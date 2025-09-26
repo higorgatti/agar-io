@@ -30,15 +30,9 @@
       max-height:80vh; overflow:hidden;
       box-shadow:0 8px 24px rgba(0,0,0,0.5);
     }
-    #instructions h2{
-      margin:6px 0 10px 0; font-size:26px;
-    }
-    #instructions .line{
-      margin:6px 0; font-size:16px; opacity:.95;
-    }
-    #instructions .tips{
-      margin:10px 0 14px 0; font-size:15px; opacity:.85;
-    }
+    #instructions h2{ margin:6px 0 10px 0; font-size:26px; }
+    #instructions .line{ margin:6px 0; font-size:16px; opacity:.95; }
+    #instructions .tips{ margin:10px 0 14px 0; font-size:15px; opacity:.85; }
     #instructions #startBtn{
       display:block; width:100%;
       font-size:18px; padding:14px 18px; border-radius:10px;
@@ -71,7 +65,7 @@
     <canvas id="gameCanvas"></canvas>
 
     <div id="ui" class="hidden">
-      <div>Pontuação: <span id="score">0</span></div>
+      <div>Pontuação: <span id="score">0</span> • Melhor: <span id="best">0</span></div>
       <div>Massa: <span id="mass">10</span></div>
       <div id="powerUpStatus"></div>
     </div>
@@ -80,7 +74,7 @@
     <div id="instructions">
       <h2>🦠 Agar.io</h2>
       <p class="line">Toque ou mova o mouse para andar</p>
-      <p class="line">Espaço: dividir • R: reunir</p>
+      <p class="line">Espaço: dividir • R: reunir • Toque duplo: dividir</p>
       <p class="tips">Coma frutas, fuja dos maiores</p>
       <button id="startBtn">🎮 COMEÇAR</button>
     </div>
@@ -118,6 +112,11 @@
 
     let canvasCSSWidth=0, canvasCSSHeight=0; 
     let deviceRatio=1;
+
+    // ===== Melhor pontuação (salva) =====
+    let bestScore = Number(localStorage.getItem('bestScore') || 0);
+    const bestSpan = document.getElementById('best');
+    bestSpan.textContent = bestScore;
 
     // ===== Player =====
     let player={
@@ -199,10 +198,17 @@
       moveTarget = null; // mouse tem prioridade em desktop
     });
 
-    // Touch (mobile): toque/arrastar define alvo contínuo
+    // ====== Toque (mobile): alvo contínuo + double-tap para dividir ======
+    let lastTap = 0;
     canvas.addEventListener('touchstart', (e)=>{
       if (!gameRunning) return;
       e.preventDefault();
+      const now = Date.now();
+      if (now - lastTap < 250) { // double tap
+        splitPlayer();
+      }
+      lastTap = now;
+
       const t=e.touches[0];
       const p=screenToWorld(t.clientX, t.clientY);
       moveTarget = {x:p.x, y:p.y};
@@ -247,6 +253,9 @@
 
       camera={ x:player.x, y:player.y, zoom:1 };
       mouse.x = player.x; mouse.y = player.y;
+
+      document.getElementById('score').textContent = 0;
+      bestSpan.textContent = bestScore;
 
       initializeGame();
       gameLoop();
@@ -625,6 +634,17 @@
       document.getElementById('powerUpStatus').textContent=status;
     }
 
+    // ===== Culling (só desenhar o que aparece na tela) =====
+    function onScreen(x,y,r){
+      const halfW = (canvasCSSWidth*0.5)/camera.zoom;
+      const halfH = (canvasCSSHeight*0.5)/camera.zoom;
+      const left = camera.x - halfW - r - 8;
+      const right = camera.x + halfW + r + 8;
+      const top = camera.y - halfH - r - 8;
+      const bottom = camera.y + halfH + r + 8;
+      return (x>left && x<right && y>top && y<bottom);
+    }
+
     // ===== Desenho =====
     function drawPlayerWithSkin(x,y,r){
       if (playerImgReady){
@@ -667,26 +687,31 @@
       for (let x=0;x<WORLD_WIDTH;x+=grid){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,WORLD_HEIGHT); ctx.stroke(); }
       for (let y=0;y<WORLD_HEIGHT;y+=grid){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(WORLD_WIDTH,y); ctx.stroke(); }
 
-      // Frutas
+      // Frutas (com culling)
       for (let i=0;i<food.length;i++){
         const f = food[i];
+        if (!onScreen(f.x,f.y,f.radius)) continue;
         ctx.font = (f.radius*2) + "px Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(f.emoji, f.x, f.y);
       }
 
-      // Power-ups
+      // Power-ups (com culling)
       for (let i=0;i<powerUps.length;i++){
-        const pu=powerUps[i]; pu.pulse+=0.1; const pr=pu.radius+Math.sin(pu.pulse)*3;
+        const pu=powerUps[i];
+        if (!onScreen(pu.x,pu.y,pu.radius+6)) continue;
+        pu.pulse+=0.1; const pr=pu.radius+Math.sin(pu.pulse)*3;
         ctx.beginPath(); ctx.fillStyle=pu.color; ctx.arc(pu.x,pu.y,pr,0,Math.PI*2); ctx.fill();
         ctx.strokeStyle='white'; ctx.lineWidth=2; ctx.stroke();
         ctx.fillStyle='white'; ctx.font='16px Arial'; ctx.textAlign='center'; ctx.fillText(pu.effect, pu.x, pu.y+6);
       }
 
-      // Vírus
+      // Vírus (com culling)
       for (let i=0;i<viruses.length;i++){
-        const v=viruses[i]; ctx.save(); ctx.translate(v.x,v.y); ctx.rotate(v.rotation);
+        const v=viruses[i];
+        if (!onScreen(v.x,v.y,v.radius+6)) continue;
+        ctx.save(); ctx.translate(v.x,v.y); ctx.rotate(v.rotation);
         const spikes=12, inner=v.radius*0.7, outer=v.radius+Math.sin(v.pulse)*3;
         ctx.beginPath();
         for (let j=0;j<spikes*2;j++){ 
@@ -701,9 +726,10 @@
         ctx.restore();
       }
 
-      // Inimigos (sem números)
+      // Inimigos (com culling)
       for (let i=0;i<enemies.length;i++){
         const e=enemies[i]; 
+        if (!onScreen(e.x,e.y,e.radius)) continue;
         ctx.beginPath();
         ctx.fillStyle=e.frozen?'#87CEEB':e.color;
         ctx.arc(e.x,e.y,e.radius,0,Math.PI*2); 
@@ -711,7 +737,7 @@
         ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.stroke();
       }
 
-      // Player (sem número)
+      // Player
       if (player.split && player.splitBalls.length>0){
         for (let i=0;i<player.splitBalls.length;i++){
           const b=player.splitBalls[i]; 
@@ -747,6 +773,13 @@
       const total=(player.split && player.splitBalls.length>0)? player.splitBalls.reduce((s,b)=>s+b.mass,0):player.mass;
       document.getElementById('finalScore').textContent=score;
       document.getElementById('finalMass').textContent=Math.floor(total);
+
+      // atualiza melhor pontuação
+      if (score > bestScore){
+        bestScore = score;
+        localStorage.setItem('bestScore', String(bestScore));
+        bestSpan.textContent = bestScore;
+      }
     }
 
     function gameLoop(){ 
