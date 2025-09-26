@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jogo Agar.io</title>
+  <title>Agar Lite</title>
   <style>
     *{box-sizing:border-box}
     body{
@@ -14,19 +14,20 @@
     #gameCanvas{ display:block; width:100%; height:100%; cursor:none; touch-action:none; }
 
     #ui{
-      position:absolute; top:10px; left:10px; color:white; font-size:18px; z-index:10;
-      text-shadow:2px 2px 4px rgba(0,0,0,0.8);
+      position:absolute; top:10px; left:10px; color:white; font-size:16px; z-index:10;
+      text-shadow:2px 2px 4px rgba(0,0,0,0.8); line-height:1.3;
+      background:rgba(0,0,0,.35); padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.15);
     }
     .hidden{ display:none !important; }
 
-    /* ===== Instruções compactas ===== */
+    /* ===== Tela inicial compacta ===== */
     #instructions{
       position:absolute; 
       top:50%; left:50%; transform:translate(-50%,-50%);
       color:white; text-align:center; z-index:5;
-      background:rgba(0,0,0,0.75);
+      background:rgba(0,0,0,0.78);
       padding:16px; border-radius:12px; border:2px solid #00ff88;
-      width:min(420px, 92vw);
+      width:min(430px, 92vw);
       max-height:80vh; overflow:hidden;
       box-shadow:0 8px 24px rgba(0,0,0,0.5);
     }
@@ -46,11 +47,14 @@
 
     #gameOver{
       position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; text-align:center; z-index:15;
-      background:rgba(255,0,0,0.85); padding:30px; border-radius:15px; border:3px solid #ff0000;
-      max-width:90vw;
+      background:rgba(0,0,0,0.9); padding:26px; border-radius:15px; border:2px solid #444; width:min(520px,94vw);
     }
+    #gameOver h2{ margin:0 0 10px 0 }
+    #gameOver .scores{ display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin:10px 0 6px }
+    #gameOver .scores > div{ background:#101820; padding:10px 12px; border-radius:10px; border:1px solid #1e2a33 }
+
     button{
-      background:#00ff88; color:black; border:none; padding:10px 20px; font-size:16px; border-radius:5px; cursor:pointer; margin:5px; font-weight:bold;
+      background:#00ff88; color:black; border:none; padding:10px 20px; font-size:16px; border-radius:8px; cursor:pointer; margin:5px; font-weight:700;
     }
     button:hover{ background:#00cc66; }
     #controls{
@@ -58,6 +62,16 @@
     }
     #controls button{ background:#00bcd4; }
     #controls button:nth-child(2){ background:#ff8a65; }
+    #btnEject{ background:#ffd54f; color:#000; }
+    #btnMute{ background:#455a64; color:#fff; }
+
+    /* Minimap */
+    #minimap{
+      position:absolute; left:10px; bottom:10px; z-index:12;
+      width:160px; height:120px; border:2px solid rgba(255,255,255,.25);
+      background:rgba(0,0,0,.35); border-radius:8px; backdrop-filter: blur(2px);
+    }
+    #minimap canvas{ width:100%; height:100%; display:block }
   </style>
 </head>
 <body>
@@ -66,37 +80,47 @@
 
     <div id="ui" class="hidden">
       <div>Pontuação: <span id="score">0</span> • Melhor: <span id="best">0</span></div>
-      <div>Massa: <span id="mass">10</span></div>
+      <div>Massa: <span id="mass">10</span> • <span id="hudFps">FPS: --</span> • <span id="hudSound">🔊</span></div>
       <div id="powerUpStatus"></div>
     </div>
 
-    <!-- Instruções reduzidas -->
+    <div id="minimap" class="hidden"><canvas id="miniCanvas" width="160" height="120"></canvas></div>
+
     <div id="instructions">
-      <h2>🦠 Agar.io</h2>
-      <p class="line">Toque ou mova o mouse para andar</p>
-      <p class="line">Espaço: dividir • R: reunir • Toque duplo: dividir</p>
-      <p class="tips">Coma frutas, fuja dos maiores</p>
+      <h2>🦠 Agar Lite</h2>
+      <p class="line">Toque / mouse para andar • Toque duplo / Espaço para dividir • R para reunir</p>
+      <p class="line">W (ou botão) cospe massa • Ímã puxa frutas</p>
+      <p class="tips">Coma frutas, fuja dos maiores. Bom jogo!</p>
       <button id="startBtn">🎮 COMEÇAR</button>
     </div>
 
     <div id="controls" class="hidden">
       <button id="btnSplit">Dividir</button>
       <button id="btnMerge">Reunir</button>
+      <button id="btnEject">Ejetar (W)</button>
+      <button id="btnMute">🔊 Som</button>
     </div>
 
     <div id="gameOver" class="hidden">
-      <h2>💀 Game Over! 💀</h2>
-      <p>Pontuação Final: <span id="finalScore">0</span></p>
-      <p>Massa Final: <span id="finalMass">0</span></p>
+      <h2>💀 Game Over</h2>
+      <div class="scores">
+        <div>Final: <span id="finalScore">0</span></div>
+        <div>Massa: <span id="finalMass">0</span></div>
+        <div>Melhor: <span id="bestEver">0</span></div>
+      </div>
+      <div id="lbWrap">
+        <h3>🏆 Top 10 local</h3>
+        <ol id="leaderboard" style="text-align:left; max-height:180px; overflow:auto; margin:8px auto; padding-left:22px;"></ol>
+      </div>
       <button id="restartBtn">🔄 JOGAR NOVAMENTE</button>
     </div>
   </div>
 
   <script>
-    // ===== Variáveis e Constantes =====
-    let gameRunning=false, score=0, food=[], powerUps=[], enemies=[], viruses=[];
+    /*************** Estado base ***************/
+    let gameRunning=false, score=0, food=[], powerUps=[], enemies=[], viruses=[], pellets=[];
     let mouse={x:0,y:0}, camera={x:1000,y:750,zoom:1}, timers=[], startTime=0;
-    let moveTarget=null; // alvo contínuo definido por toque (andar sem parar)
+    let moveTarget=null; // alvo contínuo por toque
     const WORLD_WIDTH=2000, WORLD_HEIGHT=1500, INITIAL_MASS=10;
 
     const canvas=document.getElementById('gameCanvas');
@@ -109,33 +133,35 @@
     const controls=document.getElementById('controls');
     const btnSplit=document.getElementById('btnSplit');
     const btnMerge=document.getElementById('btnMerge');
+    const btnEject=document.getElementById('btnEject');
+    const btnMute=document.getElementById('btnMute');
+    const hudFps=document.getElementById('hudFps'); const hudSound=document.getElementById('hudSound');
 
-    let canvasCSSWidth=0, canvasCSSHeight=0; 
-    let deviceRatio=1;
+    const mini=document.getElementById('minimap'), miniCanvas=document.getElementById('miniCanvas'), mctx=miniCanvas.getContext('2d');
 
-    // ===== Melhor pontuação (salva) =====
+    let canvasCSSWidth=0, canvasCSSHeight=0, deviceRatio=1;
+
+    // Melhor pontuação & Leaderboard local
     let bestScore = Number(localStorage.getItem('bestScore') || 0);
-    const bestSpan = document.getElementById('best');
+    const bestSpan=document.getElementById('best');
     bestSpan.textContent = bestScore;
+    function getLB(){ try{ return JSON.parse(localStorage.getItem('lb')||'[]'); }catch{ return []; } }
+    function setLB(arr){ localStorage.setItem('lb', JSON.stringify(arr.slice(0,10))); }
 
-    // ===== Player =====
+    // Player
     let player={
       x:WORLD_WIDTH/2, y:WORLD_HEIGHT/2, radius:18, mass:INITIAL_MASS,
       vx:0, vy:0,
       split:false, splitBalls:[], speedBoost:false, shielded:false, magnet:false, multiGain:false
     };
 
-    // ===== Auto-merge após dividir =====
-    let splitEndTime=0;             // quando as células devem se juntar
-    const AUTO_MERGE_MS=12000;      // 12s para auto-juntar
+    // Split/merge
+    let splitEndTime=0; const AUTO_MERGE_MS=12000;
 
-    // ===== Skin do jogador (opcional) =====
-    const playerImg = new Image();
-    playerImg.src = 'player.png'; // se existir na raiz, será usado
-    let playerImgReady = false;
-    playerImg.onload = ()=>{ playerImgReady = true; };
+    // Skin opcional
+    const playerImg = new Image(); playerImg.src='player.png'; let playerImgReady=false; playerImg.onload=()=>playerImgReady=true;
 
-    // ===== Frutas =====
+    // Frutas
     const FRUITS = [
       {emoji:"🍎", color:"#ff4d4d"},
       {emoji:"🍌", color:"#ffe066"},
@@ -144,7 +170,33 @@
       {emoji:"🍊", color:"#ffa500"}
     ];
 
-    // ===== Util =====
+    /*************** Áudio (WebAudio) ***************/
+    let audioCtx=null, muted = (localStorage.getItem('muted')==='1');
+    setMuteIcon();
+    function ensureAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+    function beep(freq=440, dur=0.08, type='sine', vol=0.03){
+      if(muted) return;
+      ensureAudio();
+      const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+      o.type=type; o.frequency.value=freq; g.gain.value=vol;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime+dur);
+    }
+    function sEat(){ beep(740,0.05,'triangle',0.02); }
+    function sSplit(){ beep(320,0.1,'square',0.04); }
+    function sEject(){ beep(520,0.06,'sine',0.03); }
+    function sPower(){ beep(900,0.1,'sawtooth',0.03); }
+    function sDeath(){ beep(180,0.25,'sine',0.05); setTimeout(()=>beep(120,0.3,'sine',0.05),90); }
+    function toggleMute(){
+      muted=!muted; localStorage.setItem('muted', muted?'1':'0'); setMuteIcon();
+      if(!muted) ensureAudio();
+    }
+    function setMuteIcon(){ btnMute.textContent = muted?'🔇 Som':'🔊 Som'; hudSound.textContent = muted?'🔇':'🔊'; }
+
+    /*************** Haptics ***************/
+    function vibe(ms=20){ if('vibrate' in navigator) navigator.vibrate(ms); }
+
+    /*************** Util ***************/
     function massToRadius(mass){ return Math.sqrt(Math.max(0.0001, mass))*2+5; }
     function addTimer(id){ timers.push(id); }
     function clearAllTimers(){ for (let i=0;i<timers.length;i++) clearTimeout(timers[i]); timers=[]; }
@@ -175,7 +227,6 @@
         y: ( (myCSS - cy) / camera.zoom ) + camera.y
       };
     }
-
     function updateMouseFromEvent(e){
       const rect = canvas.getBoundingClientRect();
       const mxCSS = (e.clientX - rect.left) * (canvasCSSWidth / rect.width);
@@ -186,62 +237,68 @@
       mouse.y = ( (myCSS - cy) / camera.zoom ) + camera.y;
     }
 
-    // Iniciar clicando em qualquer lugar do painel
-    instructions.addEventListener('click', (e)=>{
-      if (e.target.id !== 'startBtn') startGame();
-    });
+    // FPS simples
+    let frameTimes=[], lastFps=60;
+    function trackFPS(){
+      const now=performance.now();
+      frameTimes.push(now);
+      while(frameTimes[0] < now-1000) frameTimes.shift();
+      lastFps = frameTimes.length;
+      hudFps.textContent = 'FPS: '+lastFps;
+    }
 
-    // Mouse (PC): segue o mouse; mover mouse cancela moveTarget
-    canvas.addEventListener('mousemove', (e)=>{
-      if (!gameRunning) return;
-      updateMouseFromEvent(e);
-      moveTarget = null; // mouse tem prioridade em desktop
-    });
+    /*************** Interação ***************/
+    // iniciar clicando em qualquer parte do painel
+    instructions.addEventListener('click', (e)=>{ if (e.target.id !== 'startBtn') startGame(); });
+    startBtn.addEventListener('click', startGame);
+    restartBtn.addEventListener('click', startGame);
 
-    // ====== Toque (mobile): alvo contínuo + double-tap para dividir ======
-    let lastTap = 0;
+    // mouse segue; cancela alvo contínuo
+    canvas.addEventListener('mousemove', (e)=>{ if (!gameRunning) return; updateMouseFromEvent(e); moveTarget=null; });
+
+    // toque contínuo e double-tap para dividir
+    let lastTap=0;
     canvas.addEventListener('touchstart', (e)=>{
       if (!gameRunning) return;
       e.preventDefault();
-      const now = Date.now();
-      if (now - lastTap < 250) { // double tap
-        splitPlayer();
-      }
-      lastTap = now;
-
-      const t=e.touches[0];
-      const p=screenToWorld(t.clientX, t.clientY);
-      moveTarget = {x:p.x, y:p.y};
+      const now=Date.now();
+      if(now-lastTap<250){ splitPlayer(); sSplit(); vibe(30); }
+      lastTap=now;
+      const t=e.touches[0]; const p=screenToWorld(t.clientX, t.clientY);
+      moveTarget = {x:p.x,y:p.y};
     }, {passive:false});
-
     canvas.addEventListener('touchmove', (e)=>{
       if (!gameRunning) return;
       e.preventDefault();
-      const t=e.touches[0];
-      const p=screenToWorld(t.clientX, t.clientY);
-      moveTarget = {x:p.x, y:p.y};
+      const t=e.touches[0]; const p=screenToWorld(t.clientX, t.clientY);
+      moveTarget = {x:p.x,y:p.y};
     }, {passive:false});
 
     document.addEventListener('keydown', (e)=>{
       if (!gameRunning) return;
-      if (e.code==='Space' || e.key===' ') { e.preventDefault(); splitPlayer(); }
-      else if (e.code==='KeyR' || e.key==='r' || e.key==='R') { e.preventDefault(); forceMerge(); }
+      if (e.code==='Space' || e.key===' ') { e.preventDefault(); splitPlayer(); sSplit(); vibe(30); }
+      else if (e.code==='KeyR' || e.key.toLowerCase()==='r') { e.preventDefault(); forceMerge(); }
+      else if (e.code==='KeyW' || e.key.toLowerCase()==='w') { e.preventDefault(); ejectMass(); }
     });
 
-    startBtn.addEventListener('click', startGame);
-    restartBtn.addEventListener('click', startGame);
-    btnSplit.addEventListener('click', ()=>{ if (gameRunning) splitPlayer(); });
-    btnMerge.addEventListener('click', ()=>{ if (gameRunning) forceMerge(); });
+    controls.addEventListener('click', (e)=>{
+      if (!gameRunning) return;
+      if (e.target===btnSplit){ splitPlayer(); sSplit(); vibe(25); }
+      else if (e.target===btnMerge){ forceMerge(); }
+      else if (e.target===btnEject){ ejectMass(); }
+    });
+    btnMute.addEventListener('click', toggleMute);
 
-    // ===== Fluxo do jogo =====
+    /*************** Fluxo do jogo ***************/
     function startGame(){
       clearAllTimers();
       instructions.classList.add('hidden');
       gameOverDiv.classList.add('hidden');
       ui.classList.remove('hidden');
       controls.classList.remove('hidden');
+      mini.classList.remove('hidden');
 
-      gameRunning=true; score=0; food=[]; powerUps=[]; enemies=[]; viruses=[]; startTime=getTime();
+      gameRunning=true; score=0; food=[]; powerUps=[]; enemies=[]; viruses=[]; pellets=[]; startTime=getTime();
       splitEndTime=0; moveTarget=null;
 
       player={ 
@@ -262,16 +319,10 @@
     }
 
     function initializeGame(){
-      // FRUTAS
+      // frutas
       for (let i=0;i<300;i++){
         const f = FRUITS[Math.floor(Math.random()*FRUITS.length)];
-        food.push({
-          x: Math.random()*WORLD_WIDTH,
-          y: Math.random()*WORLD_HEIGHT,
-          radius: 10,
-          emoji: f.emoji,
-          color: f.color
-        });
+        food.push({ x:Math.random()*WORLD_WIDTH, y:Math.random()*WORLD_HEIGHT, radius:10, emoji:f.emoji, color:f.color });
       }
       // power-ups
       const powerUpTypes=[
@@ -302,6 +353,7 @@
 
     function restartGame(){ startGame(); }
 
+    /*************** Mecânicas ***************/
     function updatePlayerSize(){
       if (player.split && player.splitBalls.length>0){
         for (let i=0;i<player.splitBalls.length;i++) player.splitBalls[i].radius=massToRadius(player.splitBalls[i].mass);
@@ -350,10 +402,10 @@
       }
     }
 
-    // ===== Movimento estilo Agar.io =====
+    // velocidade estilo agar.io
     function speedFromRadius(r){
       const base = player.speedBoost ? 1.25 : 1.0;
-      return base * (6 / Math.sqrt(r + 40)); // maior => mais lento
+      return base * (6 / Math.sqrt(r + 40));
     }
     function getTarget(){
       if (moveTarget) return {targetX: moveTarget.x, targetY: moveTarget.y};
@@ -385,15 +437,39 @@
       }
     }
 
-    // ===== Respawn de inimigo =====
-    function respawnEnemy(enemy){
-      enemy.mass = 20 + Math.random()*40;
-      enemy.radius = massToRadius(enemy.mass);
-      enemy.x = Math.random()*WORLD_WIDTH;
-      enemy.y = Math.random()*WORLD_HEIGHT;
-      enemy.vx = (Math.random()-0.5)*2;
-      enemy.vy = (Math.random()-0.5)*2;
-      enemy.frozen = false;
+    // Ejetar massa (pellets)
+    function ejectMass(){
+      const shooter = (player.split && player.splitBalls.length>0) ? player.splitBalls.reduce((s,b)=> (b.mass>s.mass?b:s)) : player;
+      if ((shooter.mass||player.mass) < 15) return;
+      const {targetX, targetY} = getTarget();
+      const ang = Math.atan2(targetY - shooter.y, targetX - shooter.x);
+      const pelletMass = 3; // custo
+      if (player.split){
+        shooter.mass -= pelletMass; shooter.radius=massToRadius(shooter.mass);
+      } else {
+        player.mass -= pelletMass; updatePlayerSize();
+      }
+      const speed=5;
+      pellets.push({
+        x: (shooter.x||player.x) + Math.cos(ang)*(shooter.radius+6),
+        y: (shooter.y||player.y) + Math.sin(ang)*(shooter.radius+6),
+        vx: Math.cos(ang)*speed,
+        vy: Math.sin(ang)*speed,
+        radius: 6,
+        ttl: 180 // frames
+      });
+      sEject(); vibe(15);
+    }
+
+    /*************** IA e Atualizações ***************/
+    function respawnEnemy(e){
+      e.mass = 20 + Math.random()*40;
+      e.radius = massToRadius(e.mass);
+      e.x = Math.random()*WORLD_WIDTH;
+      e.y = Math.random()*WORLD_HEIGHT;
+      e.vx = (Math.random()-0.5)*2;
+      e.vy = (Math.random()-0.5)*2;
+      e.frozen = false;
     }
 
     function updateGame(){
@@ -401,7 +477,7 @@
       const currentTime=getTime();
       const isInvulnerable=(currentTime-startTime)<3000;
 
-      // Movimento (Agar.io) + auto-merge
+      // Movimento + auto-merge
       moveAgar();
       mergeIfReady();
 
@@ -417,7 +493,7 @@
       camera.zoom+=(targetZoom-camera.zoom)*0.03;
       camera.x+=(tx-camera.x)*0.08; camera.y+=(ty-camera.y)*0.08;
 
-      // Ímã puxa frutas
+      // Ímã nas frutas
       if (player.magnet){
         const magnetRange = 160, magnetForce = 0.06;
         for (let i=0;i<food.length;i++){
@@ -432,66 +508,65 @@
         }
       }
 
-      // IA inimigos (comem frutas e inimigos menores; fogem de maiores; tentam pegar player menor)
+      // Pellets movimento + virar comida
+      for (let i=pellets.length-1;i>=0;i--){
+        const p=pellets[i];
+        p.x+=p.vx; p.y+=p.vy; p.ttl--;
+        p.vx*=0.98; p.vy*=0.98;
+        if (p.x<0||p.x>WORLD_WIDTH||p.y<0||p.y>WORLD_HEIGHT) p.ttl=0;
+        // colisão com algo grande (vira comida)
+        let hit=false;
+        for (let e=0;e<enemies.length;e++){
+          const en=enemies[e];
+          if (Math.hypot(en.x-p.x,en.y-p.y) < en.radius + p.radius){
+            en.mass += 2; en.radius=massToRadius(en.mass); hit=true; break;
+          }
+        }
+        if (!hit && Math.hypot((player.x||tx)-p.x,(player.y||ty)-p.y) < (player.radius||20) + p.radius){
+          // evita alimentar a si mesmo instantâneo; ignore
+        }
+        if (p.ttl<=0){
+          food.push({x:p.x,y:p.y,radius:8,emoji:'🍏',color:'#9acd32'});
+          pellets.splice(i,1);
+        }
+      }
+
+      // IA dos inimigos (simplificada)
       for (let i=0;i<enemies.length;i++){
         const e=enemies[i];
         if (e.frozen) continue;
 
+        // alvo simples: fruta mais próxima
         let target=null, bestDist=1e9;
-
-        // frutas
         for (let k=0;k<food.length;k++){
-          const f=food[k];
-          const d=Math.hypot(f.x-e.x, f.y-e.y);
-          if (d<bestDist){ bestDist=d; target={x:f.x,y:f.y,type:'fruit'}; }
+          const f=food[k]; const d=Math.hypot(f.x-e.x,f.y-e.y);
+          if (d<bestDist){ bestDist=d; target={x:f.x,y:f.y}; }
         }
 
-        // inimigos menores
-        for (let j=0;j<enemies.length;j++){
-          if (j===i) continue;
-          const o=enemies[j];
-          if (e.mass > o.mass*1.2){
-            const d=Math.hypot(o.x-e.x, o.y-e.y);
-            if (d<bestDist){ bestDist=d; target={x:o.x,y:o.y,type:'enemy',j}; }
-          }
-        }
-
-        // player como presa
+        // perseguir player se vantagem
         const pMass = (player.split && player.splitBalls.length>0) ? player.splitBalls.reduce((s,b)=>s+b.mass,0) : player.mass;
         const pX = (player.split && player.splitBalls.length>0) ? player.splitBalls.reduce((s,b)=>s+b.x,0)/player.splitBalls.length : player.x;
         const pY = (player.split && player.splitBalls.length>0) ? player.splitBalls.reduce((s,b)=>s+b.y,0)/player.splitBalls.length : player.y;
         if (e.mass > pMass*1.2){
           const d=Math.hypot(pX-e.x, pY-e.y);
-          if (d<bestDist){ bestDist=d; target={x:pX,y:pY,type:'player'}; }
+          if (d<bestDist){ bestDist=d; target={x:pX,y:pY}; }
         }
 
-        // fugir de predadores
-        let fleeX=0, fleeY=0, flee=false;
-        if (pMass > e.mass*1.2){
-          const dx=e.x - pX, dy=e.y - pY, d=Math.hypot(dx,dy)||1;
-          fleeX += dx/d; fleeY += dy/d; flee = true;
-        }
+        // fugir de predadores (player maior + inimigos maiores)
+        let fleeX=0,fleeY=0,flee=false;
+        if (pMass > e.mass*1.2){ const dx=e.x-pX, dy=e.y-pY, d=Math.hypot(dx,dy)||1; fleeX+=dx/d; fleeY+=dy/d; flee=true; }
         for (let j=0;j<enemies.length;j++){
-          if (j===i) continue;
-          const o=enemies[j];
-          if (o.mass > e.mass*1.2){
-            const dx=e.x - o.x, dy=e.y - o.y, d=Math.hypot(dx,dy)||1;
-            fleeX += dx/d; fleeY += dy/d; flee = true;
-          }
+          if (j===i) continue; const o=enemies[j];
+          if (o.mass > e.mass*1.2){ const dx=e.x-o.x, dy=e.y-o.y, d=Math.hypot(dx,dy)||1; fleeX+=dx/d; fleeY+=dy/d; flee=true; }
         }
 
-        // aplica movimento
         let ax=0, ay=0;
-        if (flee){
-          const sp=1.2; ax=fleeX*sp; ay=fleeY*sp;
-        } else if (target){
-          const dx=target.x - e.x, dy=target.y - e.y, d=Math.hypot(dx,dy)||1;
-          const sp=0.9; ax=(dx/d)*sp; ay=(dy/d)*sp;
-        } else { ax += (Math.random()-0.5)*0.2; ay += (Math.random()-0.5)*0.2; }
+        if (flee){ const sp=1.2; ax=fleeX*sp; ay=fleeY*sp; }
+        else if (target){ const dx=target.x-e.x, dy=target.y-e.y, d=Math.hypot(dx,dy)||1; ax=(dx/d)*0.9; ay=(dy/d)*0.9; }
+        else { ax+=(Math.random()-0.5)*0.2; ay+=(Math.random()-0.5)*0.2; }
 
         e.vx = (e.vx*0.9) + ax*0.3; e.vy = (e.vy*0.9) + ay*0.3;
-        const maxS=1.6, cs=Math.hypot(e.vx,e.vy); 
-        if (cs>maxS){ e.vx=(e.vx/cs)*maxS; e.vy=(e.vy/cs)*maxS; }
+        const maxS=1.6, cs=Math.hypot(e.vx,e.vy); if (cs>maxS){ e.vx=(e.vx/cs)*maxS; e.vy=(e.vy/cs)*maxS; }
         e.x+=e.vx; e.y+=e.vy;
         if (e.x<e.radius || e.x>WORLD_WIDTH-e.radius) e.vx*=-1;
         if (e.y<e.radius || e.y>WORLD_HEIGHT-e.radius) e.vy*=-1;
@@ -499,7 +574,7 @@
         e.y=Math.max(e.radius, Math.min(WORLD_HEIGHT-e.radius, e.y));
       }
 
-      // Player come frutas
+      // Comer frutas (player)
       for (let i=food.length-1;i>=0;i--){
         const f=food[i]; 
         let eaten=false;
@@ -509,13 +584,13 @@
             if (Math.hypot(b.x-f.x, b.y-f.y) < b.radius + f.radius){
               const gain=(player.multiGain?0.4:0.2)*f.radius; 
               b.mass+=gain; b.radius=massToRadius(b.mass);
-              score+=Math.floor(gain*2); eaten=true; break;
+              score+=Math.floor(gain*2); eaten=true; sEat(); break;
             }
           }
         } else {
           if (Math.hypot(player.x-f.x, player.y-f.y) < player.radius + f.radius){
             const gain=(player.multiGain?0.4:0.2)*f.radius; 
-            player.mass+=gain; updatePlayerSize(); score+=Math.floor(gain*2); eaten=true;
+            player.mass+=gain; updatePlayerSize(); score+=Math.floor(gain*2); eaten=true; sEat();
           }
         }
         if (eaten) food.splice(i,1);
@@ -534,7 +609,7 @@
         }
       }
 
-      // Player vs inimigos + respawn
+      // Player vs inimigos
       for (let i=0;i<enemies.length;i++){
         const e=enemies[i];
         const poss=(player.split && player.splitBalls.length>0)? player.splitBalls:[player];
@@ -544,9 +619,9 @@
             const pMass=pos.mass||player.mass;
             if (!isInvulnerable && e.mass>pMass*1.1){
               if (player.split && player.splitBalls.length>0){ 
-                player.splitBalls.splice(j,1); 
-                if (player.splitBalls.length===0){ endGame(); return; } 
-              } else { endGame(); return; }
+                player.splitBalls.splice(j,1); vibe(40);
+                if (player.splitBalls.length===0){ sDeath(); endGame(); return; } 
+              } else { sDeath(); endGame(); return; }
             } else if (pMass>e.mass*1.2){
               const gain=e.mass*0.8; score+=Math.floor(gain);
               if (player.split){ pos.mass+=gain; pos.radius=massToRadius(pos.mass); }
@@ -557,7 +632,7 @@
         }
       }
 
-      // Inimigo come inimigo (canibalismo + respawn)
+      // Inimigo come inimigo
       for (let i=0;i<enemies.length;i++){
         for (let j=i+1;j<enemies.length;j++){
           const a=enemies[i], b=enemies[j];
@@ -580,7 +655,7 @@
         for (let j=0;j<poss.length;j++){
           const pos=poss[j];
           if (Math.hypot(pos.x-pu.x,pos.y-pu.y)<pos.radius+pu.radius && !collected){
-            collected=true; score+=20;
+            collected=true; score+=20; sPower(); vibe(15);
             if (pu.type==='speed'){ player.speedBoost=true; addTimer(setTimeout(()=>player.speedBoost=false,5000)); }
             else if (pu.type==='shield'){ player.shielded=true; addTimer(setTimeout(()=>player.shielded=false,8000)); }
             else if (pu.type==='growth'){ if (player.split){ pos.mass+=15; pos.radius=massToRadius(pos.mass); } else { player.mass+=15; updatePlayerSize(); } }
@@ -592,7 +667,7 @@
         if (collected) powerUps.splice(i,1);
       }
 
-      // Vírus
+      // Vírus (dano)
       for (let i=0;i<viruses.length;i++){
         const v=viruses[i]; v.rotation+=0.02; v.pulse+=0.1;
         const poss=(player.split && player.splitBalls.length>0)? player.splitBalls:[player];
@@ -604,17 +679,17 @@
               const loss=pMass*0.4; score=Math.max(0, score-50);
               if (player.split && player.splitBalls.length>0){
                 pos.mass-=loss;
-                if (pos.mass<5){ player.splitBalls.splice(j,1); if (player.splitBalls.length===0){ endGame(); return; } }
+                if (pos.mass<5){ player.splitBalls.splice(j,1); if (player.splitBalls.length===0){ sDeath(); endGame(); return; } }
                 else { pos.radius=massToRadius(pos.mass); }
               } else {
-                player.mass-=loss; if (player.mass<5){ endGame(); return; } else updatePlayerSize();
+                player.mass-=loss; if (player.mass<5){ sDeath(); endGame(); return; } else updatePlayerSize();
               }
             }
           }
         }
       }
 
-      // Respawn de frutas
+      // Respawn frutas
       if (food.length < 250){
         for (let i=0;i<8;i++){
           const f = FRUITS[Math.floor(Math.random()*FRUITS.length)];
@@ -627,14 +702,18 @@
       document.getElementById('score').textContent=score;
       document.getElementById('mass').textContent=Math.floor(tMass);
       let status='';
+      const invul=(currentTime-startTime)<3000;
       if (player.speedBoost) status+='⚡ ';
-      if (player.shielded || isInvulnerable) status+='🛡️ ';
+      if (player.shielded || invul) status+='🛡️ ';
       if (player.magnet) status+='🧲 ';
       if (player.multiGain) status+='✨ ';
       document.getElementById('powerUpStatus').textContent=status;
+
+      // FPS
+      trackFPS();
     }
 
-    // ===== Culling (só desenhar o que aparece na tela) =====
+    /*************** Culling & Render ***************/
     function onScreen(x,y,r){
       const halfW = (canvasCSSWidth*0.5)/camera.zoom;
       const halfH = (canvasCSSHeight*0.5)/camera.zoom;
@@ -645,7 +724,6 @@
       return (x>left && x<right && y>top && y<bottom);
     }
 
-    // ===== Desenho =====
     function drawPlayerWithSkin(x,y,r){
       if (playerImgReady){
         const old = ctx.imageSmoothingEnabled;
@@ -661,56 +739,55 @@
         ctx.imageSmoothingEnabled = old;
       } else {
         ctx.fillStyle='#4A90E2';
-        ctx.beginPath();
-        ctx.arc(x,y,r,0,Math.PI*2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
       }
     }
 
     function render(){
-      // Limpa a tela
+      // limpa a tela
       ctx.setTransform(deviceRatio,0,0,deviceRatio,0,0);
       ctx.clearRect(0,0,canvasCSSWidth,canvasCSSHeight);
 
-      // Cena com câmera
+      // câmera
       ctx.save();
       const cx = canvasCSSWidth * 0.5;
       const cy = canvasCSSHeight * 0.5;
-      ctx.translate(cx, cy);
-      ctx.scale(camera.zoom, camera.zoom);
-      ctx.translate(-camera.x, -camera.y);
+      ctx.translate(cx, cy); ctx.scale(camera.zoom, camera.zoom); ctx.translate(-camera.x, -camera.y);
 
-      // Grade
-      ctx.strokeStyle='rgba(255,255,255,0.08)'; 
-      ctx.lineWidth=1;
+      // grade
+      ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
       const grid=50;
       for (let x=0;x<WORLD_WIDTH;x+=grid){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,WORLD_HEIGHT); ctx.stroke(); }
-      for (let y=0;y<WORLD_HEIGHT;y+=grid){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(WORLD_WIDTH,y); ctx.stroke(); }
+      for (let y=0;y<WORLD_HEIGHT;y+=grid){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(WORLD_HEIGHT,y); ctx.stroke(); }
 
-      // Frutas (com culling)
+      // frutas
       for (let i=0;i<food.length;i++){
         const f = food[i];
         if (!onScreen(f.x,f.y,f.radius)) continue;
         ctx.font = (f.radius*2) + "px Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
         ctx.fillText(f.emoji, f.x, f.y);
       }
 
-      // Power-ups (com culling)
+      // pellets
+      ctx.fillStyle='#fff59d';
+      for (let i=0;i<pellets.length;i++){
+        const p=pellets[i]; if(!onScreen(p.x,p.y,p.radius)) continue;
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.fill();
+      }
+
+      // power-ups
       for (let i=0;i<powerUps.length;i++){
-        const pu=powerUps[i];
-        if (!onScreen(pu.x,pu.y,pu.radius+6)) continue;
+        const pu=powerUps[i]; if (!onScreen(pu.x,pu.y,pu.radius+6)) continue;
         pu.pulse+=0.1; const pr=pu.radius+Math.sin(pu.pulse)*3;
         ctx.beginPath(); ctx.fillStyle=pu.color; ctx.arc(pu.x,pu.y,pr,0,Math.PI*2); ctx.fill();
         ctx.strokeStyle='white'; ctx.lineWidth=2; ctx.stroke();
         ctx.fillStyle='white'; ctx.font='16px Arial'; ctx.textAlign='center'; ctx.fillText(pu.effect, pu.x, pu.y+6);
       }
 
-      // Vírus (com culling)
+      // vírus
       for (let i=0;i<viruses.length;i++){
-        const v=viruses[i];
-        if (!onScreen(v.x,v.y,v.radius+6)) continue;
+        const v=viruses[i]; if (!onScreen(v.x,v.y,v.radius+6)) continue;
         ctx.save(); ctx.translate(v.x,v.y); ctx.rotate(v.rotation);
         const spikes=12, inner=v.radius*0.7, outer=v.radius+Math.sin(v.pulse)*3;
         ctx.beginPath();
@@ -720,41 +797,31 @@
           const xx=Math.cos(ang)*rr, yy=Math.sin(ang)*rr; 
           if (j===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy); 
         }
-        ctx.closePath(); 
-        ctx.fillStyle='#FF0000'; ctx.fill(); 
+        ctx.closePath(); ctx.fillStyle='#FF0000'; ctx.fill(); 
         ctx.lineWidth=2; ctx.strokeStyle='#800000'; ctx.stroke(); 
         ctx.restore();
       }
 
-      // Inimigos (com culling)
+      // inimigos
       for (let i=0;i<enemies.length;i++){
-        const e=enemies[i]; 
-        if (!onScreen(e.x,e.y,e.radius)) continue;
-        ctx.beginPath();
-        ctx.fillStyle=e.frozen?'#87CEEB':e.color;
-        ctx.arc(e.x,e.y,e.radius,0,Math.PI*2); 
-        ctx.fill();
+        const e=enemies[i]; if (!onScreen(e.x,e.y,e.radius)) continue;
+        ctx.beginPath(); ctx.fillStyle=e.frozen?'#87CEEB':e.color;
+        ctx.arc(e.x,e.y,e.radius,0,Math.PI*2); ctx.fill();
         ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.stroke();
       }
 
-      // Player
+      // player
       if (player.split && player.splitBalls.length>0){
         for (let i=0;i<player.splitBalls.length;i++){
-          const b=player.splitBalls[i]; 
-          drawPlayerWithSkin(b.x,b.y,b.radius);
+          const b=player.splitBalls[i]; drawPlayerWithSkin(b.x,b.y,b.radius);
         }
-      } else {
-        drawPlayerWithSkin(player.x,player.y,player.radius);
-      }
+      } else { drawPlayerWithSkin(player.x,player.y,player.radius); }
 
-      // Anéis de status
+      // anéis de status
       const currentTime=getTime(), isInvulnerable=(currentTime-startTime)<3000;
       const ring=(cx2,cy2,r,style,dash=false)=>{
-        ctx.save();
-        ctx.strokeStyle=style; ctx.lineWidth=3;
-        if (dash){ ctx.setLineDash([5,5]); }
-        ctx.beginPath(); ctx.arc(cx2,cy2,r+6,0,Math.PI*2); ctx.stroke();
-        ctx.restore();
+        ctx.save(); ctx.strokeStyle=style; ctx.lineWidth=3; if (dash){ ctx.setLineDash([5,5]); }
+        ctx.beginPath(); ctx.arc(cx2,cy2,r+6,0,Math.PI*2); ctx.stroke(); ctx.restore();
       };
       if (player.shielded || isInvulnerable){
         if (player.split && player.splitBalls.length>0){ for (let i=0;i<player.splitBalls.length;i++) ring(player.splitBalls[i].x,player.splitBalls[i].y,player.splitBalls[i].radius,'rgba(255,255,255,0.6)'); }
@@ -766,29 +833,69 @@
       }
 
       ctx.restore();
+
+      // ----- minimapa -----
+      drawMini();
+    }
+
+    function drawMini(){
+      // fundo
+      mctx.clearRect(0,0,miniCanvas.width, miniCanvas.height);
+      mctx.fillStyle='rgba(0,0,0,.35)'; mctx.fillRect(0,0,miniCanvas.width, miniCanvas.height);
+      // escala
+      const sx = miniCanvas.width / WORLD_WIDTH;
+      const sy = miniCanvas.height / WORLD_HEIGHT;
+      // grade leve
+      mctx.strokeStyle='rgba(255,255,255,0.08)'; mctx.lineWidth=1;
+      for(let x=0;x<miniCanvas.width;x+=20){ mctx.beginPath(); mctx.moveTo(x,0); mctx.lineTo(x,miniCanvas.height); mctx.stroke(); }
+      for(let y=0;y<miniCanvas.height;y+=20){ mctx.beginPath(); mctx.moveTo(0,y); mctx.lineTo(miniCanvas.width,y); mctx.stroke(); }
+      // player
+      function dot(x,y,r,style){ mctx.fillStyle=style; mctx.beginPath(); mctx.arc(x*sx,y*sy, Math.max(2, r*sx*0.4),0,Math.PI*2); mctx.fill(); }
+      if (player.split && player.splitBalls.length>0){
+        for (const b of player.splitBalls) dot(b.x,b.y,b.radius,'#00ff99');
+      } else { dot(player.x,player.y,player.radius,'#00ff99'); }
+      // inimigos
+      for (const e of enemies) dot(e.x,e.y,e.radius,'#ff5577');
+      // vírus
+      for (const v of viruses) dot(v.x,v.y,v.radius,'#ff0000');
+      // viewport
+      const halfW = (canvasCSSWidth*0.5)/camera.zoom;
+      const halfH = (canvasCSSHeight*0.5)/camera.zoom;
+      const left = (camera.x - halfW)*sx, top = (camera.y - halfH)*sy;
+      const w = (halfW*2)*sx, h=(halfH*2)*sy;
+      mctx.strokeStyle='#ffffffaa'; mctx.lineWidth=1.5; mctx.strokeRect(left,top,w,h);
     }
 
     function endGame(){
-      gameRunning=false; clearAllTimers(); ui.classList.add('hidden'); gameOverDiv.classList.remove('hidden'); controls.classList.add('hidden');
+      gameRunning=false; clearAllTimers(); ui.classList.add('hidden'); gameOverDiv.classList.remove('hidden'); controls.classList.add('hidden'); mini.classList.add('hidden');
       const total=(player.split && player.splitBalls.length>0)? player.splitBalls.reduce((s,b)=>s+b.mass,0):player.mass;
       document.getElementById('finalScore').textContent=score;
       document.getElementById('finalMass').textContent=Math.floor(total);
 
-      // atualiza melhor pontuação
-      if (score > bestScore){
-        bestScore = score;
-        localStorage.setItem('bestScore', String(bestScore));
-        bestSpan.textContent = bestScore;
-      }
+      // melhor
+      if (score > bestScore){ bestScore = score; localStorage.setItem('bestScore', String(bestScore)); bestSpan.textContent = bestScore; }
+      document.getElementById('bestEver').textContent = bestScore;
+
+      // leaderboard local
+      const lb = getLB();
+      lb.push({score, mass:Math.floor(total), date: new Date().toLocaleString()});
+      lb.sort((a,b)=>b.score-a.score);
+      setLB(lb);
+      const ol=document.getElementById('leaderboard'); ol.innerHTML='';
+      lb.slice(0,10).forEach((e,i)=>{
+        const li=document.createElement('li');
+        li.textContent = `${e.score} pts • massa ${e.mass} • ${e.date}`;
+        ol.appendChild(li);
+      });
     }
 
     function gameLoop(){ 
       if (!gameRunning) return; 
       updateGame(); 
       render(); 
+      trackFPS();
       requestAnimationFrame(gameLoop); 
     }
   </script>
-
 </body>
 </html>
