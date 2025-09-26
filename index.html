@@ -79,17 +79,26 @@
     let canvasCSSWidth=0, canvasCSSHeight=0; 
     let deviceRatio=1;
 
-    // Player
+    // ===== Player =====
     let player={
       x:WORLD_WIDTH/2, y:WORLD_HEIGHT/2, radius:18, mass:INITIAL_MASS,
       split:false, splitBalls:[], speedBoost:false, shielded:false, magnet:false, multiGain:false
     };
 
-    // === Sprite do jogador (usa player.png se existir) ===
+    // ===== Skin do jogador (opcional) =====
     const playerImg = new Image();
-    playerImg.src = 'player.png'; // coloque seu PNG na mesma pasta
+    playerImg.src = 'player.png'; // se existir na raiz, será usado
     let playerImgReady = false;
     playerImg.onload = ()=>{ playerImgReady = true; };
+
+    // ===== Frutas =====
+    const FRUITS = [
+      {emoji:"🍎", color:"#ff4d4d"},
+      {emoji:"🍌", color:"#ffe066"},
+      {emoji:"🍇", color:"#8e44ad"},
+      {emoji:"🍓", color:"#ff5c8a"},
+      {emoji:"🍊", color:"#ffa500"}
+    ];
 
     // ===== Util =====
     function massToRadius(mass){ return Math.sqrt(Math.max(0.0001, mass))*2+5; }
@@ -161,10 +170,16 @@
     }
 
     function initializeGame(){
-      // comida
+      // === comida como FRUTAS ===
       for (let i=0;i<300;i++){
-        food.push({ x:Math.random()*WORLD_WIDTH, y:Math.random()*WORLD_HEIGHT, radius:3+Math.random()*4,
-          color:'hsl('+(Math.random()*360)+', 70%, 60%)' });
+        const f = FRUITS[Math.floor(Math.random()*FRUITS.length)];
+        food.push({
+          x: Math.random()*WORLD_WIDTH,
+          y: Math.random()*WORLD_HEIGHT,
+          radius: 10,
+          emoji: f.emoji,
+          color: f.color
+        });
       }
       // power-ups
       const powerUpTypes=[
@@ -233,19 +248,16 @@
           const dx=mouse.x-b.x;
           const dy=mouse.y-b.y;
           const dist=Math.hypot(dx,dy);
-          
           if (dist>10){ 
             const speedFactor = (player.speedBoost ? 1.8 : 1.2) * (40 / (b.radius + 20));
             const targetVx = (dx/dist) * speedFactor * Math.min(dist/20, 1);
             const targetVy = (dy/dist) * speedFactor * Math.min(dist/20, 1);
-            
             b.vx += (targetVx - b.vx) * 0.15;
             b.vy += (targetVy - b.vy) * 0.15;
           } else { 
             b.vx *= 0.85; 
             b.vy *= 0.85; 
           }
-          
           b.x += b.vx; 
           b.y += b.vy;
           b.x = Math.max(b.radius, Math.min(WORLD_WIDTH-b.radius, b.x));
@@ -255,15 +267,12 @@
         const dx=mouse.x-player.x;
         const dy=mouse.y-player.y;
         const dist=Math.hypot(dx,dy);
-        
         if (dist>10){ 
           const speedFactor = (player.speedBoost ? 1.8 : 1.2) * (40 / (player.radius + 20));
           const moveSpeed = speedFactor * Math.min(dist/20, 1);
-          
           player.x += (dx/dist) * moveSpeed;
           player.y += (dy/dist) * moveSpeed;
         }
-        
         player.x = Math.max(player.radius, Math.min(WORLD_WIDTH-player.radius, player.x));
         player.y = Math.max(player.radius, Math.min(WORLD_HEIGHT-player.radius, player.y));
       }
@@ -281,7 +290,23 @@
       camera.x+=(tx-camera.x)*0.08; 
       camera.y+=(ty-camera.y)*0.08;
 
-      // Colisão com comida
+      // ===== ÍMÃ: atrai frutas se ativo =====
+      if (player.magnet){
+        const magnetRange = 160;
+        const magnetForce = 0.06; // ajuste entre 0.03 e 0.1
+        for (let i=0;i<food.length;i++){
+          const f = food[i];
+          const dx = player.x - f.x;
+          const dy = player.y - f.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist > 0 && dist < magnetRange){
+            f.x += (dx / dist) * (magnetRange - dist) * magnetForce;
+            f.y += (dy / dist) * (magnetRange - dist) * magnetForce;
+          }
+        }
+      }
+
+      // Colisão com comida (frutas)
       for (let i=food.length-1;i>=0;i--){
         const f=food[i]; 
         let eaten=false;
@@ -390,24 +415,18 @@
         }
       }
 
-      // Respawn de comida e power-ups
-      if (food.length<250){
+      // Respawn de frutas (comida)
+      if (food.length < 250){
         for (let i=0;i<8;i++){
-          food.push({ x:Math.random()*WORLD_WIDTH, y:Math.random()*WORLD_HEIGHT, radius:3+Math.random()*4,
-            color:'hsl('+(Math.random()*360)+', 70%, 60%)' });
+          const f = FRUITS[Math.floor(Math.random()*FRUITS.length)];
+          food.push({
+            x: Math.random()*WORLD_WIDTH,
+            y: Math.random()*WORLD_HEIGHT,
+            radius: 10,
+            emoji: f.emoji,
+            color: f.color
+          });
         }
-      }
-      if (powerUps.length<15 && Math.random()<0.015){
-        const types=[
-          {type:'speed',color:'#FFD700',effect:'⚡'},
-          {type:'shield',color:'#00BFFF',effect:'🛡️'},
-          {type:'growth',color:'#FF69B4',effect:'📈'},
-          {type:'magnet',color:'#9932CC',effect:'🧲'},
-          {type:'freeze',color:'#00FFFF',effect:'❄️'},
-          {type:'multi',color:'#32CD32',effect:'✨'}
-        ];
-        const p=types[Math.floor(Math.random()*types.length)];
-        powerUps.push({ x:Math.random()*WORLD_WIDTH, y:Math.random()*WORLD_HEIGHT, radius:12, type:p.type, color:p.color, effect:p.effect, pulse:Math.random()*6.28 });
       }
 
       // HUD
@@ -429,7 +448,12 @@
         ctx.imageSmoothingEnabled = false;
         const size = Math.floor(r*2);
         const half = size/2;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x,y,r,0,Math.PI*2);
+        ctx.clip();
         ctx.drawImage(playerImg, Math.floor(x - half), Math.floor(y - half), size, size);
+        ctx.restore();
         ctx.imageSmoothingEnabled = old;
       } else {
         ctx.fillStyle='#4A90E2';
@@ -459,10 +483,13 @@
       for (let x=0;x<WORLD_WIDTH;x+=grid){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,WORLD_HEIGHT); ctx.stroke(); }
       for (let y=0;y<WORLD_HEIGHT;y+=grid){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(WORLD_WIDTH,y); ctx.stroke(); }
 
-      // Comida
+      // ===== Desenha frutas =====
       for (let i=0;i<food.length;i++){
-        const f=food[i]; ctx.beginPath(); ctx.fillStyle=f.color; ctx.arc(f.x,f.y,f.radius,0,Math.PI*2); ctx.fill();
-        ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1; ctx.stroke();
+        const f = food[i];
+        ctx.font = (f.radius*2) + "px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(f.emoji, f.x, f.y);
       }
 
       // Power-ups
