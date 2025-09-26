@@ -50,10 +50,10 @@
 
     <div id="instructions">
       <h2>🦠 Jogo Agar.io 🦠</h2>
-      <p><strong>PC (mouse):</strong> o player segue o ponteiro</p>
-      <p><strong>Celular (toque/arrastar):</strong> o player segue seu dedo</p>
+      <p><strong>PC:</strong> o player segue o mouse</p>
+      <p><strong>Celular:</strong> toque em um ponto para o player andar sem parar até lá; toque de novo para mudar a direção</p>
       <p><strong>Espaço / Botão:</strong> Dividir célula</p>
-      <p><strong>R / Botão:</strong> Reunir células (ou aguarde o timer)</p>
+      <p><strong>R / Botão:</strong> Reunir células (auto-junta após um tempo)</p>
       <p><strong>Objetivo:</strong> Coma frutas pequenas, evite as maiores!</p>
       <p><strong>Power-ups:</strong> ⚡Velocidade 🛡️Escudo 📈Crescimento 🧲Ímã ❄️Congelar ✨Multi</p>
       <p><strong>Cuidado:</strong> Vírus vermelhos te fazem perder massa!</p>
@@ -77,6 +77,7 @@
     // ===== Variáveis e Constantes =====
     let gameRunning=false, score=0, food=[], powerUps=[], enemies=[], viruses=[];
     let mouse={x:0,y:0}, camera={x:1000,y:750,zoom:1}, timers=[], startTime=0;
+    let moveTarget=null; // alvo contínuo definido por toque
     const WORLD_WIDTH=2000, WORLD_HEIGHT=1500, INITIAL_MASS=10;
 
     const canvas=document.getElementById('gameCanvas');
@@ -161,19 +162,20 @@
       mouse.y = ( (myCSS - cy) / camera.zoom ) + camera.y;
     }
 
-    // Mouse (PC): segue o mouse
+    // Mouse (PC): segue o mouse; ao mover o mouse, cancelamos moveTarget
     canvas.addEventListener('mousemove', (e)=>{
       if (!gameRunning) return;
       updateMouseFromEvent(e);
+      moveTarget = null; // mouse tem prioridade quando em desktop
     });
 
-    // Touch (mobile): tocar/arrastar atualiza o "cursor virtual"
+    // Touch (mobile): toque/arrastar define alvo contínuo
     canvas.addEventListener('touchstart', (e)=>{
       if (!gameRunning) return;
       e.preventDefault();
       const t=e.touches[0];
       const p=screenToWorld(t.clientX, t.clientY);
-      mouse.x=p.x; mouse.y=p.y;
+      moveTarget = {x:p.x, y:p.y};
     }, {passive:false});
 
     canvas.addEventListener('touchmove', (e)=>{
@@ -181,7 +183,7 @@
       e.preventDefault();
       const t=e.touches[0];
       const p=screenToWorld(t.clientX, t.clientY);
-      mouse.x=p.x; mouse.y=p.y;
+      moveTarget = {x:p.x, y:p.y}; // arrastar atualiza o destino
     }, {passive:false});
 
     document.addEventListener('keydown', (e)=>{
@@ -204,7 +206,7 @@
       controls.classList.remove('hidden');
 
       gameRunning=true; score=0; food=[]; powerUps=[]; enemies=[]; viruses=[]; startTime=getTime();
-      splitEndTime=0;
+      splitEndTime=0; moveTarget=null;
 
       player={ 
         x:WORLD_WIDTH/2, y:WORLD_HEIGHT/2, mass:INITIAL_MASS,
@@ -270,8 +272,12 @@
     function splitPlayer(){
       if (player.split || player.mass<20) return;
       const splitMass=player.mass/2;
-      const a1=Math.atan2(mouse.y-player.y, mouse.x-player.x);
+
+      // direção para o alvo atual (mouse ou moveTarget)
+      const {targetX, targetY} = getTarget();
+      const a1=Math.atan2(targetY-player.y, targetX-player.x);
       const a2=a1+Math.PI; const d=30;
+
       player.split=true;
       player.splitBalls=[
         { x:player.x+Math.cos(a1)*d, y:player.y+Math.sin(a1)*d, mass:splitMass, radius:massToRadius(splitMass), vx:Math.cos(a1)*3, vy:Math.sin(a1)*3 },
@@ -314,12 +320,19 @@
       return base * (6 / Math.sqrt(r + 40)); // maior => mais lento
     }
 
+    function getTarget(){
+      if (moveTarget) return {targetX: moveTarget.x, targetY: moveTarget.y};
+      return {targetX: mouse.x, targetY: mouse.y};
+    }
+
     function moveAgar(){
+      const {targetX, targetY} = getTarget();
+
       if (player.split && player.splitBalls.length>0){
         for (let i=0;i<player.splitBalls.length;i++){
           const b=player.splitBalls[i];
-          const dx = mouse.x - b.x;
-          const dy = mouse.y - b.y;
+          const dx = targetX - b.x;
+          const dy = targetY - b.y;
           const d = Math.hypot(dx,dy) || 1;
 
           const maxS = speedFromRadius(b.radius);
@@ -337,8 +350,8 @@
           b.y = Math.max(b.radius, Math.min(WORLD_HEIGHT-b.radius, b.y));
         }
       } else {
-        const dx = mouse.x - player.x;
-        const dy = mouse.y - player.y;
+        const dx = targetX - player.x;
+        const dy = targetY - player.y;
         const d = Math.hypot(dx,dy) || 1;
 
         const maxS = speedFromRadius(player.radius);
@@ -355,6 +368,17 @@
         player.x = Math.max(player.radius, Math.min(WORLD_WIDTH-player.radius, player.x));
         player.y = Math.max(player.radius, Math.min(WORLD_HEIGHT-player.radius, player.y));
       }
+    }
+
+    // ===== Respawn de inimigo =====
+    function respawnEnemy(enemy){
+      enemy.mass = 20 + Math.random()*40;
+      enemy.radius = massToRadius(enemy.mass);
+      enemy.x = Math.random()*WORLD_WIDTH;
+      enemy.y = Math.random()*WORLD_HEIGHT;
+      enemy.vx = (Math.random()-0.5)*2;
+      enemy.vy = (Math.random()-0.5)*2;
+      enemy.frozen = false;
     }
 
     function updateGame(){
@@ -397,7 +421,7 @@
         }
       }
 
-      // IA inimigos: comem frutas, inimigos menores, fogem de maiores
+      // IA inimigos: comem frutas, inimigos menores, fogem de maiores, tentam player menor
       for (let i=0;i<enemies.length;i++){
         const e=enemies[i];
         if (e.frozen) continue;
@@ -504,7 +528,7 @@
         }
       }
 
-      // Player vs inimigos (game over se predador te pega)
+      // Player vs inimigos (game over se predador te pega) + respawn do inimigo morto
       for (let i=0;i<enemies.length;i++){
         const e=enemies[i];
         const poss=(player.split && player.splitBalls.length>0)? player.splitBalls:[player];
@@ -521,10 +545,7 @@
               const gain=e.mass*0.8; score+=Math.floor(gain);
               if (player.split){ pos.mass+=gain; pos.radius=massToRadius(pos.mass); }
               else { player.mass+=gain; updatePlayerSize(); }
-              // respawn inimigo morto
-              const newMass=20+Math.random()*40; let x,y;
-              do{ x=Math.random()*WORLD_WIDTH; y=Math.random()*WORLD_HEIGHT; }while(Math.hypot(x-player.x,y-player.y)<300);
-              e.x=x; e.y=y; e.mass=newMass; e.radius=massToRadius(newMass);
+              respawnEnemy(e);
             }
           }
         }
@@ -537,12 +558,10 @@
           if (Math.hypot(a.x-b.x,a.y-b.y) < a.radius + b.radius){
             if (a.mass > b.mass*1.2){
               const gain=b.mass*0.8; a.mass+=gain; a.radius=massToRadius(a.mass);
-              let x,y; do{ x=Math.random()*WORLD_WIDTH; y=Math.random()*WORLD_HEIGHT; }while(Math.hypot(x-player.x,y-player.y)<300);
-              const newMass=20+Math.random()*40; b.x=x; b.y=y; b.mass=newMass; b.radius=massToRadius(newMass);
+              respawnEnemy(b);
             } else if (b.mass > a.mass*1.2){
               const gain=a.mass*0.8; b.mass+=gain; b.radius=massToRadius(b.mass);
-              let x,y; do{ x=Math.random()*WORLD_WIDTH; y=Math.random()*WORLD_HEIGHT; }while(Math.hypot(x-player.x,y-player.y)<300);
-              const newMass=20+Math.random()*40; a.x=x; a.y=y; a.mass=newMass; a.radius=massToRadius(newMass);
+              respawnEnemy(a);
             }
           }
         }
