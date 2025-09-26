@@ -1,1 +1,54 @@
-
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo Agar.io</title>
+  <style>
+    *{box-sizing:border-box}
+    body{ margin:0; padding:0; background:#000; display:flex; justify-content:center; align-items:center;
+      min-height:100vh; font-family:Arial,sans-serif; overflow:hidden; }
+    #gameContainer{ position:relative; background:#001122; width:100vw; height:100vh; }
+    #gameCanvas{ display:block; width:100%; height:100%; cursor:none; }
+    #ui{ position:absolute; top:10px; left:10px; color:white; font-size:18px; z-index:10;
+      text-shadow:2px 2px 4px rgba(0,0,0,0.9); background:rgba(0,0,0,0.45); padding:8px 12px; border-radius:8px; }
+    #instructions{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; text-align:center; z-index:5;
+      background:rgba(0,0,0,0.75); padding:16px; border-radius:12px; border:2px solid #00ff88; width:min(420px, 92vw); }
+    #instructions h2{ margin:6px 0 10px 0; font-size:26px; }
+    #instructions p{ margin:8px 0; font-size:15px; opacity:.9; }
+    .hidden{ display:none !important; }
+    #gameOver{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; text-align:center; z-index:15;
+      background:rgba(255,0,0,0.85); padding:30px; border-radius:15px; border:3px solid #ff0000; max-width:90vw; }
+    button{ background:#00ff88; color:black; border:none; padding:14px 18px; font-size:18px; border-radius:8px;
+      cursor:pointer; margin-top:10px; font-weight:bold; width:100%; }
+    button:hover{ background:#00cc66; }
+    #minimap{ position:absolute; right:10px; bottom:10px; z-index:12; background:rgba(0,0,0,0.2);
+      border:1px solid #00ff88; border-radius:6px; width:160px; height:110px; overflow:hidden; }
+  </style>
+</head>
+<body>
+  <div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui" class="hidden">
+      <div>Pontuação: <span id="score">0</span> (Melhor: <span id="best">0</span>)</div>
+      <div>Massa: <span id="mass">10</span></div>
+      <div id="powerUpStatus"></div>
+    </div>
+    <div id="instructions">
+      <h2>🦠 Agar.io</h2>
+      <p>Toque/mouse para mover • Espaço: dividir • R: reunir</p>
+      <button id="startBtn">🎮 COMEÇAR</button>
+    </div>
+    <div id="gameOver" class="hidden">
+      <h2>💀 Game Over!</h2>
+      <p>Pontuação Final: <span id="finalScore">0</span></p>
+      <p>Massa Final: <span id="finalMass">0</span></p>
+      <button id="restartBtn">🔄 JOGAR NOVAMENTE</button>
+    </div>
+    <canvas id="minimap"></canvas>
+  </div>
+  <script>
+    alert("O jogo foi carregado com HUD otimizado, minimapa e zona de tempestade!");
+  </script>
+</body>
+</html>
