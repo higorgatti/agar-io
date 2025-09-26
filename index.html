@@ -31,6 +31,11 @@
       background:#00ff88; color:black; border:none; padding:10px 20px; font-size:16px; border-radius:5px; cursor:pointer; margin:5px; font-weight:bold;
     }
     button:hover{ background:#00cc66; }
+    #controls{
+      position:absolute; right:10px; bottom:10px; z-index:20; display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    #controls button{ background:#00bcd4; }
+    #controls button:nth-child(2){ background:#ff8a65; }
   </style>
 </head>
 <body>
@@ -45,14 +50,19 @@
 
     <div id="instructions">
       <h2>🦠 Jogo Agar.io 🦠</h2>
-      <p><strong>Mouse:</strong> Mover célula</p>
-      <p><strong>Toque na tela:</strong> Liga/desliga andar sem parar na direção do toque</p>
-      <p><strong>Espaço:</strong> Dividir célula</p>
-      <p><strong>R:</strong> Reunir células</p>
+      <p><strong>PC (mouse):</strong> o player segue o ponteiro</p>
+      <p><strong>Celular (toque/arrastar):</strong> o player segue seu dedo</p>
+      <p><strong>Espaço / Botão:</strong> Dividir célula</p>
+      <p><strong>R / Botão:</strong> Reunir células (ou aguarde o timer)</p>
       <p><strong>Objetivo:</strong> Coma frutas pequenas, evite as maiores!</p>
       <p><strong>Power-ups:</strong> ⚡Velocidade 🛡️Escudo 📈Crescimento 🧲Ímã ❄️Congelar ✨Multi</p>
       <p><strong>Cuidado:</strong> Vírus vermelhos te fazem perder massa!</p>
       <button id="startBtn">🎮 COMEÇAR JOGO</button>
+    </div>
+
+    <div id="controls" class="hidden">
+      <button id="btnSplit">Dividir</button>
+      <button id="btnMerge">Reunir</button>
     </div>
 
     <div id="gameOver" class="hidden">
@@ -76,6 +86,9 @@
     const gameOverDiv=document.getElementById('gameOver');
     const startBtn=document.getElementById('startBtn');
     const restartBtn=document.getElementById('restartBtn');
+    const controls=document.getElementById('controls');
+    const btnSplit=document.getElementById('btnSplit');
+    const btnMerge=document.getElementById('btnMerge');
 
     let canvasCSSWidth=0, canvasCSSHeight=0; 
     let deviceRatio=1;
@@ -83,12 +96,13 @@
     // ===== Player =====
     let player={
       x:WORLD_WIDTH/2, y:WORLD_HEIGHT/2, radius:18, mass:INITIAL_MASS,
+      vx:0, vy:0,
       split:false, splitBalls:[], speedBoost:false, shielded:false, magnet:false, multiGain:false
     };
 
-    // ===== Auto-movimento por toque =====
-    let autoMove=false;
-    let autoDir={x:0,y:0};
+    // ===== Auto-merge após dividir =====
+    let splitEndTime=0;             // quando as células devem se juntar
+    const AUTO_MERGE_MS=12000;      // 12s para auto-juntar
 
     // ===== Skin do jogador (opcional) =====
     const playerImg = new Image();
@@ -124,7 +138,7 @@
     window.addEventListener('resize', resizeCanvas, {passive:true});
     resizeCanvas();
 
-    // Converte coordenadas de tela para mundo
+    // Tela -> Mundo
     function screenToWorld(clientX, clientY){
       const rect = canvas.getBoundingClientRect();
       const mxCSS = (clientX - rect.left) * (canvasCSSWidth / rect.width);
@@ -147,36 +161,39 @@
       mouse.y = ( (myCSS - cy) / camera.zoom ) + camera.y;
     }
 
-    // Mouse (PC)
+    // Mouse (PC): segue o mouse
     canvas.addEventListener('mousemove', (e)=>{
       if (!gameRunning) return;
       updateMouseFromEvent(e);
     });
 
-    // Toque (mobile): toca = alterna auto-movimento
+    // Touch (mobile): tocar/arrastar atualiza o "cursor virtual"
     canvas.addEventListener('touchstart', (e)=>{
       if (!gameRunning) return;
       e.preventDefault();
-      if (!autoMove){
-        const t=e.touches[0];
-        const p=screenToWorld(t.clientX, t.clientY);
-        const dx=p.x - player.x, dy=p.y - player.y;
-        const d=Math.hypot(dx,dy)||1;
-        autoDir.x=dx/d; autoDir.y=dy/d;
-        autoMove=true;
-      } else {
-        autoMove=false; // toca de novo = para
-      }
+      const t=e.touches[0];
+      const p=screenToWorld(t.clientX, t.clientY);
+      mouse.x=p.x; mouse.y=p.y;
+    }, {passive:false});
+
+    canvas.addEventListener('touchmove', (e)=>{
+      if (!gameRunning) return;
+      e.preventDefault();
+      const t=e.touches[0];
+      const p=screenToWorld(t.clientX, t.clientY);
+      mouse.x=p.x; mouse.y=p.y;
     }, {passive:false});
 
     document.addEventListener('keydown', (e)=>{
       if (!gameRunning) return;
       if (e.code==='Space' || e.key===' ') { e.preventDefault(); splitPlayer(); }
-      else if (e.code==='KeyR' || e.key==='r' || e.key==='R') { e.preventDefault(); mergeSplitBalls(); }
+      else if (e.code==='KeyR' || e.key==='r' || e.key==='R') { e.preventDefault(); forceMerge(); }
     });
 
     startBtn.addEventListener('click', startGame);
     restartBtn.addEventListener('click', startGame);
+    btnSplit.addEventListener('click', ()=>{ if (gameRunning) splitPlayer(); });
+    btnMerge.addEventListener('click', ()=>{ if (gameRunning) forceMerge(); });
 
     // ===== Fluxo do jogo =====
     function startGame(){
@@ -184,20 +201,20 @@
       instructions.classList.add('hidden');
       gameOverDiv.classList.add('hidden');
       ui.classList.remove('hidden');
+      controls.classList.remove('hidden');
 
       gameRunning=true; score=0; food=[]; powerUps=[]; enemies=[]; viruses=[]; startTime=getTime();
-      autoMove=false; autoDir={x:0,y:0};
+      splitEndTime=0;
 
       player={ 
         x:WORLD_WIDTH/2, y:WORLD_HEIGHT/2, mass:INITIAL_MASS,
         radius:massToRadius(INITIAL_MASS),
+        vx:0, vy:0,
         split:false, splitBalls:[], speedBoost:false, shielded:false, magnet:false, multiGain:false 
       };
 
       camera={ x:player.x, y:player.y, zoom:1 };
-
-      mouse.x = player.x; 
-      mouse.y = player.y;
+      mouse.x = player.x; mouse.y = player.y;
 
       initializeGame();
       gameLoop();
@@ -260,14 +277,84 @@
         { x:player.x+Math.cos(a1)*d, y:player.y+Math.sin(a1)*d, mass:splitMass, radius:massToRadius(splitMass), vx:Math.cos(a1)*3, vy:Math.sin(a1)*3 },
         { x:player.x+Math.cos(a2)*d, y:player.y+Math.sin(a2)*d, mass:splitMass, radius:massToRadius(splitMass), vx:Math.cos(a2)*3, vy:Math.sin(a2)*3 }
       ];
+      splitEndTime = getTime() + AUTO_MERGE_MS;
     }
 
-    function mergeSplitBalls(){
+    function canMergeNow(){
+      if (!player.split || player.splitBalls.length<2) return false;
+      const a=player.splitBalls[0], b=player.splitBalls[1];
+      return Math.hypot(a.x-b.x, a.y-b.y) < (a.radius + b.radius) * 0.9;
+    }
+
+    function forceMerge(){
       if (!player.split || player.splitBalls.length===0) return;
       let total=0, cx=0, cy=0;
       for (let i=0;i<player.splitBalls.length;i++){ total+=player.splitBalls[i].mass; cx+=player.splitBalls[i].x; cy+=player.splitBalls[i].y; }
       cx/=player.splitBalls.length; cy/=player.splitBalls.length;
       player.split=false; player.x=cx; player.y=cy; player.mass=total; player.splitBalls=[]; updatePlayerSize();
+      player.vx=0; player.vy=0;
+    }
+
+    function mergeIfReady(){
+      if (!player.split) return;
+      const now=getTime();
+      if (now >= splitEndTime && canMergeNow()) forceMerge();
+      else if (now >= splitEndTime && player.splitBalls.length>=2){
+        const a=player.splitBalls[0], b=player.splitBalls[1];
+        const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
+        const pull=0.08;
+        a.vx += (cx - a.x)*pull*0.02; a.vy += (cy - a.y)*pull*0.02;
+        b.vx += (cx - b.x)*pull*0.02; b.vy += (cy - b.y)*pull*0.02;
+      }
+    }
+
+    // ===== Movimento estilo Agar.io =====
+    function speedFromRadius(r){
+      const base = player.speedBoost ? 1.25 : 1.0;
+      return base * (6 / Math.sqrt(r + 40)); // maior => mais lento
+    }
+
+    function moveAgar(){
+      if (player.split && player.splitBalls.length>0){
+        for (let i=0;i<player.splitBalls.length;i++){
+          const b=player.splitBalls[i];
+          const dx = mouse.x - b.x;
+          const dy = mouse.y - b.y;
+          const d = Math.hypot(dx,dy) || 1;
+
+          const maxS = speedFromRadius(b.radius);
+          const ax = (dx/d) * 0.35;
+          const ay = (dy/d) * 0.35;
+
+          b.vx = (b.vx || 0) * 0.90 + ax;
+          b.vy = (b.vy || 0) * 0.90 + ay;
+
+          const v = Math.hypot(b.vx,b.vy);
+          if (v > maxS){ b.vx = (b.vx/v)*maxS; b.vy = (b.vy/v)*maxS; }
+
+          b.x += b.vx; b.y += b.vy;
+          b.x = Math.max(b.radius, Math.min(WORLD_WIDTH-b.radius, b.x));
+          b.y = Math.max(b.radius, Math.min(WORLD_HEIGHT-b.radius, b.y));
+        }
+      } else {
+        const dx = mouse.x - player.x;
+        const dy = mouse.y - player.y;
+        const d = Math.hypot(dx,dy) || 1;
+
+        const maxS = speedFromRadius(player.radius);
+        const ax = (dx/d) * 0.35;
+        const ay = (dy/d) * 0.35;
+
+        player.vx = (player.vx || 0) * 0.90 + ax;
+        player.vy = (player.vy || 0) * 0.90 + ay;
+
+        const v = Math.hypot(player.vx,player.vy);
+        if (v > maxS){ player.vx = (player.vx/v)*maxS; player.vy = (player.vy/v)*maxS; }
+
+        player.x += player.vx; player.y += player.vy;
+        player.x = Math.max(player.radius, Math.min(WORLD_WIDTH-player.radius, player.x));
+        player.y = Math.max(player.radius, Math.min(WORLD_HEIGHT-player.radius, player.y));
+      }
     }
 
     function updateGame(){
@@ -275,41 +362,13 @@
       const currentTime=getTime();
       const isInvulnerable=(currentTime-startTime)<3000;
 
-      // ===== Movimento do player (auto-move por toque OU mouse) =====
-      if (player.split && player.splitBalls.length>0){
-        for (let i=0;i<player.splitBalls.length;i++){
-          const b=player.splitBalls[i];
-          const target = autoMove ? {x:b.x + autoDir.x*1000, y:b.y + autoDir.y*1000} : mouse;
-          const dx=target.x-b.x, dy=target.y-b.y;
-          const dist=Math.hypot(dx,dy);
-          if (dist>10){ 
-            const speedFactor = (player.speedBoost ? 1.8 : 1.2) * (40 / (b.radius + 20));
-            const targetVx = (dx/dist) * speedFactor * Math.min(dist/20, 1);
-            const targetVy = (dy/dist) * speedFactor * Math.min(dist/20, 1);
-            b.vx += (targetVx - b.vx) * 0.15;
-            b.vy += (targetVy - b.vy) * 0.15;
-          } else { b.vx *= 0.85; b.vy *= 0.85; }
-          b.x += b.vx; b.y += b.vy;
-          b.x = Math.max(b.radius, Math.min(WORLD_WIDTH-b.radius, b.x));
-          b.y = Math.max(b.radius, Math.min(WORLD_HEIGHT-b.radius, b.y));
-        }
-      } else {
-        let dx,dy,dist;
-        if (autoMove){
-          dx = autoDir.x; dy = autoDir.y; dist = 1;
-        } else {
-          dx=mouse.x-player.x; dy=mouse.y-player.y; dist=Math.hypot(dx,dy);
-          if (dist>0){ dx/=dist; dy/=dist; }
-        }
-        const speedFactor = (player.speedBoost ? 1.8 : 1.2) * (40 / (player.radius + 20));
-        const moveSpeed = autoMove ? speedFactor : speedFactor * Math.min(Math.hypot(mouse.x-player.x, mouse.y-player.y)/20, 1);
-        player.x += dx * moveSpeed;
-        player.y += dy * moveSpeed;
-        player.x = Math.max(player.radius, Math.min(WORLD_WIDTH-player.radius, player.x));
-        player.y = Math.max(player.radius, Math.min(WORLD_HEIGHT-player.radius, player.y));
-      }
+      // Movimento (Agar.io)
+      moveAgar();
 
-      // ===== Câmera =====
+      // Auto-merge após tempo
+      mergeIfReady();
+
+      // Câmera
       let tx=player.x, ty=player.y;
       if (player.split && player.splitBalls.length>0){
         tx=0; ty=0; 
@@ -322,14 +381,14 @@
       camera.x+=(tx-camera.x)*0.08; 
       camera.y+=(ty-camera.y)*0.08;
 
-      // ===== ÍMÃ: atrai frutas se ativo =====
+      // Ímã: atrai frutas se ativo
       if (player.magnet){
         const magnetRange = 160;
         const magnetForce = 0.06;
         for (let i=0;i<food.length;i++){
           const f = food[i];
-          const dx = player.x - f.x;
-          const dy = player.y - f.y;
+          const dx = (player.split ? tx : player.x) - f.x;
+          const dy = (player.split ? ty : player.y) - f.y;
           const dist = Math.hypot(dx, dy);
           if (dist > 0 && dist < magnetRange){
             f.x += (dx / dist) * (magnetRange - dist) * magnetForce;
@@ -338,19 +397,18 @@
         }
       }
 
-      // ===== IA simples dos inimigos: comem frutas e inimigos menores, fogem dos maiores =====
+      // IA inimigos: comem frutas, inimigos menores, fogem de maiores
       for (let i=0;i<enemies.length;i++){
         const e=enemies[i];
         if (e.frozen) continue;
 
-        // procura presa (fruta ou inimigo menor ou player menor)
-        let target=null, targetType='fruit', targetMass=0, bestDist=1e9;
+        let target=null, bestDist=1e9;
 
         // frutas
         for (let k=0;k<food.length;k++){
           const f=food[k];
           const d=Math.hypot(f.x-e.x, f.y-e.y);
-          if (d<bestDist){ bestDist=d; target={x:f.x,y:f.y,index:k}; targetType='fruit'; targetMass=f.radius*0.2; }
+          if (d<bestDist){ bestDist=d; target={x:f.x,y:f.y,type:'fruit',k}; }
         }
 
         // outros inimigos menores
@@ -359,20 +417,20 @@
           const o=enemies[j];
           if (e.mass > o.mass*1.2){
             const d=Math.hypot(o.x-e.x, o.y-e.y);
-            if (d<bestDist){ bestDist=d; target={x:o.x,y:o.y,index:j}; targetType='enemy'; targetMass=o.mass; }
+            if (d<bestDist){ bestDist=d; target={x:o.x,y:o.y,type:'enemy',j}; }
           }
         }
 
-        // jogador como presa (considera total da célula se não split)
+        // jogador como presa
         const pMass = (player.split && player.splitBalls.length>0) ? player.splitBalls.reduce((s,b)=>s+b.mass,0) : player.mass;
         const pX = (player.split && player.splitBalls.length>0) ? player.splitBalls.reduce((s,b)=>s+b.x,0)/player.splitBalls.length : player.x;
         const pY = (player.split && player.splitBalls.length>0) ? player.splitBalls.reduce((s,b)=>s+b.y,0)/player.splitBalls.length : player.y;
         if (e.mass > pMass*1.2){
           const d=Math.hypot(pX-e.x, pY-e.y);
-          if (d<bestDist){ bestDist=d; target={x:pX,y:pY}; targetType='player'; targetMass=pMass; }
+          if (d<bestDist){ bestDist=d; target={x:pX,y:pY,type:'player'}; }
         }
 
-        // foge de predadores maiores (player ou inimigos maiores)
+        // foge de predadores maiores
         let fleeX=0, fleeY=0, flee = false;
         if (pMass > e.mass*1.2){
           const dx=e.x - pX, dy=e.y - pY, d=Math.hypot(dx,dy)||1;
@@ -395,7 +453,6 @@
           const dx=target.x - e.x, dy=target.y - e.y, d=Math.hypot(dx,dy)||1;
           const sp=0.9; ax=(dx/d)*sp; ay=(dy/d)*sp;
         } else {
-          // vagar
           ax += (Math.random()-0.5)*0.2; ay += (Math.random()-0.5)*0.2;
         }
 
@@ -412,9 +469,7 @@
         e.y=Math.max(e.radius, Math.min(WORLD_HEIGHT-e.radius, e.y));
       }
 
-      // ===== Colisões =====
-
-      // Player come frutas
+      // Colisões: player come frutas
       for (let i=food.length-1;i>=0;i--){
         const f=food[i]; 
         let eaten=false;
@@ -449,7 +504,7 @@
         }
       }
 
-      // Player vs inimigos (já encerra jogo se inimigo maior te pegar)
+      // Player vs inimigos (game over se predador te pega)
       for (let i=0;i<enemies.length;i++){
         const e=enemies[i];
         const poss=(player.split && player.splitBalls.length>0)? player.splitBalls:[player];
@@ -466,7 +521,7 @@
               const gain=e.mass*0.8; score+=Math.floor(gain);
               if (player.split){ pos.mass+=gain; pos.radius=massToRadius(pos.mass); }
               else { player.mass+=gain; updatePlayerSize(); }
-              // respawna inimigo morto
+              // respawn inimigo morto
               const newMass=20+Math.random()*40; let x,y;
               do{ x=Math.random()*WORLD_WIDTH; y=Math.random()*WORLD_HEIGHT; }while(Math.hypot(x-player.x,y-player.y)<300);
               e.x=x; e.y=y; e.mass=newMass; e.radius=massToRadius(newMass);
@@ -475,19 +530,17 @@
         }
       }
 
-      // Inimigo come inimigo (canibalismo)
+      // Inimigo come inimigo (canibalismo + respawn)
       for (let i=0;i<enemies.length;i++){
         for (let j=i+1;j<enemies.length;j++){
           const a=enemies[i], b=enemies[j];
           if (Math.hypot(a.x-b.x,a.y-b.y) < a.radius + b.radius){
             if (a.mass > b.mass*1.2){
               const gain=b.mass*0.8; a.mass+=gain; a.radius=massToRadius(a.mass);
-              // respawn b
               let x,y; do{ x=Math.random()*WORLD_WIDTH; y=Math.random()*WORLD_HEIGHT; }while(Math.hypot(x-player.x,y-player.y)<300);
               const newMass=20+Math.random()*40; b.x=x; b.y=y; b.mass=newMass; b.radius=massToRadius(newMass);
             } else if (b.mass > a.mass*1.2){
               const gain=a.mass*0.8; b.mass+=gain; b.radius=massToRadius(b.mass);
-              // respawn a
               let x,y; do{ x=Math.random()*WORLD_WIDTH; y=Math.random()*WORLD_HEIGHT; }while(Math.hypot(x-player.x,y-player.y)<300);
               const newMass=20+Math.random()*40; a.x=x; a.y=y; a.mass=newMass; a.radius=massToRadius(newMass);
             }
@@ -495,7 +548,7 @@
         }
       }
 
-      // Power-ups (igual)
+      // Power-ups
       for (let i=powerUps.length-1;i>=0;i--){
         const pu=powerUps[i]; let collected=false;
         const poss=(player.split && player.splitBalls.length>0)? player.splitBalls:[player];
@@ -514,7 +567,7 @@
         if (collected) powerUps.splice(i,1);
       }
 
-      // Vírus (igual)
+      // Vírus
       for (let i=0;i<viruses.length;i++){
         const v=viruses[i]; v.rotation+=0.02; v.pulse+=0.1;
         const poss=(player.split && player.splitBalls.length>0)? player.splitBalls:[player];
@@ -632,7 +685,7 @@
         ctx.restore();
       }
 
-      // Inimigos
+      // Inimigos (sem números)
       for (let i=0;i<enemies.length;i++){
         const e=enemies[i]; 
         ctx.beginPath();
@@ -642,7 +695,7 @@
         ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.stroke();
       }
 
-      // Player
+      // Player (sem número)
       if (player.split && player.splitBalls.length>0){
         for (let i=0;i<player.splitBalls.length;i++){
           const b=player.splitBalls[i]; 
@@ -674,7 +727,7 @@
     }
 
     function endGame(){
-      gameRunning=false; clearAllTimers(); ui.classList.add('hidden'); gameOverDiv.classList.remove('hidden');
+      gameRunning=false; clearAllTimers(); ui.classList.add('hidden'); gameOverDiv.classList.remove('hidden'); controls.classList.add('hidden');
       const total=(player.split && player.splitBalls.length>0)? player.splitBalls.reduce((s,b)=>s+b.mass,0):player.mass;
       document.getElementById('finalScore').textContent=score;
       document.getElementById('finalMass').textContent=Math.floor(total);
