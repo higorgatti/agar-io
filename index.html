@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo Agar.io</title>
+  <style>
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:0; background:#000; display:flex; justify-content:center; align-items:center;
+      min-height:100vh; font-family:Arial,sans-serif; overflow:hidden;
+    }
+    #gameContainer{ position:relative; background:linear-gradient(45deg,#001122 0%,#003344 100%); width:100vw; height:100vh; }
+    #gameCanvas{ display:block; width:100%; height:100%; cursor:none; }
+    #ui{
+      position:absolute; top:10px; left:10px; color:white; font-size:18px; z-index:10;
+      text-shadow:2px 2px 4px rgba(0,0,0,0.8);
+    }
+    #instructions{
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; text-align:center; z-index:5;
+      background:rgba(0,0,0,0.7); padding:20px; border-radius:10px; border:2px solid #00ff88;
+      max-width:90vw;
+    }
+    .hidden{ display:none !important; }
+    #gameOver{
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; text-align:center; z-index:15;
+      background:rgba(255,0,0,0.85); padding:30px; border-radius:15px; border:3px solid #ff0000;
+      max-width:90vw;
+    }
+    button{
+      background:#00ff88; color:black; border:none; padding:10px 20px; font-size:16px; border-radius:5px; cursor:pointer; margin:5px; font-weight:bold;
+    }
+    button:hover{ background:#00cc66; }
+  </style>
+</head>
+<body>
+  <div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui" class="hidden">
+      <div>Pontuação: <span id="score">0</span></div>
+      <div>Massa: <span id="mass">10</span></div>
+      <div id="powerUpStatus"></div>
+    </div>
+
+    <div id="instructions">
+      <h2>🦠 Jogo Agar.io 🦠</h2>
+      <p><strong>Mouse:</strong> Mover célula</p>
+      <p><strong>Espaço:</strong> Dividir célula</p>
+      <p><strong>R:</strong> Reunir células</p>
+      <p><strong>Objetivo:</strong> Coma partículas pequenas, evite as maiores!</p>
+      <p><strong>Power-ups:</strong> ⚡Velocidade 🛡️Escudo 📈Crescimento 🧲Ímã ❄️Congelar ✨Multi</p>
+      <p><strong>Cuidado:</strong> Vírus vermelhos te fazem perder massa!</p>
+      <button id="startBtn">🎮 COMEÇAR JOGO</button>
+    </div>
+
+    <div id="gameOver" class="hidden">
+      <h2>💀 Game Over! 💀</h2>
+      <p>Pontuação Final: <span id="finalScore">0</span></p>
+      <p>Massa Final: <span id="finalMass">0</span></p>
+      <button id="restartBtn">🔄 JOGAR NOVAMENTE</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== Variáveis e Constantes =====
+    let gameRunning=false, score=0, food=[], powerUps=[], enemies=[], viruses=[];
+    let mouse={x:0,y:0}, camera={x:1000,y:750,zoom:1}, timers=[], startTime=0;
+    const WORLD_WIDTH=2000, WORLD_HEIGHT=1500, INITIAL_MASS=10;
+
+    const canvas=document.getElementById('gameCanvas');
+    const ctx=canvas.getContext('2d');
+    const ui=document.getElementById('ui');
+    const instructions=document.getElementById('instructions');
+    const gameOverDiv=document.getElementById('gameOver');
+    const startBtn=document.getElementById('startBtn');
+    const restartBtn=document.getElementById('restartBtn');
+
+    let canvasCSSWidth=0, canvasCSSHeight=0; // tamanhos em CSS (para mouse)
+    let deviceRatio=1;
+
+    // Player
+    let player={
+      x:WORLD_WIDTH/2, y:WORLD_HEIGHT/2, radius:18, mass:INITIAL_MASS,
+      split:false, splitBalls:[], speedBoost:false, shielded:false, magnet:false, multiGain:false
+    };
+
+    // === Sprite do jogador (skin que você mandou) ===
+    const playerImg = new Image();
+    playerImg.src = 'player.png'; // salve sua imagem como player.png ao lado do HTML
+    let playerImgReady = false;
+    playerImg.onload = ()=>{ playerImgReady = true; };
+
+    // ===== Util =====
+    function massToRadius(mass){ return Math.sqrt(Math.max(0.0001, mass))*2+5; }
+    function addTimer(id){ timers.push(id); }
+    function clearAllTimers(){ for (let i=0;i<timers.length;i++) clearTimeout(timers[i]); timers=[]; }
+    function getTime(){ return Date.now(); }
+
+    // Canvas responsivo + retina
+    function resizeCanvas(){
+      const rect = canvas.getBoundingClientRect();
+      canvasCSSWidth = Math.max(1, Math.floor(rect.width));
+      canvasCSSHeight = Math.max(1, Math.floor(rect.height));
+      deviceRatio = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+
+      canvas.width = canvasCSSWidth * deviceRatio;
+      canvas.height = canvasCSSHeight * deviceRatio;
+      ctx.setTransform(deviceRatio,0,0,deviceRatio,0,0); // desenhar em coordenadas CSS
+    }
+    window.addEventListener('resize', resizeCanvas, {passive:true});
+    resizeCanvas();
+
+    // Mouse em coordenadas do MUNDO (considerando câmera/zoom)
+    function updateMouseFromEvent(e){
+      const rect = canvas.getBoundingClientRect();
+      const mxCSS = (e.clientX - rect.left) * (canvasCSSWidth / rect.width);
+      const myCSS = (e.clientY - rect.top) * (canvasCSSHeight / rect.height);
+
+      const cx = canvasCSSWidth * 0.5;
+      const cy = canvasCSSHeight * 0.5;
+
+      // desfazemos a transformação: tela -> mundo
+      mouse.x = ( (mxCSS - cx) / camera.zoom ) + camera.x;
+      mouse.y = ( (myCSS - cy) / camera.zoom ) + camera.y;
+    }
+
+    canvas.addEventListener('mousemove', (e)=>{
+      if (!gameRunning) return;
+      updateMouseFromEvent(e);
+    });
+
+    document.addEventListener('keydown', (e)=>{
+      if (!gameRunning) return;
+      if (e.code==='Space' || e.key===' ') { e.preventDefault(); splitPlayer(); }
+      else if (e.code==='KeyR' || e.key==='r' || e.key==='R') { e.preventDefault(); mergeSplitBalls(); }
+    });
+
+    startBtn.addEventListener('click', startGame);
+    restartBtn.addEventListener('click', startGame);
+
+    // ===== Fluxo do jogo =====
+    function startGame(){
+      clearAllTimers();
+      instructions.classList.add('hidden');
+      gameOverDiv.classList.add('hidden');
+      ui.classList.remove('hidden');
+
+      gameRunning=true; score=0; food=[]; powerUps=[]; enemies=[]; viruses=[]; startTime=getTime();
+
+      player={
+        x:WORLD_WIDTH/2, y:WORLD_HEIGHT/2, mass:INITIAL_MASS,
+        radius:massToRadius(INITIAL_MASS),
+        split:false, splitBalls:[], speedBoost:false, shielded:false, magnet:false, multiGain:false
+      };
+
+      camera={ x:player.x, y:player.y, zoom:1 };
+
+      // Inicializa mouse no centro da tela (mesma posição do player/câmera)
+      mouse.x = player.x;
+      mouse.y = player.y;
+
+      initializeGame();
+      gameLoop();
+    }
+
+    function initializeGame(){
+      // comida
+      for (let i=0;i<300;i++){
+        food.push({ x:Math.random()*WORLD_WIDTH, y:Math.random()*WORLD_HEIGHT, radius:3+Math.random()*4,
+          color:'hsl('+(Math.random()*360)+', 70%, 60%)' });
+      }
+      // power-ups
+      const powerUpTypes=[
+        {type:'speed',color:'#FFD700',effect:'⚡'},
+        {type:'shield',color:'#00BFFF',effect:'🛡️'},
+        {type:'growth',color:'#FF69B4',effect:'📈'},
+        {type:'magnet',color:'#9932CC',effect:'🧲'},
+        {type:'freeze',color:'#00FFFF',effect:'❄️'},
+        {type:'multi',color:'#32CD32',effect:'✨'}
+      ];
+      for (let i=0;i<20;i++){
+        const p=powerUpTypes[Math.floor(Math.random()*powerUpTypes.length)];
+        powerUps.push({ x:Math.random()*WORLD_WIDTH, y:Math.random()*WORLD_HEIGHT, radius:12, type:p.type, color:p.color, effect:p.effect, pulse:Math.random()*6.28 });
+      }
+      // inimigos
+      for (let i=0;i<6;i++){
+        let x,y; do{ x=Math.random()*WORLD_WIDTH; y=Math.random()*WORLD_HEIGHT; }while(Math.hypot(x-player.x,y-player.y)<300);
+        const mass=20+Math.random()*40;
+        enemies.push({ x,y, mass, radius:massToRadius(mass), vx:(Math.random()-0.5)*2, vy:(Math.random()-0.5)*2,
+          color:'hsl('+(Math.random()*60+300)+', 70%, 50%)', frozen:false });
+      }
+      // vírus
+      for (let i=0;i<10;i++){
+        let x,y; do{ x=Math.random()*WORLD_WIDTH; y=Math.random()*WORLD_HEIGHT; }while(Math.hypot(x-player.x,y-player.y)<350);
+        viruses.push({ x,y, radius:18+Math.random()*8, rotation:0, pulse:Math.random()*6.28 });
+      }
+    }
+
+    function restartGame(){ startGame(); }
+
+    function updatePlayerSize(){
+      if (player.split && player.splitBalls.length>0){
+        for (let i=0;i<player.splitBalls.length;i++) player.splitBalls[i].radius=massToRadius(player.splitBalls[i].mass);
+      } else { player.radius=massToRadius(player.mass); }
+    }
+
+    function splitPlayer(){
+      if (player.split || player.mass<20) return;
+      const splitMass=player.mass/2;
+      const a1=Math.atan2(mouse.y-player.y, mouse.x-player.x);
+      const a2=a1+Math.PI; const d=30;
+      player.split=true;
+      player.splitBalls=[
+        { x:player.x+Math.cos(a1)*d, y:player.y+Math.sin(a1)*d, mass:splitMass, radius:massToRadius(splitMass), vx:Math.cos(a1)*3, vy:Math.sin(a1)*3 },
+        { x:player.x+Math.cos(a2)*d, y:player.y+Math.sin(a2)*d, mass:splitMass, radius:massToRadius(splitMass), vx:Math.cos(a2)*3, vy:Math.sin(a2)*3 }
+      ];
+    }
+
+    function mergeSplitBalls(){
+      if (!player.split || player.splitBalls.length===0) return;
+      let total=0, cx=0, cy=0;
+      for (let i=0;i<player.splitBalls.length;i++){ total+=player.splitBalls[i].mass; cx+=player.splitBalls[i].x; cy+=player.splitBalls[i].y; }
+      cx/=player.splitBalls.length; cy/=player.splitBalls.length;
+      player.split=false; player.x=cx; player.y=cy; player.mass=total; player.splitBalls=[]; updatePlayerSize();
+    }
+
+    function updateGame(){
+      if (!gameRunning) return;
+      const currentTime=getTime();
+      const isInvulnerable=(currentTime-startTime)<3000;
+
+      // Movimento (segue o mouse suavemente)
+      if (player.split && player.splitBalls.length>0){
+        for (let i=0;i<player.splitBalls.length;i++){
+          const b=player.splitBalls[i];
+          const dx=mouse.x-b.x;
+          const dy=mouse.y-b.y;
+          const dist=Math.hypot(dx,dy);
+
+          if (dist>10){
+            const speedFactor = (player.speedBoost ? 1.8 : 1.2) * (40 / (b.radius + 20));
+            const targetVx = (dx/dist) * speedFactor * Math.min(dist/20, 1);
+            const targetVy = (dy/dist) * speedFactor * Math.min(dist/20, 1);
+
+            b.vx += (targetVx - b.vx) * 0.15;
+            b.vy += (targetVy - b.vy) * 0.15;
+          } else {
+            b.vx *= 0.85;
+            b.vy *= 0.85;
+          }
+
+          b.x += b.vx;
+          b.y += b.vy;
+          b.x = Math.max(b.radius, Math.min(WORLD_WIDTH-b.radius, b.x));
+          b.y = Math.max(b.radius, Math.min(WORLD_HEIGHT-b.radius, b.y));
+        }
+      } else {
+        const dx=mouse.x-player.x;
+        const dy=mouse.y-player.y;
+        const dist=Math.hypot(dx,dy);
+
+        if (dist>10){
+          const speedFactor = (player.speedBoost ? 1.8 : 1.2) * (40 / (player.radius + 20));
+          const moveSpeed = speedFactor * Math.min(dist/20, 1);
+
+          player.x += (dx/dist) * moveSpeed;
+          player.y += (dy/dist) * moveSpeed;
+        }
+
+        player.x = Math.max(player.radius, Math.min(WORLD_WIDTH-player.radius, player.x));
+        player.y = Math.max(player.radius, Math.min(WORLD_HEIGHT-player.radius, player.y));
+      }
+
+      // Câmera
+      let tx=player.x, ty=player.y;
+      if (player.split && player.splitBalls.length>0){
+        tx=0; ty=0;
+        for (let i=0;i<player.splitBalls.length;i++){ tx+=player.splitBalls[i].x; ty+=player.splitBalls[i].y; }
+        tx/=player.splitBalls.length; ty/=player.splitBalls.length;
+      }
+      const totalMass=(player.split && player.splitBalls.length>0)? player.splitBalls.reduce((s,b)=>s+b.mass,0):player.mass;
+      const targetZoom=Math.max(0.4, Math.min(1.2, 1.0-(totalMass-10)/300));
+      camera.zoom+=(targetZoom-camera.zoom)*0.03;
+      camera.x+=(tx-camera.x)*0.08;
+      camera.y+=(ty-camera.y)*0.08;
+
+      // Colisão com comida
+      for (let i=food.length-1;i>=0;i--){
+        const f=food[i];
+        let eaten=false;
+        if (player.split && player.splitBalls.length>0){
+          for (let j=0;j<player.splitBalls.length;j++){
+            const b=player.splitBalls[j];
+            if (Math.hypot(b.x-f.x, b.y-f.y) < b.radius + f.radius){
+              const gain=(player.multiGain?0.4:0.2)*f.radius;
+              b.mass+=gain;
+              b.radius=massToRadius(b.mass);
+              score+=Math.floor(gain*2);
+              eaten=true;
+              break;
+            }
+          }
+        } else {
+          if (Math.hypot(player.x-f.x, player.y-f.y) < player.radius + f.radius){
+            const gain=(player.multiGain?0.4:0.2)*f.radius;
+            player.mass+=gain;
+            updatePlayerSize();
+            score+=Math.floor(gain*2);
+            eaten=true;
+          }
+        }
+        if (eaten) food.splice(i,1);
+      }
+
+      // Power-ups
+      for (let i=powerUps.length-1;i>=0;i--){
+        const pu=powerUps[i]; let collected=false;
+        const poss=(player.split && player.splitBalls.length>0)? player.splitBalls:[player];
+        for (let j=0;j<poss.length;j++){
+          const pos=poss[j];
+          if (Math.hypot(pos.x-pu.x,pos.y-pu.y)<pos.radius+pu.radius && !collected){
+            collected=true; score+=20;
+            if (pu.type==='speed'){ player.speedBoost=true; addTimer(setTimeout(()=>player.speedBoost=false,5000)); }
+            else if (pu.type==='shield'){ player.shielded=true; addTimer(setTimeout(()=>player.shielded=false,8000)); }
+            else if (pu.type==='growth'){ if (player.split){ pos.mass+=15; pos.radius=massToRadius(pos.mass); } else { player.mass+=15; updatePlayerSize(); } }
+            else if (pu.type==='magnet'){ player.magnet=true; addTimer(setTimeout(()=>player.magnet=false,6000)); }
+            else if (pu.type==='freeze'){ for (let k=0;k<enemies.length;k++){ enemies[k].frozen=true; addTimer(setTimeout(()=>enemies[k].frozen=false,4000)); } }
+            else if (pu.type==='multi'){ player.multiGain=true; addTimer(setTimeout(()=>player.multiGain=false,10000)); }
+          }
+        }
+        if (collected) powerUps.splice(i,1);
+      }
+
+      // Inimigos (movimento e colisão)
+      for (let i=0;i<enemies.length;i++){
+        const e=enemies[i];
+        if (!e.frozen){
+          const tx=(player.split && player.splitBalls.length>0)? player.splitBalls.reduce((s,b)=>s+b.x,0)/player.splitBalls.length : player.x;
+          const ty=(player.split && player.splitBalls.length>0)? player.splitBalls.reduce((s,b)=>s+b.y,0)/player.splitBalls.length : player.y;
+          const dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy);
+          const pTot=(player.split && player.splitBalls.length>0)? player.splitBalls.reduce((s,b)=>s+b.mass,0):player.mass;
+          if (d>0){ const sp=0.8; if (e.mass>pTot*1.2){ e.vx+=(dx/d)*sp*0.1; e.vy+=(dy/d)*sp*0.1; } else { e.vx-=(dx/d)*sp*0.1; e.vy-=(dy/d)*sp*0.1; } }
+          const maxS=1.5, cs=Math.hypot(e.vx,e.vy); if (cs>maxS){ e.vx=(e.vx/cs)*maxS; e.vy=(e.vy/cs)*maxS; }
+          e.x+=e.vx; e.y+=e.vy;
+          if (e.x<e.radius || e.x>WORLD_WIDTH-e.radius) e.vx*=-1;
+          if (e.y<e.radius || e.y>WORLD_HEIGHT-e.radius) e.vy*=-1;
+          e.x=Math.max(e.radius, Math.min(WORLD_WIDTH-e.radius, e.x));
+          e.y=Math.max(e.radius, Math.min(WORLD_HEIGHT-e.radius, e.y));
+        }
+      }
+
+      for (let i=0;i<enemies.length;i++){
+        const e=enemies[i];
+        const poss=(player.split && player.splitBalls.length>0)? player.splitBalls:[player];
+        for (let j=poss.length-1;j>=0;j--){
+          const pos=poss[j];
+          if (Math.hypot(pos.x-e.x,pos.y-e.y)<e.radius+pos.radius){
+            const pMass=pos.mass||player.mass;
+            if (!isInvulnerable && e.mass>pMass*1.1){
+              if (player.split && player.splitBalls.length>0){ player.splitBalls.splice(j,1); if (player.splitBalls.length===0){ endGame(); return; } }
+              else { endGame(); return; }
+            } else if (pMass>e.mass*1.2){
+              const gain=e.mass*0.8; score+=Math.floor(gain);
+              if (player.split){ pos.mass+=gain; pos.radius=massToRadius(pos.mass); }
+              else { player.mass+=gain; updatePlayerSize(); }
+              const newMass=20+Math.random()*40; let x,y;
+              do{ x=Math.random()*WORLD_WIDTH; y=Math.random()*WORLD_HEIGHT; }while(Math.hypot(x-player.x,y-player.y)<300);
+              e.x=x; e.y=y; e.mass=newMass; e.radius=massToRadius(newMass);
+            }
+          }
+        }
+      }
+
+      // Vírus
+      for (let i=0;i<viruses.length;i++){
+        const v=viruses[i]; v.rotation+=0.02; v.pulse+=0.1;
+        const poss=(player.split && player.splitBalls.length>0)? player.splitBalls:[player];
+        for (let j=poss.length-1;j>=0;j--){
+          const pos=poss[j];
+          if (Math.hypot(pos.x-v.x,pos.y-v.y)<v.radius+pos.radius && !isInvulnerable && !player.shielded){
+            const pMass=pos.mass||player.mass;
+            if (pMass>v.radius*0.8){
+              const loss=pMass*0.4; score=Math.max(0, score-50);
+              if (player.split && player.splitBalls.length>0){
+                pos.mass-=loss;
+                if (pos.mass<5){ player.splitBalls.splice(j,1); if (player.splitBalls.length===0){ endGame(); return; } }
+                else { pos.radius=massToRadius(pos.mass); }
+              } else {
+                player.mass-=loss; if (player.mass<5){ endGame(); return; } else updatePlayerSize();
+              }
+            }
+          }
+        }
+      }
+
+      // Respawn de comida e power-ups
+      if (food.length<250){
+        for (let i=0;i<8;i++){
+          food.push({ x:Math.random()*WORLD_WIDTH, y:Math.random()*WORLD_HEIGHT, radius:3+Math.random()*4,
+            color:'hsl('+(Math.random()*360)+', 70%, 60%)' });
+        }
+      }
+      if (powerUps.length<15 && Math.random()<0.015){
+        const types=[
+          {type:'speed',color:'#FFD700',effect:'⚡'},
+          {type:'shield',color:'#00BFFF',effect:'🛡️'},
+          {type:'growth',color:'#FF69B4',effect:'📈'},
+          {type:'magnet',color:'#9932CC',effect:'🧲'},
+          {type:'freeze',color:'#00FFFF',effect:'❄️'},
+          {type:'multi',color:'#32CD32',effect:'✨'}
+        ];
+        const p=types[Math.floor(Math.random()*types.length)];
+        powerUps.push({ x:Math.random()*WORLD_WIDTH, y:Math.random()*WORLD_HEIGHT, radius:12, type:p.type, color:p.color, effect:p.effect, pulse:Math.random()*6.28 });
+      }
+
+      // HUD
+      const tMass=(player.split && player.splitBalls.length>0)? player.splitBalls.reduce((s,b)=>s+b.mass,0):player.mass;
+      document.getElementById('score').textContent=score;
+      document.getElementById('mass').textContent=Math.floor(tMass);
+      let status='';
+      if (player.speedBoost) status+='⚡ ';
+      if (player.shielded || isInvulnerable) status+='🛡️ ';
+      if (player.magnet) status+='🧲 ';
+      if (player.multiGain) status+='✨ ';
+      document.getElementById('powerUpStatus').textContent=status;
+    }
+
+    // === Desenho do Player usando a skin (sprite PNG) ===
+    function drawPlayerWithSkin(x,y,r){
+      if (playerImgReady){
+        const old = ctx.imageSmoothingEnabled;
+        ctx.imageSmoothingEnabled = false; // manter o pixel art nítido
+
+        const size = Math.floor(r*2);
+        const half = size/2;
+        // OBS: já estamos no espaço do MUNDO (a câmera foi aplicada em render()),
+        // então desenhe em (x,y) diretamente.
+        ctx.drawImage(playerImg, Math.floor(x - half), Math.floor(y - half), size, size);
+
+        ctx.imageSmoothingEnabled = old;
+      } else {
+        // fallback simples enquanto a imagem carrega
+        ctx.fillStyle='#4A90E2';
+        ctx.beginPath();
+        ctx.arc(x,y,r,0,Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    function render(){
+      // Limpa a tela (sem rastro)
+      ctx.setTransform(deviceRatio,0,0,deviceRatio,0,0);
+      ctx.clearRect(0,0,canvasCSSWidth,canvasCSSHeight);
+
+      // Cena com câmera
+      ctx.save();
+      const cx = canvasCSSWidth * 0.5;
+      const cy = canvasCSSHeight * 0.5;
+      ctx.translate(cx, cy);
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(-camera.x, -camera.y);
+
+      // Grade
+      ctx.strokeStyle='rgba(255,255,255,0.08)'; 
+      ctx.lineWidth=1;
+      const grid=50;
+      for (let x=0;x<WORLD_WIDTH;x+=grid){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,WORLD_HEIGHT); ctx.stroke(); }
+      for (let y=0;y<WORLD_HEIGHT;y+=grid){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(WORLD_WIDTH,y); ctx.stroke(); }
+
+      // Comida
+      for (let i=0;i<food.length;i++){
+        const f=food[i];
+        ctx.beginPath(); ctx.fillStyle=f.color; ctx.arc(f.x,f.y,f.radius,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1; ctx.stroke();
+      }
+
+      // Power-ups
+      for (let i=0;i<powerUps.length;i++){
+        const pu=powerUps[i]; pu.pulse+=0.1; const pr=pu.radius+Math.sin(pu.pulse)*3;
+        ctx.beginPath(); ctx.fillStyle=pu.color; ctx.arc(pu.x,pu.y,pr,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle='white'; ctx.lineWidth=2; ctx.stroke();
+        ctx.fillStyle='white'; ctx.font='16px Arial'; ctx.textAlign='center'; ctx.fillText(pu.effect, pu.x, pu.y+6);
+      }
+
+      // Vírus
+      for (let i=0;i<viruses.length;i++){
+        const v=viruses[i]; ctx.save(); ctx.translate(v.x,v.y); ctx.rotate(v.rotation);
+        const spikes=12, inner=v.radius*0.7, outer=v.radius+Math.sin(v.pulse)*3;
+        ctx.beginPath();
+        for (let j=0;j<spikes*2;j++){
+          const ang=(j/(spikes*2))*Math.PI*2;
+          const rr=j%2===0?outer:inner;
+          const xx=Math.cos(ang)*rr, yy=Math.sin(ang)*rr;
+          if (j===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+        }
+        ctx.closePath();
+        ctx.fillStyle='#FF0000'; ctx.fill();
+        ctx.lineWidth=2; ctx.strokeStyle='#800000'; ctx.stroke();
+        ctx.restore();
+      }
+
+      // Inimigos
+      for (let i=0;i<enemies.length;i++){
+        const e=enemies[i];
+        ctx.beginPath();
+        ctx.fillStyle=e.frozen?'#87CEEB':e.color;
+        ctx.arc(e.x,e.y,e.radius,0,Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=2; ctx.stroke();
+        ctx.fillStyle='white'; ctx.font='bold 12px Arial'; ctx.textAlign='center'; ctx.fillText(Math.floor(e.mass), e.x, e.y+4);
+      }
+
+      // Player
+      if (player.split && player.splitBalls.length>0){
+        for (let i=0;i<player.splitBalls.length;i++){
+          const b=player.splitBalls[i];
+          drawPlayerWithSkin(b.x,b.y,b.radius);
+          ctx.fillStyle='white';
+          ctx.font='bold 14px Arial';
+          ctx.textAlign='center';
+          ctx.strokeStyle='black';
+          ctx.lineWidth=3;
+          ctx.strokeText(Math.floor(b.mass||0), b.x, b.y+4);
+          ctx.fillText(Math.floor(b.mass||0), b.x, b.y+4);
+        }
+      } else {
+        drawPlayerWithSkin(player.x,player.y,player.radius);
+        ctx.fillStyle='white';
+        ctx.font='bold 16px Arial';
+        ctx.textAlign='center';
+        ctx.strokeStyle='black';
+        ctx.lineWidth=3;
+        ctx.strokeText(Math.floor(player.mass||0), player.x, player.y+5);
+        ctx.fillText(Math.floor(player.mass||0), player.x, player.y+5);
+      }
+
+      // Anéis de status
+      const currentTime=getTime(), isInvulnerable=(currentTime-startTime)<3000;
+      const ring=(cx2,cy2,r,style,dash=false)=>{
+        ctx.save();
+        ctx.strokeStyle=style; ctx.lineWidth=3;
+        if (dash){ ctx.setLineDash([5,5]); }
+        ctx.beginPath(); ctx.arc(cx2,cy2,r+6,0,Math.PI*2); ctx.stroke();
+        ctx.restore();
+      };
+      if (player.shielded || isInvulnerable){
+        if (player.split && player.splitBalls.length>0){ for (let i=0;i<player.splitBalls.length;i++) ring(player.splitBalls[i].x,player.splitBalls[i].y,player.splitBalls[i].radius,'rgba(255,255,255,0.6)'); }
+        else ring(player.x,player.y,player.radius,'rgba(255,255,255,0.6)');
+      }
+      if (player.multiGain){
+        if (player.split && player.splitBalls.length>0){ for (let i=0;i<player.splitBalls.length;i++) ring(player.splitBalls[i].x,player.splitBalls[i].y,player.splitBalls[i].radius,'rgba(50,205,50,0.9)',true); }
+        else ring(player.x,player.y,player.radius,'rgba(50,205,50,0.9)',true);
+      }
+
+      ctx.restore();
+    }
+
+    function endGame(){
+      gameRunning=false; clearAllTimers(); ui.classList.add('hidden'); gameOverDiv.classList.remove('hidden');
+      const total=(player.split && player.splitBalls.length>0)? player.splitBalls.reduce((s,b)=>s+b.mass,0):player.mass;
+      document.getElementById('finalScore').textContent=score;
+      document.getElementById('finalMass').textContent=Math.floor(total);
+    }
+
+    function gameLoop(){
+      if (!gameRunning) return;
+      updateGame();
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+  </script>
+</body>
+</html>
