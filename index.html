@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
@@ -11,122 +12,141 @@
     #gameCanvas{display:block;width:100%;height:100%;touch-action:none}
     .hidden{display:none!important}
 
-    /* HUD - Glassmorphism */
-    #ui{
-      position:absolute;left:10px;top:10px;z-index:10;color:#fff;
-      background:rgba(255,255,255,0.1);
-      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-      border:1px solid rgba(255,255,255,0.2);
-      border-radius:16px; padding:12px 16px;
-      box-shadow:0 8px 32px rgba(0,0,0,0.3);
-      font-weight:600; text-shadow:none;
-    }
+```
+/* HUD - Glassmorphism */
+#ui{
+  position:absolute;left:10px;top:10px;z-index:10;color:#fff;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:16px; padding:12px 16px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  font-weight:600; text-shadow:none;
+}
 
-    /* Start - Glassmorphism */
-    #start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
-    #start .box{
-      width:min(420px,92vw); background:rgba(255,255,255,0.1);
-      backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
-      border:1px solid rgba(0,255,153,0.3); color:#fff; border-radius:20px;
-      padding:24px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.4);
-    }
-    #start h1{margin:8px 0 12px 0;text-shadow:0 2px 10px rgba(0,0,0,0.5)}
-    #start p{opacity:0.9;margin-bottom:14px}
-    #start button{
-      width:100%;padding:16px;border-radius:12px;border:none;
-      background:rgba(0,255,136,0.9);
-      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-      font-weight:800;font-size:18px;
-      box-shadow:0 4px 20px rgba(0,255,136,0.3);
-      transition:all 0.2s ease; cursor:pointer;
-    }
-    #start button:active{transform:scale(0.98)}
+/* Start - Glassmorphism */
+#start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
+#start .box{
+  width:min(420px,92vw); background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
+  border:1px solid rgba(0,255,153,0.3); color:#fff; border-radius:20px;
+  padding:24px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.4);
+}
+#start h1{margin:8px 0 12px 0;text-shadow:0 2px 10px rgba(0,0,0,0.5)}
+#start p{opacity:0.9;margin-bottom:14px}
+#start button{
+  width:100%;padding:16px;border-radius:12px;border:none;
+  background:rgba(0,255,136,0.9);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  font-weight:800;font-size:18px;
+  box-shadow:0 4px 20px rgba(0,255,136,0.3);
+  transition:all 0.2s ease; cursor:pointer;
+}
+#start button:active{transform:scale(0.98)}
 
-    /* Game over - Glassmorphism */
-    #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
-    #over .box{
-      width:min(420px,92vw); background:rgba(255,255,255,0.1);
-      backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
-      border:1px solid rgba(255,102,102,0.3); color:#fff; border-radius:20px;
-      padding:20px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.4);
-    }
-    #over h2{text-shadow:0 2px 10px rgba(0,0,0,0.5);margin-bottom:12px}
-    #over button{
-      padding:12px 20px;border-radius:12px;border:none;
-      background:rgba(0,255,136,0.9);
-      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-      font-weight:800; box-shadow:0 4px 20px rgba(0,255,136,0.3);
-      transition:all 0.2s ease; cursor:pointer;
-    }
-    #over button:active{transform:scale(0.98)}
+/* Game over - Glassmorphism */
+#over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
+#over .box{
+  width:min(420px,92vw); background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
+  border:1px solid rgba(255,102,102,0.3); color:#fff; border-radius:20px;
+  padding:20px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.4);
+}
+#over h2{text-shadow:0 2px 10px rgba(0,0,0,0.5);margin-bottom:12px}
+#over button{
+  padding:12px 20px;border-radius:12px;border:none;
+  background:rgba(0,255,136,0.9);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  font-weight:800; box-shadow:0 4px 20px rgba(0,255,136,0.3);
+  transition:all 0.2s ease; cursor:pointer;
+}
+#over button:active{transform:scale(0.98)}
 
-    /* Minimap - Glassmorphism */
-    #minimapWrap{
-      position:absolute;right:10px;top:10px;z-index:12;
-      background:rgba(255,255,255,0.1);
-      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-      border:1px solid rgba(0,255,170,0.3); border-radius:16px; padding:8px;
-      box-shadow:0 8px 32px rgba(0,0,0,0.3);
-    }
-    #minimap{display:block;width:180px;height:130px;border-radius:10px}
+/* Minimap - Glassmorphism */
+#minimapWrap{
+  position:absolute;right:10px;top:10px;z-index:12;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(0,255,170,0.3); border-radius:16px; padding:8px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+}
+#minimap{display:block;width:180px;height:130px;border-radius:10px}
 
-    /* Status do Rage Mode */
-    #rageStatus{
-      position:absolute;left:10px;bottom:10px;z-index:10;
-      background:rgba(255,0,110,0.2);
-      backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
-      border:1px solid rgba(255,0,110,0.4);
-      border-radius:12px; padding:8px 12px; color:#fff;
-      font-size:14px; font-weight:600;
-      box-shadow:0 4px 16px rgba(255,0,110,0.3); display:none;
-    }
+/* Status do Rage Mode */
+#rageStatus{
+  position:absolute;left:10px;bottom:10px;z-index:10;
+  background:rgba(255,0,110,0.2);
+  backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
+  border:1px solid rgba(255,0,110,0.4);
+  border-radius:12px; padding:8px 12px; color:#fff;
+  font-size:14px; font-weight:600;
+  box-shadow:0 4px 16px rgba(255,0,110,0.3); display:none;
+}
 
-    /* Botões mobile */
-    #mobileBtns{
-      position:absolute;right:10px;bottom:10px;z-index:15;display:flex;gap:8px;
-    }
-    #mobileBtns button{
-      padding:12px 14px;border-radius:12px;border:none;font-weight:800;
-      background:rgba(255,255,255,0.15); color:#fff;
-      backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-      border:1px solid rgba(255,255,255,0.25);
-      box-shadow:0 4px 16px rgba(0,0,0,0.25);
-    }
-    #mobileBtns button:active{transform:scale(0.98)}
+/* Status do Split Timer */
+#splitStatus{
+  position:absolute;left:10px;bottom:60px;z-index:10;
+  background:rgba(0,150,255,0.2);
+  backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
+  border:1px solid rgba(0,150,255,0.4);
+  border-radius:12px; padding:8px 12px; color:#fff;
+  font-size:14px; font-weight:600;
+  box-shadow:0 4px 16px rgba(0,150,255,0.3); display:none;
+}
+
+/* Botões mobile */
+#mobileBtns{
+  position:absolute;right:10px;bottom:10px;z-index:15;display:flex;gap:8px;
+}
+#mobileBtns button{
+  padding:12px 14px;border-radius:12px;border:none;font-weight:800;
+  background:rgba(255,255,255,0.15); color:#fff;
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,0.25);
+  box-shadow:0 4px 16px rgba(0,0,0,0.25);
+}
+#mobileBtns button:active{transform:scale(0.98)}
+```
+
   </style>
 </head>
 <body>
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
-    <div id="ui" class="hidden">Pontuação: <b id="score">0</b> • Massa: <b id="mass">10</b></div>
-    <div id="rageStatus">😡 RAGE MODE (<span id="rageTime">10</span>s)</div>
+```
+<div id="ui" class="hidden">Pontuação: <b id="score">0</b> • Massa: <b id="mass">10</b></div>
+<div id="rageStatus">😡 RAGE MODE (<span id="rageTime">10</span>s)</div>
+<div id="splitStatus">🔄 RECOMBINAÇÃO EM <span id="splitTime">10</span>s</div>
 
-    <div id="start">
-      <div class="box">
-        <h1>🦠 Agar Mobile</h1>
-        <p>Toque e arraste para mover • Toque duplo: dividir até 8x</p>
-        <p>Botões: <b>Dividir</b> e <b>Ejetar</b> no canto inferior direito</p>
-        <p style="font-size:14px;opacity:0.85">⚡ DIVISÃO tipo Nebulos.io (recombinação inteligente)</p>
-        <p style="font-size:12px;opacity:0.75">🤖 Inimigos: Básico, Agressivo, Cauteloso, Veloz, Tanque, Caçador</p>
-        <button id="btnStart">COMEÇAR</button>
-      </div>
-    </div>
+<div id="start">
+  <div class="box">
+    <h1>🦠 Agar Mobile</h1>
+    <p>Toque e arraste para mover • Toque duplo: dividir até 8x</p>
+    <p>Botões: <b>Dividir</b> e <b>Ejetar</b> no canto inferior direito</p>
+    <p style="font-size:14px;opacity:0.85">⚡ Timer de 10s para recombinação - bolinhas se repelem</p>
+    <p style="font-size:12px;opacity:0.75">🤖 Inimigos: Básico, Agressivo, Cauteloso, Veloz, Tanque, Caçador</p>
+    <p style="font-size:11px;opacity:0.65">⚠️ Cuidado: Quando dividido, cada bolinha pode ser comida individualmente!</p>
+    <button id="btnStart">COMEÇAR</button>
+  </div>
+</div>
 
-    <div id="over" class="hidden">
-      <div class="box">
-        <h2>💀 Game Over</h2>
-        <p>Pontuação: <b id="finalScore">0</b> • Massa: <b id="finalMass">0</b></p>
-        <button id="btnRestart">Jogar novamente</button>
-      </div>
-    </div>
+<div id="over" class="hidden">
+  <div class="box">
+    <h2>💀 Game Over</h2>
+    <p>Pontuação: <b id="finalScore">0</b> • Massa: <b id="finalMass">0</b></p>
+    <button id="btnRestart">Jogar novamente</button>
+  </div>
+</div>
 
-    <div id="minimapWrap" class="hidden"><canvas id="minimap" width="180" height="130"></canvas></div>
+<div id="minimapWrap" class="hidden"><canvas id="minimap" width="180" height="130"></canvas></div>
 
-    <div id="mobileBtns" class="hidden">
-      <button id="btnEject">EJETAR</button>
-      <button id="btnSplit">DIVIDIR</button>
-    </div>
+<div id="mobileBtns" class="hidden">
+  <button id="btnEject">EJETAR</button>
+  <button id="btnSplit">DIVIDIR</button>
+</div>
+```
+
   </div>
 
 <script>
@@ -377,6 +397,31 @@ function getTarget(){ return moveTarget?{x:moveTarget.x,y:moveTarget.y}:playerCe
 function movePlayer(){
   const t=getTarget();
   if(player.split && player.splitBalls.length){
+    // Aplicar repulsão entre bolinhas divididas
+    for(let i=0; i<player.splitBalls.length; i++){
+      for(let j=i+1; j<player.splitBalls.length; j++){
+        const a = player.splitBalls[i];
+        const b = player.splitBalls[j];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = a.radius + b.radius + 5; // 5px de margem mínima
+        
+        if(dist < minDist && dist > 0){
+          const overlap = minDist - dist;
+          const pushForce = overlap * 0.5;
+          const pushX = (dx / dist) * pushForce;
+          const pushY = (dy / dist) * pushForce;
+          
+          // Aplicar força de repulsão
+          a.x -= pushX * 0.5;
+          a.y -= pushY * 0.5;
+          b.x += pushX * 0.5;
+          b.y += pushY * 0.5;
+        }
+      }
+    }
+    
     for(const b of player.splitBalls){
       const dx=t.x-b.x, dy=t.y-b.y, d=Math.hypot(dx,dy)||1;
       const speedBoost = Math.min(2.0, 1 + (player.splitBalls.length - 1) * 0.15);
@@ -406,26 +451,30 @@ function splitPlayer(){
 
   const t = getTarget();
   if(!player.split){
-    const a = Math.atan2(t.y-player.y, t.x-player.x), d = 30, m = player.mass/2;
+    const a = Math.atan2(t.y-player.y, t.x-player.x), m = player.mass/2;
+    const radius = massToRadius(m);
+    const d = radius * 1.5 + 10; // Distância baseada no raio + margem
     player.split = true;
     player.splitBalls = [
-      { x: player.x + Math.cos(a)*d, y: player.y + Math.sin(a)*d, mass:m, radius:massToRadius(m), vx:Math.cos(a)*4, vy:Math.sin(a)*4, splitTime:Date.now() },
-      { x: player.x - Math.cos(a)*d, y: player.y - Math.sin(a)*d, mass:m, radius:massToRadius(m), vx:-Math.cos(a)*4, vy:-Math.sin(a)*4, splitTime:Date.now() }
+      { x: player.x + Math.cos(a)*d, y: player.y + Math.sin(a)*d, mass:m, radius:radius, vx:Math.cos(a)*4, vy:Math.sin(a)*4, splitTime:Date.now() },
+      { x: player.x - Math.cos(a)*d, y: player.y - Math.sin(a)*d, mass:m, radius:radius, vx:-Math.cos(a)*4, vy:-Math.sin(a)*4, splitTime:Date.now() }
     ];
-    splitEnd = Date.now() + 8000;
+    // Timer fixo de 10 segundos para recombinação
+    splitEnd = Date.now() + 10000;
   }else{
     const newBalls=[];
     for(const ball of player.splitBalls){
       if(ball.mass >= 20){
-        const a = Math.atan2(t.y-ball.y, t.x-ball.x), dist=ball.radius+15, half=ball.mass/2;
-        newBalls.push({ x:ball.x+Math.cos(a)*dist, y:ball.y+Math.sin(a)*dist, mass:half, radius:massToRadius(half), vx:Math.cos(a)*5, vy:Math.sin(a)*5, splitTime:Date.now() });
-        newBalls.push({ x:ball.x-Math.cos(a)*dist, y:ball.y-Math.sin(a)*dist, mass:half, radius:massToRadius(half), vx:-Math.cos(a)*5, vy:-Math.sin(a)*5, splitTime:Date.now() });
+        const a = Math.atan2(t.y-ball.y, t.x-ball.x), half=ball.mass/2;
+        const newRadius = massToRadius(half);
+        const dist = newRadius * 1.5 + 15; // Distância baseada no novo raio + margem
+        newBalls.push({ x:ball.x+Math.cos(a)*dist, y:ball.y+Math.sin(a)*dist, mass:half, radius:newRadius, vx:Math.cos(a)*5, vy:Math.sin(a)*5, splitTime:Date.now() });
+        newBalls.push({ x:ball.x-Math.cos(a)*dist, y:ball.y-Math.sin(a)*dist, mass:half, radius:newRadius, vx:-Math.cos(a)*5, vy:-Math.sin(a)*5, splitTime:Date.now() });
       } else newBalls.push(ball);
     }
     player.splitBalls = newBalls.slice(0, maxSplits);
-    const avgMass = player.splitBalls.reduce((s,b)=>s+b.mass,0) / player.splitBalls.length;
-    const timeMultiplier = Math.min(3, player.splitBalls.length / 2);
-    splitEnd = Date.now() + (4000 + avgMass * 20) * timeMultiplier;
+    // Timer fixo de 10 segundos para cada nova divisão
+    splitEnd = Date.now() + 10000;
   }
 }
 
@@ -450,49 +499,40 @@ function ejectMass(){
 function maybeMerge(){
   if(!player.split) return;
   const now = Date.now();
+  
+  // Após 10 segundos, força a recombinação automática
   if(now >= splitEnd){
-    let merged=true;
-    while(merged && player.splitBalls.length>1){
-      merged=false;
-      for(let i=0;i<player.splitBalls.length;i++){
-        for(let j=i+1;j<player.splitBalls.length;j++){
-          const a=player.splitBalls[i], b=player.splitBalls[j];
-          const dist=Math.hypot(a.x-b.x,a.y-b.y);
-          if(dist<(a.radius+b.radius)*0.8){
-            const total=a.mass+b.mass;
-            const newBall={ x:(a.x*a.mass+b.x*b.mass)/total, y:(a.y*a.mass+b.y*b.mass)/total, mass:total, radius:massToRadius(total), vx:(a.vx+b.vx)/2, vy:(a.vy+b.vy)/2, splitTime:Math.max(a.splitTime,b.splitTime) };
-            player.splitBalls.splice(j,1); player.splitBalls.splice(i,1); player.splitBalls.push(newBall);
-            merged=true; break;
-          }
-        }
-        if(merged) break;
+    if(player.splitBalls.length > 1){
+      // Calcular centro de massa para posição final
+      const totalMass = player.splitBalls.reduce((sum, ball) => sum + ball.mass, 0);
+      let centerX = 0, centerY = 0, totalVx = 0, totalVy = 0;
+      
+      for(const ball of player.splitBalls){
+        centerX += ball.x * ball.mass;
+        centerY += ball.y * ball.mass;
+        totalVx += ball.vx || 0;
+        totalVy += ball.vy || 0;
       }
-    }
-    if(player.splitBalls.length===1){
-      const b=player.splitBalls[0];
-      player.split=false; player.x=b.x; player.y=b.y; player.mass=b.mass; player.radius=b.radius; player.vx=b.vx; player.vy=b.vy; player.splitBalls=[];
-    }
-  }
-  // Recombinação rápida para muito pequenas
-  for(let i=0;i<player.splitBalls.length;i++){
-    const ball=player.splitBalls[i];
-    if(ball.mass<15){
-      const timeSinceSplit = now - ball.splitTime;
-      if(timeSinceSplit>2000){
-        let nearest=-1, best=Infinity;
-        for(let j=0;j<player.splitBalls.length;j++){
-          if(i===j) continue;
-          const d=Math.hypot(ball.x-player.splitBalls[j].x, ball.y-player.splitBalls[j].y);
-          if(d<best){ best=d; nearest=j; }
-        }
-        if(nearest!==-1){
-          const other=player.splitBalls[nearest], total=ball.mass+other.mass;
-          other.x=(ball.x*ball.mass+other.x*other.mass)/total;
-          other.y=(ball.y*ball.mass+other.y*other.mass)/total;
-          other.mass=total; other.radius=massToRadius(total);
-          player.splitBalls.splice(i,1); i--;
-        }
+      
+      centerX /= totalMass;
+      centerY /= totalMass;
+      totalVx /= player.splitBalls.length;
+      totalVy /= player.splitBalls.length;
+      
+      // Criar partículas de recombinação
+      for(const ball of player.splitBalls){
+        createParticles(ball.x, ball.y, '#00FFFF');
       }
+      
+      // Recombinar em uma única bolinha
+      player.split = false;
+      player.x = centerX;
+      player.y = centerY;
+      player.mass = totalMass;
+      player.radius = massToRadius(totalMass);
+      player.vx = totalVx;
+      player.vy = totalVy;
+      player.splitBalls = [];
     }
   }
 }
@@ -614,7 +654,7 @@ function update(){
       const f=food[k]; if(Math.hypot(e.x-f.x,e.y-f.y)<e.radius+f.radius){ e.mass+=0.3*f.radius; e.radius=massToRadius(e.mass); food.splice(k,1); }
     }
     for(let k=pellets.length-1;k>=0;k--){
-      const p=pellets[k]; if(Math.hypot(e.x-p.x,e.y-p.y)<e.radius+p.radius){ e.mass+=p.mass*0.9; e.radius=massToRadius(e.mass); pellets.splice(k,1); }
+      const p=pellets[k]; if(Math.hypot(e.x-p.x,e.y-p.y)<e.radius+p.radius){ e.mass+=p.mass*0.9; e.radius=massToRadius(p.mass); pellets.splice(k,1); }
     }
 
     // colisão inimigo x player — checar por célula
@@ -641,13 +681,52 @@ function update(){
       en.x=Math.random()*WORLD_W; en.y=Math.random()*WORLD_H; en.behavior='wander'; en.target=null; en.fearLevel=0;
     }
 
+    function removeSplitBall(ballIndex) {
+      if (player.splitBalls.length > 1) {
+        player.splitBalls.splice(ballIndex, 1);
+        // Se sobrou apenas uma bolinha, mesclar de volta
+        if (player.splitBalls.length === 1) {
+          const b = player.splitBalls[0];
+          player.split = false;
+          player.x = b.x;
+          player.y = b.y;
+          player.mass = b.mass;
+          player.radius = b.radius;
+          player.vx = b.vx;
+          player.vy = b.vy;
+          player.splitBalls = [];
+        }
+      } else {
+        // Se era a última bolinha, game over
+        endGame();
+      }
+    }
+
     if(player.split){
-      for(const b of player.splitBalls){
+      // Verificar colisões para cada bolinha dividida
+      for(let ballIndex = player.splitBalls.length - 1; ballIndex >= 0; ballIndex--){
+        const b = player.splitBalls[ballIndex];
         const d=Math.hypot(b.x-e.x,b.y-e.y);
         if(d<b.radius+e.radius){
-          if(b.mass>e.mass*1.15 || pMass>e.mass*1.15){ eatEnemy(i); }
-          else if(e.mass>pMass*1.1){ endGame(); }
-          break;
+          if(b.mass>e.mass*1.15){ 
+            eatEnemy(i); 
+            break; 
+          }
+          else if(e.mass>b.mass*1.1){ 
+            // Inimigo come essa bolinha específica
+            createParticles(b.x, b.y, '#FF4444');
+            const gainedMass = b.mass * 0.9;
+            e.mass += gainedMass;
+            e.radius = massToRadius(e.mass);
+            
+            // Criar partículas extra para mostrar que uma bolinha foi comida
+            for(let j=0;j<8;j++){ 
+              createParticles(b.x+(Math.random()-0.5)*30, b.y+(Math.random()-0.5)*30, '#FF6666'); 
+            }
+            
+            removeSplitBall(ballIndex);
+            break;
+          }
         }
       }
     } else {
@@ -672,6 +751,15 @@ function update(){
     document.getElementById('rageStatus').style.display='block';
   } else {
     document.getElementById('rageStatus').style.display='none';
+  }
+
+  // Split status
+  if(player.split && now2<splitEnd){
+    const remaining = Math.ceil((splitEnd - now2)/1000);
+    document.getElementById('splitTime').textContent = remaining;
+    document.getElementById('splitStatus').style.display='block';
+  } else {
+    document.getElementById('splitStatus').style.display='none';
   }
 }
 
@@ -849,5 +937,6 @@ function drawMini(){
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden && gameRunning){ gameRunning=false; } });
 
 </script>
+
 </body>
 </html>
