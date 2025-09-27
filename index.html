@@ -24,25 +24,84 @@
   font-weight:600; text-shadow:none;
 }
 
-/* Start - Glassmorphism */
-#start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
-#start .box{
-  width:min(420px,92vw); background:rgba(255,255,255,0.1);
-  backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
-  border:1px solid rgba(0,255,153,0.3); color:#fff; border-radius:20px;
-  padding:24px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.4);
+/* Start - Interface Simples e Limpa */
+#start{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;
+  background: linear-gradient(135deg, #0c1445 0%, #1a2980 50%, #26467c 100%);
 }
-#start h1{margin:8px 0 12px 0;text-shadow:0 2px 10px rgba(0,0,0,0.5)}
-#start p{opacity:0.9;margin-bottom:14px}
-#start button{
-  width:100%;padding:16px;border-radius:12px;border:none;
-  background:rgba(0,255,136,0.9);
-  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-  font-weight:800;font-size:18px;
-  box-shadow:0 4px 20px rgba(0,255,136,0.3);
-  transition:all 0.2s ease; cursor:pointer;
+
+#start .container{
+  width:min(400px,90vw); text-align:center; position:relative;
 }
-#start button:active{transform:scale(0.98)}
+
+/* Logo principal */
+#start .logo{
+  font-size:2.8em; font-weight:900; margin-bottom:30px; color:#fff;
+  text-shadow: 0 0 20px rgba(0,255,170,0.6), 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Botões superiores */
+#start .topBtns{display:flex;gap:12px;margin-bottom:30px;}
+#start .topBtn{
+  flex:1;padding:14px 12px;border-radius:8px;border:none;font-weight:600;font-size:13px;
+  cursor:pointer;transition:all 0.2s;
+}
+#start .topBtn.free{background:#ffd700;color:#000;}
+#start .topBtn.tournament{background:#4169e1;color:#fff;}
+#start .topBtn.arena{background:#9932cc;color:#fff;}
+#start .topBtn:active{transform:scale(0.95);}
+
+/* Info do servidor */
+#start .serverInfo{
+  background:rgba(255,255,255,0.15);
+  border:2px solid rgba(0,255,170,0.4);border-radius:12px;padding:20px;margin-bottom:25px;
+}
+#start .serverRow{
+  display:flex;justify-content:space-between;margin-bottom:8px;color:#fff;font-size:15px;font-weight:500;
+}
+#start .serverRow:last-child{margin-bottom:0;}
+#start .ping{color:#00ff88;font-weight:700;}
+
+/* Toggle Rage Mode */
+#start .toggleSection{margin-bottom:30px;}
+#start .toggle{
+  display:flex;align-items:center;justify-content:center;gap:15px;
+  background:rgba(255,255,255,0.15);
+  border:2px solid rgba(255,50,150,0.5);border-radius:10px;padding:15px;
+}
+#start .toggleSwitch{
+  width:60px;height:30px;border-radius:15px;background:#666;
+  position:relative;cursor:pointer;transition:all 0.3s;
+}
+#start .toggleSwitch.active{background:#ff0080;}
+#start .toggleSwitch::after{
+  content:'';width:26px;height:26px;border-radius:50%;background:#fff;
+  position:absolute;top:2px;left:2px;transition:all 0.3s;
+  box-shadow:0 2px 5px rgba(0,0,0,0.3);
+}
+#start .toggleSwitch.active::after{left:32px;}
+#start .toggleLabel{color:#fff;font-weight:600;font-size:16px;}
+
+/* Botões principais */
+#start .mainBtns{display:flex;justify-content:center;gap:20px;}
+#start .mainBtn{
+  width:100px;height:100px;border-radius:50%;border:3px solid;cursor:pointer;
+  position:relative;transition:all 0.2s;font-weight:600;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+#start .mainBtn:active{transform:scale(0.95);}
+#start .mainBtn .icon{font-size:28px;margin-bottom:5px;}
+#start .mainBtn .text{font-size:12px;line-height:1.1;}
+
+#start .mainBtn.solo{
+  background:#00ff88;border-color:#00cc66;color:#000;
+}
+#start .mainBtn.online{
+  background:#ff6b6b;border-color:#cc5555;color:#fff;
+}
+#start .mainBtn.find{
+  background:#4ecdc4;border-color:#3ca39c;color:#000;
+}
 
 /* Game over - Glassmorphism */
 #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
@@ -120,14 +179,63 @@
 <div id="splitStatus">🔄 RECOMBINAÇÃO EM <span id="splitTime">10</span>s</div>
 
 <div id="start">
-  <div class="box">
-    <h1>🦠 Agar Mobile</h1>
-    <p>Toque e arraste para mover • Toque duplo: dividir até 8x</p>
-    <p>Botões: <b>Dividir</b> e <b>Ejetar</b> no canto inferior direito</p>
-    <p style="font-size:14px;opacity:0.85">⚡ Timer de 10s para recombinação - bolinhas se repelem</p>
-    <p style="font-size:12px;opacity:0.75">🤖 Inimigos: Básico, Agressivo, Cauteloso, Veloz, Tanque, Caçador</p>
-    <p style="font-size:11px;opacity:0.65">⚠️ Cuidado: Quando dividido, cada bolinha pode ser comida individualmente!</p>
-    <button id="btnStart">COMEÇAR</button>
+  <!-- Partículas de fundo -->
+  <div class="particle" style="left:10%;animation-delay:0s;"></div>
+  <div class="particle" style="left:20%;animation-delay:2s;"></div>
+  <div class="particle" style="left:30%;animation-delay:4s;"></div>
+  <div class="particle" style="left:40%;animation-delay:1s;"></div>
+  <div class="particle" style="left:50%;animation-delay:3s;"></div>
+  <div class="particle" style="left:60%;animation-delay:5s;"></div>
+  <div class="particle" style="left:70%;animation-delay:2.5s;"></div>
+  <div class="particle" style="left:80%;animation-delay:4.5s;"></div>
+  <div class="particle" style="left:90%;animation-delay:1.5s;"></div>
+  
+  <div class="container">
+    <!-- Botões superiores -->
+    <div class="topBtns">
+      <button class="topBtn">🎁 Bônus Grátis!</button>
+      <button class="topBtn tournament">🏆 Torneio</button>
+      <button class="topBtn arena">🏛️ Arena</button>
+    </div>
+
+    <!-- Logo principal -->
+    <div class="logo">AGAR MOBILE</div>
+
+    <!-- Informações do servidor -->
+    <div class="serverInfo">
+      <div class="serverRow">
+        <span>Servidor:</span>
+        <span class="ping">Brasil 25ms</span>
+      </div>
+      <div class="serverRow">
+        <span>Modo de Jogo:</span>
+        <span>FFA</span>
+      </div>
+    </div>
+
+    <!-- Toggle Rage Mode -->
+    <div class="toggleSection">
+      <div class="toggle">
+        <span class="toggleLabel">MODO RAGE</span>
+        <div class="toggleSwitch" id="rageToggle"></div>
+      </div>
+    </div>
+
+    <!-- Botões principais -->
+    <div class="mainBtns">
+      <button class="mainBtn solo" id="btnStart">
+        <div class="icon">👤</div>
+        <div class="text">JOGAR<br>SOZINHO</div>
+      </button>
+      <button class="mainBtn online">
+        <div class="icon">👥</div>
+        <div class="text">JOGAR<br>ONLINE</div>
+      </button>
+      <button class="mainBtn find">
+        <div class="icon">🔍</div>
+        <div class="text">ENCONTRAR<br>JOGOS</div>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -374,11 +482,25 @@ document.getElementById('btnRestart').onclick = startGame;
 document.getElementById('btnSplit').onclick = ()=>{ if(gameRunning) splitPlayer(); };
 document.getElementById('btnEject').onclick = ()=>{ if(gameRunning) ejectMass(); };
 
+// Toggle do Rage Mode
+let rageStartMode = false;
+document.getElementById('rageToggle').onclick = function(){
+  rageStartMode = !rageStartMode;
+  this.classList.toggle('active', rageStartMode);
+};
+
 /* ===== Jogo ===== */
 function startGame(){
   reset();
   gameRunning=true; window.__GAME_RUNNING__=true;
   startTime=Date.now(); score=0; splitEnd=0; moveTarget=null;
+  
+  // Aplicar Rage Mode inicial se ativado
+  if(rageStartMode){
+    player.rageMode = true;
+    player.rageEnd = Date.now() + 15000; // 15s de rage inicial
+  }
+  
   startPane.classList.add('hidden'); overPane.classList.add('hidden');
   ui.classList.remove('hidden'); minimapWrap.classList.remove('hidden'); mobileBtns.classList.remove('hidden');
   requestAnimationFrame(loop);
