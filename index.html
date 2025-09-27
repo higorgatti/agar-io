@@ -617,11 +617,7 @@ function update(){
       const p=pellets[k]; if(Math.hypot(e.x-p.x,e.y-p.y)<e.radius+p.radius){ e.mass+=p.mass*0.9; e.radius=massToRadius(e.mass); pellets.splice(k,1); }
     }
 
-    // colisão inimigo x player — checar por célula (inimigo pode comer células individuais)
-    // Regras:
-    // - Se QUALQUER célula do player for muito maior que o inimigo -> player come inimigo.
-    // - Caso contrário, se o inimigo for maior que UMA célula específica -> ele come só essa célula.
-    // - Game Over apenas quando TODAS as células forem comidas (ou quando não estiver dividido e perder a única célula).
+    // colisão inimigo x player — checar por célula
     const pMass = totalPlayerMass();
 
     function eatEnemy(idxE){
@@ -645,75 +641,24 @@ function update(){
       en.x=Math.random()*WORLD_W; en.y=Math.random()*WORLD_H; en.behavior='wander'; en.target=null; en.fearLevel=0;
     }
 
-    // Helper: inimigo come uma célula específica do player
-    function enemyEatsPlayerCell(cellIndex){
-      const cell = player.split ? player.splitBalls[cellIndex] : null;
-      if(player.split && cell){
-        // ganho pro inimigo que comeu
-        e.mass += cell.mass * 0.9;
-        e.radius = massToRadius(e.mass);
-        createParticles(cell.x, cell.y, '#FF4444');
-
-        // remove a célula do player
-        player.splitBalls.splice(cellIndex, 1);
-
-        // Se não sobrou nenhuma, game over
-        if(player.splitBalls.length === 0){
-          endGame();
-        } else if(player.splitBalls.length === 1){
-          // opcional: deixar o maybeMerge voltar sozinho; aqui não forçamos merge imediato
-        }
-      } else {
-        // player não está dividido -> perdeu a única célula
-        createParticles(player.x, player.y, '#FF4444');
-        endGame();
-      }
-    }
-
-    // 1) Se alguma célula (ou massa total) for bem maior que o inimigo, o player come o inimigo
-    let playerCanEatEnemy = false;
     if(player.split){
       for(const b of player.splitBalls){
-        if(b.mass > e.mass * 1.15){ playerCanEatEnemy = true; break; }
-      }
-      if(!playerCanEatEnemy && pMass > e.mass * 1.25){
-        // Se a soma total for MUITO maior, também permite engolir (ajuda no Rage)
-        playerCanEatEnemy = true;
-      }
-    } else {
-      if(player.mass > e.mass * 1.15) playerCanEatEnemy = true;
-    }
-    if(playerCanEatEnemy){ eatEnemy(i); if(!gameRunning) return; }
-
-    // 2) Caso contrário, o inimigo tenta comer células individuais do player
-    if(player.split){
-      let consumed = false;
-      for(let bi=0; bi<player.splitBalls.length; bi++){
-        const b = player.splitBalls[bi];
         const d=Math.hypot(b.x-e.x,b.y-e.y);
-        if(d < b.radius + e.radius){
-          if(e.mass > b.mass * 1.10){
-            enemyEatsPlayerCell(bi);
-            consumed = true;
-            break;
-          } else {
-            // colisão sem condição de comer -> nada (empurra visual), segue
-          }
+        if(d<b.radius+e.radius){
+          if(b.mass>e.mass*1.15 || pMass>e.mass*1.15){ eatEnemy(i); }
+          else if(e.mass>pMass*1.1){ endGame(); }
+          break;
         }
       }
-      if(consumed){ if(!gameRunning) return; }
     } else {
       const d=Math.hypot(player.x-e.x,player.y-e.y);
       if(d<player.radius+e.radius){
-        if(e.mass > player.mass * 1.10){
-          enemyEatsPlayerCell(-1); // sinaliza que é célula única
-          if(!gameRunning) return;
-        } else if(player.mass > e.mass * 1.15){
-          eatEnemy(i);
-          if(!gameRunning) return;
-        }
+        if(player.mass>e.mass*1.15){ eatEnemy(i); }
+        else if(e.mass>player.mass*1.1){ endGame(); }
       }
     }
+    if(!gameRunning) return;
+  }
 
   // HUD
   document.getElementById('score').textContent=score;
