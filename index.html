@@ -1,107 +1,543 @@
-
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Agar.io Visual+</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Agar Mobile</title>
   <style>
-    body,html{margin:0;padding:0;height:100%;overflow:hidden;background:#000;font-family:sans-serif}
-    #gameContainer{position:relative;width:100vw;height:100vh;background:radial-gradient(circle at 20% 20%,#022,#000)}
-    #gameCanvas{display:block;width:100%;height:100%;cursor:none;touch-action:none}
-    #ui{position:absolute;top:10px;left:10px;color:#fff;z-index:10;font-weight:bold;background:rgba(0,0,0,.5);padding:8px 12px;border-radius:8px}
-    #instructions{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;z-index:20}
-    #instructions .box{background:rgba(0,0,0,.8);padding:20px;border-radius:12px;border:2px solid #00ff99;text-align:center;max-width:90%}
-    #instructions button{margin-top:15px;padding:12px 24px;border:none;border-radius:8px;background:#00ff99;font-weight:bold;font-size:16px;cursor:pointer}
-    #gameOver{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:white;z-index:20}
-    #gameOver .box{background:rgba(0,0,0,.9);padding:20px;border-radius:12px;border:2px solid #ff4444;text-align:center}
-    #gameOver button{margin-top:12px;padding:10px 20px;border:none;border-radius:8px;background:#00ff99;font-weight:bold}
-    #minimapWrap{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);padding:6px;border-radius:10px;display:none}
-    #minimap{width:160px;height:120px;border-radius:8px;background:#011}
+    html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:system-ui,Arial,sans-serif}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    #gameContainer{position:relative;width:100vw;height:100vh;background:linear-gradient(45deg,#001122 0%,#003344 100%)}
+    #gameCanvas{display:block;width:100%;height:100%;touch-action:none;cursor:none}
+    .hidden{display:none!important}
+
+```
+/* HUD - Glassmorphism */
+#ui{
+  position:absolute;left:10px;top:10px;z-index:10;color:#fff;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:16px;
+  padding:12px 16px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+  font-weight:600;
+  text-shadow:none;
+}
+
+/* Start - Glassmorphism */
+#start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
+#start .box{
+  width:min(420px,92vw);
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(30px);
+  -webkit-backdrop-filter:blur(30px);
+  border:1px solid rgba(0,255,153,0.3);
+  color:#fff;
+  border-radius:20px;
+  padding:24px;
+  text-align:center;
+  box-shadow:0 16px 40px rgba(0,0,0,0.4);
+}
+#start h1{margin:8px 0 12px 0;text-shadow:0 2px 10px rgba(0,0,0,0.5)}
+#start p{opacity:0.9;margin-bottom:20px}
+#start button{
+  width:100%;padding:16px;border-radius:12px;border:none;
+  background:rgba(0,255,136,0.9);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  font-weight:800;font-size:18px;
+  box-shadow:0 4px 20px rgba(0,255,136,0.3);
+  transition:all 0.3s ease;
+  cursor:pointer;
+}
+#start button:hover{
+  background:rgba(0,255,136,1);
+  transform:translateY(-2px);
+  box-shadow:0 6px 25px rgba(0,255,136,0.4);
+}
+
+/* Game over - Glassmorphism */
+#over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
+#over .box{
+  width:min(420px,92vw);
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(30px);
+  -webkit-backdrop-filter:blur(30px);
+  border:1px solid rgba(255,102,102,0.3);
+  color:#fff;
+  border-radius:20px;
+  padding:20px;
+  text-align:center;
+  box-shadow:0 16px 40px rgba(0,0,0,0.4);
+}
+#over h2{text-shadow:0 2px 10px rgba(0,0,0,0.5);margin-bottom:12px}
+#over button{
+  padding:12px 20px;border-radius:12px;border:none;
+  background:rgba(0,255,136,0.9);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  font-weight:800;
+  box-shadow:0 4px 20px rgba(0,255,136,0.3);
+  transition:all 0.3s ease;
+  cursor:pointer;
+}
+#over button:hover{
+  background:rgba(0,255,136,1);
+  transform:translateY(-2px);
+}
+
+/* Minimap - Glassmorphism */
+#minimapWrap{
+  position:absolute;right:10px;top:10px;z-index:12;
+  background:rgba(255,255,255,0.1);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(0,255,170,0.3);
+  border-radius:16px;
+  padding:8px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+}
+#minimap{display:block;width:180px;height:130px;border-radius:10px}
+```
+
   </style>
 </head>
 <body>
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
-    <div id="ui" class="hidden">Pontuação: <span id="score">0</span> • Massa: <span id="mass">10</span></div>
-    <div id="instructions">
+    <div id="ui" class="hidden">Pontuação: <b id="score">0</b> • Massa: <b id="mass">10</b></div>
+    <div id="start">
       <div class="box">
-        <h1>🦠 Agar Visual+</h1>
-        <p>Toque para andar • Espaço: dividir • R: reunir</p>
-        <button id="startBtn">COMEÇAR</button>
+        <h1>🦠 Agar Mobile</h1>
+        <p>Toque para andar • Duplo-toque/Espaço: dividir • W: ejetar massa</p>
+        <button id="btnStart">COMEÇAR</button>
       </div>
     </div>
-    <div id="gameOver">
+    <div id="over" class="hidden">
       <div class="box">
         <h2>💀 Game Over</h2>
-        <p>Pontuação: <span id="finalScore">0</span> | Massa: <span id="finalMass">0</span></p>
-        <button id="restartBtn">Jogar novamente</button>
+        <p>Pontuação: <b id="finalScore">0</b> • Massa: <b id="finalMass">0</b></p>
+        <button id="btnRestart">Jogar novamente</button>
       </div>
     </div>
-    <div id="minimapWrap">
-      <canvas id="minimap" width="160" height="120"></canvas>
-    </div>
+    <div id="minimapWrap" class="hidden"><canvas id="minimap" width="180" height="130"></canvas></div>
   </div>
-<script>
-// ====== Setup ======
-const canvas=document.getElementById("gameCanvas"),ctx=canvas.getContext("2d");
-const W=()=>window.innerWidth,H=()=>window.innerHeight;let DPR=window.devicePixelRatio||1;
-function resize(){canvas.width=W()*DPR;canvas.height=H()*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}resize();window.addEventListener("resize",resize);
-let gameRunning=false,player,enemies=[],food=[],score=0,viruses=[];
-const WORLD_W=2200,WORLD_H=1600;
 
-// ====== Player ======
-function reset(){player={x:WORLD_W/2,y:WORLD_H/2,mass:15,radius:20,vx:0,vy:0};food=[];enemies=[];viruses=[];score=0;
-for(let i=0;i<300;i++)food.push(randFruit());
-for(let i=0;i<12;i++)spawnEnemy();
-for(let i=0;i<10;i++)viruses.push({x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,r:20});
+<script>
+// ===== Evita rolagem no iOS/Android durante o jogo =====
+document.addEventListener('touchmove', (e)=>{ if (window.__GAME_RUNNING__) e.preventDefault(); }, {passive:false});
+
+// ===== Setup básico =====
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const mini = document.getElementById('minimap');
+const mctx = mini.getContext('2d');
+const ui = document.getElementById('ui');
+const startPane = document.getElementById('start');
+const overPane = document.getElementById('over');
+const minimapWrap = document.getElementById('minimapWrap');
+
+let W = innerWidth, H = innerHeight, DPR = Math.max(1, Math.floor(devicePixelRatio||1));
+function fit(){ W = innerWidth; H = innerHeight; DPR=Math.max(1,Math.floor(devicePixelRatio||1)); canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', fit, {passive:true}); fit();
+
+// ===== Mundo =====
+const WORLD_W = 2400, WORLD_H = 1800;
+const FRUITS = ['🍎','🍌','🍇','🍓','🍊'];
+let gameRunning=false, score=0;
+let player, enemies=[], food=[], powerUps=[], viruses=[], pellets=[], particles=[];
+let camera={x:WORLD_W/2,y:WORLD_H/2,zoom:1};
+let mouse={x:WORLD_W/2,y:WORLD_H/2};
+let moveTarget=null, startTime=0, splitEnd=0;
+const INITIAL_MASS=12;
+
+function massToRadius(m){ return Math.sqrt(Math.max(0.0001,m))*2+5; }
+
+function reset(){
+  player={x:WORLD_W/2,y:WORLD_H/2,mass:INITIAL_MASS,radius:massToRadius(INITIAL_MASS),vx:0,vy:0,split:false,splitBalls:[],magnet:false,shielded:false,speedBoost:false,multiGain:false};
+  enemies=[]; food=[]; powerUps=[]; viruses=[]; pellets=[]; particles=[];
+  for(let i=0;i<320;i++){food.push(randFruit());}
+  for(let i=0;i<12;i++){spawnEnemy();}
+  for(let i=0;i<12;i++){viruses.push({x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,radius:18+Math.random()*8,rotation:0,pulse:Math.random()*6.28});}
 }
 
-// ====== Fruits ======
-function randFruit(){return {x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,r:8+Math.random()*5,kind:Math.floor(Math.random()*3)};}
-function drawFruit(f){ctx.save();if(f.kind===0){ctx.fillStyle="#e33";ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,Math.PI*2);ctx.fill();}else if(f.kind===1){ctx.fillStyle="#ff5";ctx.beginPath();ctx.ellipse(f.x,f.y,f.r, f.r*0.6,0,0,Math.PI*2);ctx.fill();}else{ctx.fillStyle="#95f";for(let i=0;i<6;i++){let ang=i*Math.PI/3;ctx.beginPath();ctx.arc(f.x+Math.cos(ang)*f.r*0.6,f.y+Math.sin(ang)*f.r*0.6,f.r*0.4,0,Math.PI*2);ctx.fill();}}ctx.restore();}
+function createParticles(x, y, color = '#FFD700'){
+  for(let i=0; i<6; i++){
+    particles.push({
+      x: x + (Math.random()-0.5)*10,
+      y: y + (Math.random()-0.5)*10,
+      vx: (Math.random()-0.5)*4,
+      vy: (Math.random()-0.5)*4,
+      life: Date.now() + 800,
+      color: color,
+      size: Math.random()*3+1
+    });
+  }
+}
 
-// ====== Enemies ======
-function spawnEnemy(){let m=20+Math.random()*40;enemies.push({x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,radius:Math.sqrt(m)*2+5,vx:Math.random()*2-1,vy:Math.random()*2-1,mass:m});}
+function randFruit(){ const e=FRUITS[Math.floor(Math.random()*FRUITS.length)]; return {x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,radius:10,emoji:e}; }
+function spawnEnemy(){ const m=20+Math.random()*50; enemies.push({x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,mass:m,radius:massToRadius(m),vx:Math.random()-0.5,vy:Math.random()-0.5,color:'hsl('+(Math.random()*60+300)+',70%,55%)'}); }
 
-// ====== Update ======
+// ===== Controles =====
+document.getElementById('btnStart').onclick = startGame;
+document.getElementById('btnRestart').onclick = startGame;
+
+canvas.addEventListener('mousemove', (e)=>{ if(!gameRunning) return; const r=canvas.getBoundingClientRect(); const x=(e.clientX-r.left)*(W/r.width); const y=(e.clientY-r.top)*(H/r.height); const cx=W*0.5, cy=H*0.5; mouse.x=((x-cx)/camera.zoom)+camera.x; mouse.y=((y-cy)/camera.zoom)+camera.y; moveTarget=null; });
+let lastTap=0;
+canvas.addEventListener('touchstart', (e)=>{
+  if(!gameRunning) return;
+  const now=Date.now();
+  if(now-lastTap<250){ splitPlayer(); }
+  lastTap=now;
+  const t=e.touches[0]; const r=canvas.getBoundingClientRect();
+  const x=(t.clientX-r.left)*(W/r.width); const y=(t.clientY-r.top)*(H/r.height);
+  const cx=W*0.5, cy=H*0.5; const wx=((x-cx)/camera.zoom)+camera.x, wy=((y-cy)/camera.zoom)+camera.y;
+  moveTarget={x:wx,y:wy};
+},{passive:false});
+canvas.addEventListener('touchmove', (e)=>{
+  if(!gameRunning) return;
+  const t=e.touches[0]; const r=canvas.getBoundingClientRect();
+  const x=(t.clientX-r.left)*(W/r.width); const y=(t.clientY-r.top)*(H/r.height);
+  const cx=W*0.5, cy=H*0.5; const wx=((x-cx)/camera.zoom)+camera.x, wy=((y-cy)/camera.zoom)+camera.y;
+  moveTarget={x:wx,y:wy};
+},{passive:false});
+
+document.addEventListener('keydown',(e)=>{
+  if(!gameRunning) return;
+  if(e.key===' '){ e.preventDefault(); splitPlayer(); }
+  if(e.key.toLowerCase()==='w'){ e.preventDefault(); ejectMass(); }
+});
+
+// ===== Jogo =====
+function startGame(){
+  reset();
+  gameRunning=true; window.__GAME_RUNNING__=true;
+  startTime=Date.now(); score=0; splitEnd=0; moveTarget=null;
+  startPane.classList.add('hidden'); overPane.classList.add('hidden');
+  ui.classList.remove('hidden'); minimapWrap.classList.remove('hidden');
+  requestAnimationFrame(loop);
+}
+function endGame(){
+  gameRunning=false; window.__GAME_RUNNING__=false;
+  ui.classList.add('hidden'); minimapWrap.classList.add('hidden');
+  document.getElementById('finalScore').textContent=score;
+  document.getElementById('finalMass').textContent=Math.floor(player.mass);
+  overPane.classList.remove('hidden');
+}
+
+function speedFromRadius(r){ return (player.speedBoost?1.2:1.0)*(6/Math.sqrt(r+40)); }
+function getTarget(){ return moveTarget?{x:moveTarget.x,y:moveTarget.y}:{x:mouse.x,y:mouse.y}; }
+
+function movePlayer(){
+  const t=getTarget();
+  if(player.split && player.splitBalls.length){
+    for(const b of player.splitBalls){
+      const dx=t.x-b.x, dy=t.y-b.y, d=Math.hypot(dx,dy)||1;
+      const ax=(dx/d)*0.35, ay=(dy/d)*0.35, maxS=speedFromRadius(b.radius);
+      b.vx=(b.vx||0)*0.9+ax; b.vy=(b.vy||0)*0.9+ay;
+      const v=Math.hypot(b.vx,b.vy); if(v>maxS){ b.vx=(b.vx/v)*maxS; b.vy=(b.vy/v)*maxS; }
+      b.x+=b.vx; b.y+=b.vy; b.x=Math.max(b.radius,Math.min(WORLD_W-b.radius,b.x)); b.y=Math.max(b.radius,Math.min(WORLD_H-b.radius,b.y));
+    }
+  }else{
+    const dx=t.x-player.x, dy=t.y-player.y, d=Math.hypot(dx,dy)||1;
+    const ax=(dx/d)*0.35, ay=(dy/d)*0.35, maxS=speedFromRadius(player.radius);
+    player.vx=(player.vx||0)*0.9+ax; player.vy=(player.vy||0)*0.9+ay;
+    const v=Math.hypot(player.vx,player.vy); if(v>maxS){ player.vx=(player.vx/v)*maxS; player.vy=(player.vy/v)*maxS; }
+    player.x+=player.vx; player.y+=player.vy; player.x=Math.max(player.radius,Math.min(WORLD_W-player.radius,player.x)); player.y=Math.max(player.radius,Math.min(WORLD_H-player.radius,player.y));
+  }
+}
+
+function splitPlayer(){
+  if(player.split || player.mass<20) return;
+  const t=getTarget(); const a=Math.atan2(t.y-player.y,t.x-player.x), d=30, m=player.mass/2;
+  player.split=true;
+  player.splitBalls=[
+    {x:player.x+Math.cos(a)*d,y:player.y+Math.sin(a)*d,mass:m,radius:massToRadius(m),vx:Math.cos(a)*3,vy:Math.sin(a)*3},
+    {x:player.x-Math.cos(a)*d,y:player.y-Math.sin(a)*d,mass:m,radius:massToRadius(m),vx:-Math.cos(a)*3,vy:-Math.sin(a)*3}
+  ];
+  splitEnd = Date.now()+12000;
+}
+
+function ejectMass(){
+  if(player.mass < 15) return; // Precisa ter massa mínima
+  const t=getTarget();
+  
+  if(player.split){
+    // Se estiver dividido, ejeta de ambas as partes
+    for(const b of player.splitBalls){
+      if(b.mass < 15) continue;
+      const a=Math.atan2(t.y-b.y,t.x-b.x);
+      const ejectAmount = 2;
+      const speed = 8;
+      
+      // Cria pellet ejetado
+      pellets.push({
+        x: b.x + Math.cos(a) * (b.radius + 5),
+        y: b.y + Math.sin(a) * (b.radius + 5),
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed,
+        mass: ejectAmount,
+        radius: 4,
+        life: Date.now() + 5000 // 5 segundos
+      });
+      
+      b.mass -= ejectAmount;
+      b.radius = massToRadius(b.mass);
+    }
+  } else {
+    // Modo normal
+    const a=Math.atan2(t.y-player.y,t.x-player.x);
+    const ejectAmount = 2;
+    const speed = 8;
+    
+    // Cria pellet ejetado
+    pellets.push({
+      x: player.x + Math.cos(a) * (player.radius + 5),
+      y: player.y + Math.sin(a) * (player.radius + 5),
+      vx: Math.cos(a) * speed,
+      vy: Math.sin(a) * speed,
+      mass: ejectAmount,
+      radius: 4,
+      life: Date.now() + 5000 // 5 segundos
+    });
+    
+    player.mass -= ejectAmount;
+    player.radius = massToRadius(player.mass);
+  }
+}
+
+function maybeMerge(){
+  if(!player.split) return;
+  if(Date.now()>=splitEnd){
+    const a=player.splitBalls[0], b=player.splitBalls[1];
+    if(Math.hypot(a.x-b.x,a.y-b.y) < (a.radius+b.radius)*0.9){
+      // Auto merge
+      const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2; const total=a.mass+b.mass;
+      player.split=false; player.x=cx; player.y=cy; player.mass=total; player.radius=massToRadius(total); player.splitBalls=[]; player.vx=0; player.vy=0;
+    }
+  }
+}
+
+function loop(){
+  if(!gameRunning) return;
+  update(); render(); requestAnimationFrame(loop);
+}
+
 function update(){
-  // move player
-  player.x+=player.vx;player.y+=player.vy;
-  player.x=Math.max(player.radius,Math.min(WORLD_W-player.radius,player.x));
-  player.y=Math.max(player.radius,Math.min(WORLD_H-player.radius,player.y));
+  movePlayer(); maybeMerge();
+
+  // camera
+  const cx = player.split? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
+  const cy = player.split? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
+  const mass = player.split? player.splitBalls[0].mass+player.splitBalls[1].mass : player.mass;
+  const targetZoom = Math.max(0.45, Math.min(1.2, 1-(mass-10)/350));
+  camera.zoom += (targetZoom-camera.zoom)*0.03; camera.x += (cx-camera.x)*0.08; camera.y += (cy-camera.y)*0.08;
+
+  // atualizar partículas
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x += p.vx; p.y += p.vy;
+    p.vx *= 0.95; p.vy *= 0.95;
+    if(Date.now() > p.life){
+      particles.splice(i,1);
+    }
+  }
+
+  // atualizar pellets ejetados
+  for(let i=pellets.length-1;i>=0;i--){
+    const p=pellets[i];
+    p.x += p.vx; p.y += p.vy;
+    p.vx *= 0.98; p.vy *= 0.98; // desaceleração
+    
+    // remover pellets expirados
+    if(Date.now() > p.life){
+      pellets.splice(i,1);
+      continue;
+    }
+    
+    // limites do mundo
+    if(p.x < 0 || p.x > WORLD_W || p.y < 0 || p.y > WORLD_H){
+      pellets.splice(i,1);
+      continue;
+    }
+  }
 
   // comer frutas
-  for(let i=food.length-1;i>=0;i--){let f=food[i];if(Math.hypot(player.x-f.x,player.y-f.y)<player.radius+f.r){player.mass+=f.r*0.3;player.radius=Math.sqrt(player.mass)*2+5;score+=10;food.splice(i,1);}}
+  for(let i=food.length-1;i>=0;i--){
+    const f=food[i];
+    if(player.split){
+      for(const b of player.splitBalls){
+        if(Math.hypot(b.x-f.x,b.y-f.y)<b.radius+f.radius){ 
+          createParticles(f.x, f.y, '#00FF88'); // partículas verdes
+          b.mass+=0.25*f.radius; b.radius=massToRadius(b.mass); score+=1; food.splice(i,1); break; 
+        }
+      }
+    }else if(Math.hypot(player.x-f.x,player.y-f.y)<player.radius+f.radius){
+      createParticles(f.x, f.y, '#00FF88'); // partículas verdes
+      player.mass+=0.25*f.radius; player.radius=massToRadius(player.mass); score+=1; food.splice(i,1);
+    }
+  }
 
-  // inimigos
-  for(const e of enemies){e.x+=e.vx;e.y+=e.vy;if(e.x<e.radius||e.x>WORLD_W-e.radius)e.vx*=-1;if(e.y<e.radius||e.y>WORLD_H-e.radius)e.vy*=-1;}
+  // comer pellets
+  for(let i=pellets.length-1;i>=0;i--){
+    const p=pellets[i];
+    if(player.split){
+      for(const b of player.splitBalls){
+        if(Math.hypot(b.x-p.x,b.y-p.y)<b.radius+p.radius){ 
+          createParticles(p.x, p.y, '#FFD700'); // partículas douradas
+          b.mass+=p.mass*0.8; b.radius=massToRadius(b.mass); score+=1; pellets.splice(i,1); break; 
+        }
+      }
+    }else if(Math.hypot(player.x-p.x,player.y-p.y)<player.radius+p.radius){
+      createParticles(p.x, p.y, '#FFD700'); // partículas douradas
+      player.mass+=p.mass*0.8; player.radius=massToRadius(player.mass); score+=1; pellets.splice(i,1);
+    }
+  }
 
-  // colisões simples
-  for(const e of enemies){if(Math.hypot(player.x-e.x,player.y-e.y)<player.radius+e.radius){if(player.mass>e.mass*1.2){player.mass+=e.mass*0.5;player.radius=Math.sqrt(player.mass)*2+5;e.mass=20+Math.random()*40;e.radius=Math.sqrt(e.mass)*2+5;e.x=Math.random()*WORLD_W;e.y=Math.random()*WORLD_H;}else if(e.mass>player.mass*1.2){endGame();}}}
+  // inimigos simples + colisões
+  for(const e of enemies){
+    e.x+=e.vx; e.y+=e.vy;
+    if(e.x<e.radius||e.x>WORLD_W-e.radius) e.vx*=-1;
+    if(e.y<e.radius||e.y>WORLD_H-e.radius) e.vy*=-1;
+    
+    // inimigos comem frutas
+    for(let i=food.length-1;i>=0;i--){
+      const f=food[i]; if(Math.hypot(e.x-f.x,e.y-f.y)<e.radius+f.radius){ e.mass+=0.2*f.radius; e.radius=massToRadius(e.mass); food.splice(i,1); }
+    }
+    
+    // inimigos comem pellets
+    for(let i=pellets.length-1;i>=0;i--){
+      const p=pellets[i]; if(Math.hypot(e.x-p.x,e.y-p.y)<e.radius+p.radius){ e.mass+=p.mass*0.8; e.radius=massToRadius(e.mass); pellets.splice(i,1); }
+    }
+    
+    // player vs enemy
+    const pMass = player.split ? player.splitBalls[0].mass+player.splitBalls[1].mass : player.mass;
+    const pX = player.split ? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
+    const pY = player.split ? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
+    if(Math.hypot(pX-e.x,pY-e.y) < (player.split?Math.max(player.splitBalls[0].radius,player.splitBalls[1].radius):player.radius)+e.radius){
+      if(pMass>e.mass*1.2){ // player come
+        createParticles(e.x, e.y, '#FF4444'); // partículas vermelhas
+        const g=e.mass*0.8; if(player.split){ player.splitBalls[0].mass+=g*0.5; player.splitBalls[1].mass+=g*0.5; player.splitBalls[0].radius=massToRadius(player.splitBalls[0].mass); player.splitBalls[1].radius=massToRadius(player.splitBalls[1].mass);} else { player.mass+=g; player.radius=massToRadius(player.mass); }
+        // respawn inimigo
+        e.mass=20+Math.random()*50; e.radius=massToRadius(e.mass); e.x=Math.random()*WORLD_W; e.y=Math.random()*WORLD_H;
+      }else if(e.mass>pMass*1.1){ endGame(); }
+    }
+  }
+
+  // HUD
+  document.getElementById('score').textContent=score;
+  document.getElementById('mass').textContent=Math.floor(player.split? player.splitBalls[0].mass+player.splitBalls[1].mass : player.mass);
 }
 
-// ====== Render ======
-function render(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W(),H());ctx.save();
-ctx.translate(W()/2-player.x,H()/2-player.y);
-ctx.fillStyle="#444";for(let i=0;i<food.length;i++)drawFruit(food[i]);
-ctx.fillStyle="red";for(const v of viruses){ctx.beginPath();ctx.arc(v.x,v.y,v.r,0,Math.PI*2);ctx.fill();}
-ctx.fillStyle="blue";ctx.beginPath();ctx.arc(player.x,player.y,player.radius,0,Math.PI*2);ctx.fill();
-ctx.fillStyle="purple";for(const e of enemies){ctx.beginPath();ctx.arc(e.x,e.y,e.radius,0,Math.PI*2);ctx.fill();}
-ctx.restore();document.getElementById("score").textContent=score;document.getElementById("mass").textContent=Math.floor(player.mass);}
+function render(){
+  ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H);
 
-// ====== Game loop ======
-function loop(){if(!gameRunning)return;update();render();requestAnimationFrame(loop);}
+  // câmera
+  ctx.save();
+  ctx.translate(W*0.5, H*0.5); ctx.scale(camera.zoom, camera.zoom); ctx.translate(-camera.x, -camera.y);
 
-// ====== Flow ======
-function startGame(){reset();gameRunning=true;document.getElementById("instructions").style.display="none";document.getElementById("gameOver").style.display="none";document.getElementById("ui").classList.remove("hidden");document.getElementById("minimapWrap").style.display="block";loop();}
-function endGame(){gameRunning=false;document.getElementById("finalScore").textContent=score;document.getElementById("finalMass").textContent=Math.floor(player.mass);document.getElementById("gameOver").style.display="flex";}
+  // grid
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1;
+  for(let x=0;x<WORLD_W;x+=50){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,WORLD_H); ctx.stroke(); }
+  for(let y=0;y<WORLD_H;y+=50){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(WORLD_W,y); ctx.stroke(); }
 
-document.getElementById("startBtn").onclick=startGame;
-document.getElementById("restartBtn").onclick=startGame;
+  // frutas (emoji)
+  for(const f of food){ ctx.font='18px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(f.emoji, f.x, f.y); }
 
-// ====== Movimento por toque ======
-canvas.addEventListener("touchstart",e=>{if(!gameRunning)return;let t=e.touches[0];let cx=W()/2,cy=H()/2;let dx=t.clientX-cx,dy=t.clientY-cy;let len=Math.hypot(dx,dy);player.vx=(dx/len)*2;player.vy=(dy/len)*2;},{passive:true});
+  // pellets ejetados
+  for(const p of pellets){ 
+    ctx.fillStyle='#FFD700'; 
+    ctx.beginPath(); 
+    ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); 
+    ctx.fill(); 
+    ctx.strokeStyle='rgba(255,255,255,0.6)'; 
+    ctx.stroke(); 
+  }
+
+  // partículas
+  for(const p of particles){
+    const life = Math.max(0, (p.life - Date.now()) / 800); // garantir que seja positivo
+    if(life > 0){
+      ctx.globalAlpha = life;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(0.1, p.size * life), 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // inimigos
+  for(const e of enemies){ ctx.fillStyle=e.color; ctx.beginPath(); ctx.arc(e.x,e.y,e.radius,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,.45)'; ctx.stroke(); }
+
+  // player com pulsação
+  const time = Date.now() * 0.002; // velocidade da pulsação
+  const pulse = 1 + Math.sin(time) * 0.03; // variação de 3%
+  
+  if(player.split){
+    for(const b of player.splitBalls){ 
+      const pulseRadius = b.radius * pulse;
+      // Gradiente radial para cada bola
+      const gradient = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, pulseRadius);
+      gradient.addColorStop(0, '#66B2FF'); // centro mais claro
+      gradient.addColorStop(0.7, '#4A90E2'); // meio
+      gradient.addColorStop(1, '#2E5C8A'); // borda mais escura
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath(); 
+      ctx.arc(b.x,b.y,pulseRadius,0,Math.PI*2); 
+      ctx.fill(); 
+      ctx.strokeStyle='#1A4B73'; 
+      ctx.lineWidth = 2;
+      ctx.stroke(); 
+    }
+  }else{
+    const pulseRadius = player.radius * pulse;
+    // Gradiente radial para player normal
+    const gradient = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, pulseRadius);
+    gradient.addColorStop(0, '#66B2FF'); // centro mais claro
+    gradient.addColorStop(0.7, '#4A90E2'); // meio
+    gradient.addColorStop(1, '#2E5C8A'); // borda mais escura
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath(); 
+    ctx.arc(player.x,player.y,pulseRadius,0,Math.PI*2); 
+    ctx.fill(); 
+    ctx.strokeStyle='#1A4B73'; 
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  drawMini();
+}
+
+function drawMini(){
+  if(minimapWrap.classList.contains('hidden')) return;
+  const w=mini.width,h=mini.height; mctx.clearRect(0,0,w,h);
+  mctx.fillStyle='#071c2d'; mctx.fillRect(0,0,w,h);
+  const sx=w/WORLD_W, sy=h/WORLD_H;
+
+  // viewport
+  const halfW=(W*0.5)/camera.zoom, halfH=(H*0.5)/camera.zoom;
+  mctx.strokeStyle='#ffffffb0'; mctx.lineWidth=1.5;
+  mctx.strokeRect((camera.x-halfW)*sx,(camera.y-halfH)*sy,(halfW*2)*sx,(halfH*2)*sy);
+
+  // dots
+  function dot(x,y,r,c){ mctx.fillStyle=c; mctx.beginPath(); mctx.arc(x*sx,y*sy,Math.max(2,r*sx*0.35),0,Math.PI*2); mctx.fill(); }
+  for(const e of enemies) dot(e.x,e.y,e.radius,'#ff5577');
+  const px = player.split? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
+  const py = player.split? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
+  const pr = player.split? Math.max(player.splitBalls[0].radius,player.splitBalls[1].radius) : player.radius;
+  dot(px,py,pr,'#00ff99');
+}
+
+// Inicia parado na tela de start (nada é desenhado do mundo até startGame)
 </script>
+
 </body>
 </html>
