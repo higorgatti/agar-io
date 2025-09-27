@@ -351,6 +351,15 @@ let moveTarget=null, lastTap=0, startTime=0, splitEnd=0;
 const INITIAL_MASS=12;
 function massToRadius(m){ return Math.sqrt(Math.max(0.0001,m))*2+5; }
 
+// Sistema de efeitos especiais
+let activeEffects = {
+  speed: 0,      // Speed boost end time
+  shield: 0,     // Shield end time  
+  magnet: 0,     // Magnet end time
+  invisibility: 0, // Invisibility end time
+  freeze: 0      // Freeze end time
+};
+
 /* ===== Utilitários para múltiplas células ===== */
 function totalPlayerMass(){
   if (!player.split) return player.mass;
@@ -446,9 +455,39 @@ function spawnEnemy(){
 function spawnRageBonus(){
   powerUps.push({ x:Math.random()*WORLD_W, y:Math.random()*WORLD_H, radius:15, type:'rage', color:'#FF006E', emoji:'😡', pulse: Math.random()*6.28 });
 }
+
+function spawnSpecialItem(){
+  const itemTypes = [
+    { type: 'speed', color: '#00BFFF', emoji: '🚀', chance: 0.2 },
+    { type: 'shield', color: '#FFD700', emoji: '🛡️', chance: 0.15 },
+    { type: 'magnet', color: '#8A2BE2', emoji: '🧲', chance: 0.2 },
+    { type: 'splitbomb', color: '#FFFF00', emoji: '⚡', chance: 0.1 },
+    { type: 'sizeboost', color: '#32CD32', emoji: '📈', chance: 0.15 },
+    { type: 'invisibility', color: '#C0C0C0', emoji: '👻', chance: 0.1 },
+    { type: 'freeze', color: '#87CEEB', emoji: '❄️', chance: 0.1 }
+  ];
+  
+  const randomType = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+  specialItems.push({ 
+    x: Math.random() * WORLD_W, 
+    y: Math.random() * WORLD_H, 
+    radius: 12, 
+    type: randomType.type,
+    color: randomType.color, 
+    emoji: randomType.emoji, 
+    pulse: Math.random() * 6.28,
+    spawnTime: Date.now()
+  });
+}
+
 function safeSpawnRageLater(){
   const delay = 3000 + Math.random()*5000;
   setTimeout(()=>{ if (gameRunning) spawnRageBonus(); }, delay);
+}
+
+function safeSpawnSpecialLater(){
+  const delay = 8000 + Math.random()*12000; // 8-20s
+  setTimeout(()=>{ if (gameRunning) spawnSpecialItem(); }, delay);
 }
 
 /* ===== Reset ===== */
@@ -479,7 +518,16 @@ function reset(){
     vx:0, vy:0, split:false, splitBalls:[], rageMode:false, rageEnd:0
   };
   
-  enemies=[]; food=[]; powerUps=[]; pellets=[]; particles=[];
+  // Limpar arrays
+  enemies = [];
+  food = [];
+  powerUps = [];
+  specialItems = [];
+  pellets = [];
+  particles = [];
+  
+  // Reset efeitos
+  activeEffects = { speed: 0, shield: 0, magnet: 0, invisibility: 0, freeze: 0 };
   
   // Spawnar comida baseada na dificuldade
   for(let i=0;i<foodCount;i++){food.push(randFruit());}
@@ -489,6 +537,13 @@ function reset(){
   
   // Spawnar power-ups
   for(let i=0;i<5;i++){spawnRageBonus();}
+  
+  // Spawnar itens especiais iniciais
+  console.log("Spawning initial special items...");
+  for(let i=0;i<3;i++){
+    spawnSpecialItem();
+    console.log(`Special item ${i+1} spawned. Total items: ${specialItems.length}`);
+  }
 }
 function randFruit(){ const e=FRUITS[Math.floor(Math.random()*FRUITS.length)]; return {x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,radius:10,emoji:e}; }
 
@@ -501,6 +556,9 @@ function updateEnemyAI(enemy, now){
   const pMass = totalPlayerMass();
   const {vx:pVx, vy:pVy} = playerAvgVelocity();
   const distToPlayer = Math.hypot(enemy.x - pX, enemy.y - pY);
+
+  // Se o jogador está invisível, inimigos não podem vê-lo
+  const playerIsInvisible = activeEffects.invisibility > Date.now();
 
   let predictionTime = 1.0;
   if(enemy.type==='hunter') predictionTime=1.5;
@@ -530,7 +588,10 @@ function updateEnemyAI(enemy, now){
     return;
   }
 
-  if(distToPlayer < 300){
+  // Se jogador invisível, só procurar comida ou vagar
+  if(playerIsInvisible){
+    enemy.behavior='hunt_food';
+  } else if(distToPlayer < 300){
     if(player.rageMode){
       enemy.behavior='flee'; enemy.target={x:predictedX, y:predictedY}; enemy.fearLevel=5;
     } else if(enemy.mass > pMass*1.2){
@@ -555,6 +616,9 @@ function updateEnemyAI(enemy, now){
   }
 }
 function moveEnemyAI(enemy){
+  // Se inimigo está congelado, não se move
+  if(enemy.frozen && Date.now() < enemy.frozen) return;
+  
   let targetX=enemy.x, targetY=enemy.y;
   let speed=(enemy.baseSpeed||0.3)*(30/(enemy.radius+10));
 
@@ -652,6 +716,9 @@ function startGame(){
     player.rageEnd = Date.now() + 15000; // 15s de rage inicial
   }
   
+  // Iniciar spawn automático de itens especiais
+  safeSpawnSpecialLater();
+  
   startPane.classList.add('hidden'); overPane.classList.add('hidden');
   ui.classList.remove('hidden'); minimapWrap.classList.remove('hidden'); mobileBtns.classList.remove('hidden');
   requestAnimationFrame(loop);
@@ -659,9 +726,10 @@ function startGame(){
 function endGame(){
   gameRunning=false; window.__GAME_RUNNING__=false;
   ui.classList.add('hidden'); minimapWrap.classList.add('hidden'); mobileBtns.classList.add('hidden');
-  document.getElementById('finalScore').textContent=score;
-  document.getElementById('finalMass').textContent=Math.floor(totalPlayerMass());
-  overPane.classList.remove('hidden');
+  
+  // Voltar para a tela inicial em vez de mostrar game over
+  startPane.classList.remove('hidden');
+  overPane.classList.add('hidden');
 }
 
 function speedFromRadius(r){ return 12/Math.sqrt(r+30); }
@@ -669,6 +737,23 @@ function getTarget(){ return moveTarget?{x:moveTarget.x,y:moveTarget.y}:playerCe
 
 function movePlayer(){
   const t=getTarget();
+  
+  // Efeito Magnet - atrai comida próxima
+  if(activeEffects.magnet > Date.now()){
+    const {x:px, y:py} = playerCentroid();
+    for(const f of food){
+      const dist = Math.hypot(f.x - px, f.y - py);
+      if(dist < 120){
+        const pullForce = 0.3;
+        const dx = px - f.x;
+        const dy = py - f.y;
+        const d = Math.hypot(dx, dy) || 1;
+        f.x += (dx / d) * pullForce;
+        f.y += (dy / d) * pullForce;
+      }
+    }
+  }
+  
   if(player.split && player.splitBalls.length){
     // Aplicar repulsão entre bolinhas divididas
     for(let i=0; i<player.splitBalls.length; i++){
@@ -678,7 +763,7 @@ function movePlayer(){
         const dx = b.x - a.x;
         const dy = b.y - a.y;
         const dist = Math.hypot(dx, dy);
-        const minDist = a.radius + b.radius + 5; // 5px de margem mínima
+        const minDist = a.radius + b.radius + 5;
         
         if(dist < minDist && dist > 0){
           const overlap = minDist - dist;
@@ -686,7 +771,6 @@ function movePlayer(){
           const pushX = (dx / dist) * pushForce;
           const pushY = (dy / dist) * pushForce;
           
-          // Aplicar força de repulsão
           a.x -= pushX * 0.5;
           a.y -= pushY * 0.5;
           b.x += pushX * 0.5;
@@ -697,7 +781,11 @@ function movePlayer(){
     
     for(const b of player.splitBalls){
       const dx=t.x-b.x, dy=t.y-b.y, d=Math.hypot(dx,dy)||1;
-      const speedBoost = Math.min(2.0, 1 + (player.splitBalls.length - 1) * 0.15);
+      let speedBoost = Math.min(2.0, 1 + (player.splitBalls.length - 1) * 0.15);
+      
+      // Speed boost effect
+      if(activeEffects.speed > Date.now()) speedBoost *= 2;
+      
       const ax=(dx/d)*0.6*speedBoost, ay=(dy/d)*0.6*speedBoost;
       const maxS=speedFromRadius(b.radius)*speedBoost;
       b.vx=(b.vx||0)*0.85+ax; b.vy=(b.vy||0)*0.85+ay;
@@ -708,7 +796,13 @@ function movePlayer(){
     }
   }else{
     const dx=t.x-player.x, dy=t.y-player.y, d=Math.hypot(dx,dy)||1;
-    const ax=(dx/d)*0.6, ay=(dy/d)*0.6, maxS=speedFromRadius(player.radius);
+    let speedBoost = 1;
+    
+    // Speed boost effect
+    if(activeEffects.speed > Date.now()) speedBoost = 2;
+    
+    const ax=(dx/d)*0.6*speedBoost, ay=(dy/d)*0.6*speedBoost;
+    const maxS=speedFromRadius(player.radius)*speedBoost;
     player.vx=(player.vx||0)*0.85+ax; player.vy=(player.vy||0)*0.85+ay;
     const v=Math.hypot(player.vx,player.vy); if(v>maxS){ player.vx=(player.vx/v)*maxS; player.vy=(player.vy/v)*maxS; }
     player.x+=player.vx; player.y+=player.vy;
@@ -817,6 +911,90 @@ function createParticles(x,y,color='#FFD700'){
   }
 }
 
+function applySpecialEffect(type){
+  const now = Date.now();
+  
+  switch(type){
+    case 'speed':
+      activeEffects.speed = now + 8000; // 8 segundos
+      break;
+      
+    case 'shield':
+      activeEffects.shield = now + 6000; // 6 segundos
+      break;
+      
+    case 'magnet':
+      activeEffects.magnet = now + 10000; // 10 segundos
+      break;
+      
+    case 'splitbomb':
+      // Divide todos os inimigos próximos
+      const {x:px, y:py} = playerCentroid();
+      for(const enemy of enemies){
+        const dist = Math.hypot(enemy.x - px, enemy.y - py);
+        if(dist < 200 && enemy.mass >= 20){
+          const newMass = enemy.mass / 2;
+          const angle = Math.random() * Math.PI * 2;
+          const spreadDist = enemy.radius + 20;
+          
+          // Criar um "clone" dividido
+          enemies.push({
+            ...enemy,
+            x: enemy.x + Math.cos(angle) * spreadDist,
+            y: enemy.y + Math.sin(angle) * spreadDist,
+            mass: newMass,
+            radius: massToRadius(newMass),
+            vx: Math.cos(angle) * 3,
+            vy: Math.sin(angle) * 3
+          });
+          
+          // Reduzir o original
+          enemy.mass = newMass;
+          enemy.radius = massToRadius(newMass);
+          enemy.x -= Math.cos(angle) * spreadDist;
+          enemy.y -= Math.sin(angle) * spreadDist;
+          enemy.vx = -Math.cos(angle) * 3;
+          enemy.vy = -Math.sin(angle) * 3;
+          
+          // Efeitos visuais
+          createParticles(enemy.x, enemy.y, '#FFFF00');
+        }
+      }
+      break;
+      
+    case 'sizeboost':
+      // Adiciona massa instantaneamente
+      if(player.split){
+        const addMass = 30 / player.splitBalls.length;
+        for(const ball of player.splitBalls){
+          ball.mass += addMass;
+          ball.radius = massToRadius(ball.mass);
+        }
+      } else {
+        player.mass += 30;
+        player.radius = massToRadius(player.mass);
+      }
+      break;
+      
+    case 'invisibility':
+      activeEffects.invisibility = now + 5000; // 5 segundos
+      break;
+      
+    case 'freeze':
+      activeEffects.freeze = now + 4000; // 4 segundos
+      // Congelar inimigos próximos
+      const {x:pxf, y:pyf} = playerCentroid();
+      for(const enemy of enemies){
+        const dist = Math.hypot(enemy.x - pxf, enemy.y - pyf);
+        if(dist < 150){
+          enemy.frozen = now + 4000;
+          createParticles(enemy.x, enemy.y, '#87CEEB');
+        }
+      }
+      break;
+  }
+}
+
 /* ===== Loop ===== */
 function loop(){ if(!gameRunning) return; update(); render(); requestAnimationFrame(loop); }
 
@@ -855,6 +1033,31 @@ function update(){
       for(let j=0;j<8;j++){ createParticles(b.x+(Math.random()-0.5)*30, b.y+(Math.random()-0.5)*30, '#FF006E'); }
       powerUps.splice(i,1);
       safeSpawnRageLater();
+    }
+  }
+
+  // Itens especiais
+  for(let i=specialItems.length-1;i>=0;i--){
+    const item=specialItems[i];
+    const {x:px,y:py} = playerCentroid();
+    const pr = player.split ? Math.max(...player.splitBalls.map(b=>b.radius)) : player.radius;
+    if(Math.hypot(px-item.x,py-item.y) < pr + item.radius){
+      // Aplicar efeito do item
+      applySpecialEffect(item.type);
+      
+      // Efeitos visuais
+      createParticles(item.x,item.y,item.color);
+      for(let j=0;j<6;j++){ createParticles(item.x+(Math.random()-0.5)*25, item.y+(Math.random()-0.5)*25, item.color); }
+      
+      specialItems.splice(i,1);
+      safeSpawnSpecialLater();
+    }
+  }
+
+  // Remover itens especiais antigos (após 30s)
+  for(let i=specialItems.length-1;i>=0;i--){
+    if(now - specialItems[i].spawnTime > 30000){
+      specialItems.splice(i,1);
     }
   }
 
@@ -903,10 +1106,15 @@ function update(){
   // inimigos
   for(let i=0;i<enemies.length;i++){
     const e=enemies[i];
-    updateEnemyAI(e, now); moveEnemyAI(e);
-    e.x+=e.vx; e.y+=e.vy;
-    e.x=Math.max(e.radius,Math.min(WORLD_W-e.radius,e.x));
-    e.y=Math.max(e.radius,Math.min(WORLD_H-e.radius,e.y));
+    updateEnemyAI(e, now); 
+    
+    // Só mover se não estiver congelado
+    if(!e.frozen || Date.now() >= e.frozen){
+      moveEnemyAI(e);
+      e.x+=e.vx; e.y+=e.vy;
+      e.x=Math.max(e.radius,Math.min(WORLD_W-e.radius,e.x));
+      e.y=Math.max(e.radius,Math.min(WORLD_H-e.radius,e.y));
+    }
 
     // inimigos comem entre si
     for(let j=i+1;j<enemies.length;j++){
@@ -1031,8 +1239,8 @@ function update(){
             eatEnemy(i); 
             break; 
           }
-          else if(e.mass>b.mass*1.1){ 
-            // Inimigo come essa bolinha específica
+          else if(e.mass>b.mass*1.1 && activeEffects.shield <= Date.now()){ 
+            // Inimigo come essa bolinha específica (se não tiver escudo)
             createParticles(b.x, b.y, '#FF4444');
             const gainedMass = b.mass * 0.9;
             e.mass += gainedMass;
@@ -1052,7 +1260,10 @@ function update(){
       const d=Math.hypot(player.x-e.x,player.y-e.y);
       if(d<player.radius+e.radius){
         if(player.mass>e.mass*1.15){ eatEnemy(i); }
-        else if(e.mass>player.mass*1.1){ endGame(); }
+        else if(e.mass>player.mass*1.1 && activeEffects.shield <= Date.now()){ 
+          // Player morre apenas se não tiver escudo
+          endGame(); 
+        }
       }
     }
     if(!gameRunning) return;
@@ -1109,6 +1320,21 @@ function render(){
     ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(bonus.emoji, bonus.x, bonus.y);
   }
 
+  // itens especiais
+  for(const item of specialItems){
+    const time = Date.now()*0.004;
+    const pulse = 1 + Math.sin(time + item.pulse)*0.25;
+    const pulseRadius = item.radius * pulse;
+    ctx.shadowColor = item.color; ctx.shadowBlur = 12;
+    ctx.fillStyle = item.color; ctx.beginPath(); ctx.arc(item.x, item.y, pulseRadius, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.font='16px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, Arial';
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(item.emoji, item.x, item.y);
+  }
+
+  // Debug: mostrar quantos itens especiais existem
+  ctx.fillStyle='white'; ctx.font='12px Arial'; ctx.fillText(`Items: ${specialItems.length}`, 10, 100);
+
   // pellets
   for(const p of pellets){
     ctx.fillStyle='#FFD700'; ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.fill();
@@ -1131,6 +1357,18 @@ function render(){
     else if(e.behavior==='flee') displayColor='#4ECDC4';
     else if(e.behavior==='hunt_food') displayColor='#45B7D1';
     else if(e.fearLevel>0) displayColor='#FFD93D';
+
+    // Efeito de congelamento
+    if(e.frozen && Date.now() < e.frozen){
+      ctx.fillStyle='rgba(135,206,235,0.4)';
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.radius * 1.3, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle='#87CEEB';
+      ctx.lineWidth=3;
+      ctx.stroke();
+      displayColor='#B0E0E6'; // Cor azul claro para inimigo congelado
+    }
 
     switch(e.type){
       case 'basic':
@@ -1209,9 +1447,41 @@ function render(){
   let centerColor='#66B2FF', midColor='#4A90E2', borderColor='#2E5C8A', strokeColor='#1A4B73', glowColor=null, glowBlur=0;
   if(player.rageMode){ centerColor='#FF8FA3'; midColor='#FF006E'; borderColor='#CC0052'; strokeColor='#990040'; glowColor='#FF006E'; glowBlur=20; }
 
+  // Efeitos especiais do jogador
+  if(activeEffects.invisibility > Date.now()){
+    // Invisibilidade - torna o jogador semi-transparente
+    ctx.globalAlpha = 0.3;
+  }
+
   if(player.split){
     for(const b of player.splitBalls){
       const pr=b.radius*pulse;
+      
+      // Efeito Shield
+      if(activeEffects.shield > Date.now()){
+        ctx.shadowColor='#FFD700'; ctx.shadowBlur=15;
+        ctx.strokeStyle='#FFD700'; ctx.lineWidth=4;
+        ctx.beginPath(); ctx.arc(b.x,b.y,pr+8,0,Math.PI*2); ctx.stroke();
+        ctx.shadowBlur=0;
+      }
+      
+      // Efeito Speed
+      if(activeEffects.speed > Date.now()){
+        ctx.strokeStyle='#00BFFF'; ctx.lineWidth=3;
+        for(let i=1;i<=3;i++){
+          ctx.globalAlpha=0.3/i;
+          ctx.beginPath(); ctx.arc(b.x-(b.vx||0)*i*2,b.y-(b.vy||0)*i*2,pr,0,Math.PI*2); ctx.stroke();
+        }
+        ctx.globalAlpha=1;
+      }
+      
+      // Efeito Magnet
+      if(activeEffects.magnet > Date.now()){
+        ctx.strokeStyle='#8A2BE2'; ctx.lineWidth=2;
+        const magnetPulse = 1 + Math.sin(time*4)*0.3;
+        ctx.beginPath(); ctx.arc(b.x,b.y,pr*1.5*magnetPulse,0,Math.PI*2); ctx.stroke();
+      }
+      
       if(glowColor){ ctx.shadowColor=glowColor; ctx.shadowBlur=glowBlur; }
       const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,pr);
       g.addColorStop(0,centerColor); g.addColorStop(0.7,midColor); g.addColorStop(1,borderColor);
@@ -1220,12 +1490,41 @@ function render(){
     }
   } else {
     const pr=player.radius*pulse;
+    
+    // Efeito Shield
+    if(activeEffects.shield > Date.now()){
+      ctx.shadowColor='#FFD700'; ctx.shadowBlur=15;
+      ctx.strokeStyle='#FFD700'; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.arc(player.x,player.y,pr+8,0,Math.PI*2); ctx.stroke();
+      ctx.shadowBlur=0;
+    }
+    
+    // Efeito Speed
+    if(activeEffects.speed > Date.now()){
+      ctx.strokeStyle='#00BFFF'; ctx.lineWidth=3;
+      for(let i=1;i<=3;i++){
+        ctx.globalAlpha=0.3/i;
+        ctx.beginPath(); ctx.arc(player.x-(player.vx||0)*i*2,player.y-(player.vy||0)*i*2,pr,0,Math.PI*2); ctx.stroke();
+      }
+      ctx.globalAlpha=1;
+    }
+    
+    // Efeito Magnet
+    if(activeEffects.magnet > Date.now()){
+      ctx.strokeStyle='#8A2BE2'; ctx.lineWidth=2;
+      const magnetPulse = 1 + Math.sin(time*4)*0.3;
+      ctx.beginPath(); ctx.arc(player.x,player.y,pr*1.5*magnetPulse,0,Math.PI*2); ctx.stroke();
+    }
+    
     if(glowColor){ ctx.shadowColor=glowColor; ctx.shadowBlur=glowBlur; }
     const g=ctx.createRadialGradient(player.x,player.y,0,player.x,player.y,pr);
     g.addColorStop(0,centerColor); g.addColorStop(0.7,midColor); g.addColorStop(1,borderColor);
     ctx.fillStyle=g; ctx.beginPath(); ctx.arc(player.x,player.y,pr,0,Math.PI*2); ctx.fill();
     ctx.shadowBlur=0; ctx.strokeStyle=strokeColor; ctx.lineWidth=player.rageMode?3:2; ctx.stroke();
   }
+  
+  // Restaurar alpha se estava invisível
+  ctx.globalAlpha=1;
 
   ctx.restore();
   drawMini();
