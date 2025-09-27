@@ -27,6 +27,22 @@
   text-shadow:none;
 }
 
+/* Status do Rage Mode */
+#rageStatus{
+  position:absolute;left:10px;bottom:10px;z-index:10;
+  background:rgba(255,0,110,0.15);
+  backdrop-filter:blur(15px);
+  -webkit-backdrop-filter:blur(15px);
+  border:1px solid rgba(255,0,110,0.4);
+  border-radius:12px;
+  padding:8px 12px;
+  color:#fff;
+  font-size:14px;
+  font-weight:600;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);
+  display:none;
+}
+
 /* Start - Glassmorphism */
 #start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
 #start .box{
@@ -109,10 +125,13 @@
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
     <div id="ui" class="hidden">Pontuação: <b id="score">0</b> • Massa: <b id="mass">10</b></div>
+    <div id="rageStatus">😡 Rage Mode: <span id="rageTime">0</span>s</div>
     <div id="start">
       <div class="box">
         <h1>🦠 Agar Mobile</h1>
         <p>Toque para andar • Duplo-toque/Espaço: dividir • W: ejetar massa</p>
+        <p style="font-size:14px;opacity:0.8;margin-top:10px">🔥 <b>NOVO:</b> Colete bônus 😡 Rage Mode para crescer 3x mais rápido!</p>
+        <p style="font-size:12px;opacity:0.7">Teste rápido: Tecla R = Rage Mode instantâneo</p>
         <button id="btnStart">COMEÇAR</button>
       </div>
     </div>
@@ -157,11 +176,28 @@ const INITIAL_MASS=12;
 function massToRadius(m){ return Math.sqrt(Math.max(0.0001,m))*2+5; }
 
 function reset(){
-  player={x:WORLD_W/2,y:WORLD_H/2,mass:INITIAL_MASS,radius:massToRadius(INITIAL_MASS),vx:0,vy:0,split:false,splitBalls:[],magnet:false,shielded:false,speedBoost:false,multiGain:false};
+  player={x:WORLD_W/2,y:WORLD_H/2,mass:INITIAL_MASS,radius:massToRadius(INITIAL_MASS),vx:0,vy:0,split:false,splitBalls:[],
+    // Rage Mode
+    rageMode:false, rageEnd:0
+  };
   enemies=[]; food=[]; powerUps=[]; viruses=[]; pellets=[]; particles=[];
   for(let i=0;i<320;i++){food.push(randFruit());}
   for(let i=0;i<12;i++){spawnEnemy();}
+  // Adicionar alguns bônus Rage Mode
+  for(let i=0;i<5;i++){spawnRagePowerUp();}
   for(let i=0;i<12;i++){viruses.push({x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,radius:18+Math.random()*8,rotation:0,pulse:Math.random()*6.28});}
+}
+
+function spawnRagePowerUp(){
+  powerUps.push({
+    x: Math.random() * WORLD_W,
+    y: Math.random() * WORLD_H,
+    radius: 15,
+    type: 'rage',
+    color: '#FF006E',
+    emoji: '😡',
+    pulse: Math.random() * 6.28
+  });
 }
 
 function createParticles(x, y, color = '#FFD700'){
@@ -209,6 +245,18 @@ document.addEventListener('keydown',(e)=>{
   if(!gameRunning) return;
   if(e.key===' '){ e.preventDefault(); splitPlayer(); }
   if(e.key.toLowerCase()==='w'){ e.preventDefault(); ejectMass(); }
+  // Tecla de teste para Rage Mode
+  if(e.key.toLowerCase()==='r'){ 
+    e.preventDefault(); 
+    player.rageMode = true;
+    player.rageEnd = Date.now() + 12000;
+    // Efeito visual
+    const px = player.split ? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
+    const py = player.split ? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
+    for(let j=0; j<10; j++){
+      createParticles(px + (Math.random()-0.5)*30, py + (Math.random()-0.5)*30, '#FF006E');
+    }
+  }
 });
 
 // ===== Jogo =====
@@ -228,7 +276,7 @@ function endGame(){
   overPane.classList.remove('hidden');
 }
 
-function speedFromRadius(r){ return (player.speedBoost?1.2:1.0)*(6/Math.sqrt(r+40)); }
+function speedFromRadius(r){ return 6/Math.sqrt(r+40); }
 function getTarget(){ return moveTarget?{x:moveTarget.x,y:moveTarget.y}:{x:mouse.x,y:mouse.y}; }
 
 function movePlayer(){
@@ -262,18 +310,16 @@ function splitPlayer(){
 }
 
 function ejectMass(){
-  if(player.mass < 15) return; // Precisa ter massa mínima
+  if(player.mass < 15) return;
   const t=getTarget();
   
   if(player.split){
-    // Se estiver dividido, ejeta de ambas as partes
     for(const b of player.splitBalls){
       if(b.mass < 15) continue;
       const a=Math.atan2(t.y-b.y,t.x-b.x);
       const ejectAmount = 2;
       const speed = 8;
       
-      // Cria pellet ejetado
       pellets.push({
         x: b.x + Math.cos(a) * (b.radius + 5),
         y: b.y + Math.sin(a) * (b.radius + 5),
@@ -281,19 +327,17 @@ function ejectMass(){
         vy: Math.sin(a) * speed,
         mass: ejectAmount,
         radius: 4,
-        life: Date.now() + 5000 // 5 segundos
+        life: Date.now() + 5000
       });
       
       b.mass -= ejectAmount;
       b.radius = massToRadius(b.mass);
     }
   } else {
-    // Modo normal
     const a=Math.atan2(t.y-player.y,t.x-player.x);
     const ejectAmount = 2;
     const speed = 8;
     
-    // Cria pellet ejetado
     pellets.push({
       x: player.x + Math.cos(a) * (player.radius + 5),
       y: player.y + Math.sin(a) * (player.radius + 5),
@@ -301,7 +345,7 @@ function ejectMass(){
       vy: Math.sin(a) * speed,
       mass: ejectAmount,
       radius: 4,
-      life: Date.now() + 5000 // 5 segundos
+      life: Date.now() + 5000
     });
     
     player.mass -= ejectAmount;
@@ -314,7 +358,6 @@ function maybeMerge(){
   if(Date.now()>=splitEnd){
     const a=player.splitBalls[0], b=player.splitBalls[1];
     if(Math.hypot(a.x-b.x,a.y-b.y) < (a.radius+b.radius)*0.9){
-      // Auto merge
       const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2; const total=a.mass+b.mass;
       player.split=false; player.x=cx; player.y=cy; player.mass=total; player.radius=massToRadius(total); player.splitBalls=[]; player.vx=0; player.vy=0;
     }
@@ -336,6 +379,12 @@ function update(){
   const targetZoom = Math.max(0.45, Math.min(1.2, 1-(mass-10)/350));
   camera.zoom += (targetZoom-camera.zoom)*0.03; camera.x += (cx-camera.x)*0.08; camera.y += (cy-camera.y)*0.08;
 
+  // Atualizar Rage Mode
+  const now = Date.now();
+  if(player.rageMode && now > player.rageEnd){
+    player.rageMode = false;
+  }
+
   // atualizar partículas
   for(let i=particles.length-1;i>=0;i--){
     const p=particles[i];
@@ -350,78 +399,117 @@ function update(){
   for(let i=pellets.length-1;i>=0;i--){
     const p=pellets[i];
     p.x += p.vx; p.y += p.vy;
-    p.vx *= 0.98; p.vy *= 0.98; // desaceleração
+    p.vx *= 0.98; p.vy *= 0.98;
     
-    // remover pellets expirados
     if(Date.now() > p.life){
       pellets.splice(i,1);
       continue;
     }
     
-    // limites do mundo
     if(p.x < 0 || p.x > WORLD_W || p.y < 0 || p.y > WORLD_H){
       pellets.splice(i,1);
       continue;
     }
   }
 
-  // comer frutas
+  // comer bônus rage
+  for(let i=powerUps.length-1;i>=0;i--){
+    const p=powerUps[i];
+    const pX = player.split ? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
+    const pY = player.split ? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
+    const pRadius = player.split ? Math.max(player.splitBalls[0].radius,player.splitBalls[1].radius) : player.radius;
+    
+    if(Math.hypot(pX-p.x,pY-p.y) < pRadius+p.radius){
+      // Ativar Rage Mode!
+      player.rageMode = true;
+      player.rageEnd = now + 12000; // 12 segundos
+      createParticles(p.x, p.y, '#FF006E');
+      // Explosão de partículas vermelhas
+      for(let j=0; j<10; j++){
+        createParticles(p.x + (Math.random()-0.5)*30, p.y + (Math.random()-0.5)*30, '#FF006E');
+      }
+      powerUps.splice(i,1);
+      
+      // Spawn novo bônus após um tempo
+      setTimeout(()=>spawnRagePowerUp(), 3000 + Math.random()*5000);
+    }
+  }
+
+  // comer frutas (com rage mode bonus)
   for(let i=food.length-1;i>=0;i--){
     const f=food[i];
+    const rageMultiplier = player.rageMode ? 3 : 1; // 3x no rage mode
+    
     if(player.split){
       for(const b of player.splitBalls){
         if(Math.hypot(b.x-f.x,b.y-f.y)<b.radius+f.radius){ 
-          createParticles(f.x, f.y, '#00FF88'); // partículas verdes
-          b.mass+=0.25*f.radius; b.radius=massToRadius(b.mass); score+=1; food.splice(i,1); break; 
+          createParticles(f.x, f.y, '#00FF88');
+          if(player.rageMode) createParticles(b.x, b.y, '#FF006E'); // Partículas extra
+          b.mass+=0.25*f.radius*rageMultiplier; b.radius=massToRadius(b.mass); score+=1; food.splice(i,1); break; 
         }
       }
     }else if(Math.hypot(player.x-f.x,player.y-f.y)<player.radius+f.radius){
-      createParticles(f.x, f.y, '#00FF88'); // partículas verdes
-      player.mass+=0.25*f.radius; player.radius=massToRadius(player.mass); score+=1; food.splice(i,1);
+      createParticles(f.x, f.y, '#00FF88');
+      if(player.rageMode) createParticles(player.x, player.y, '#FF006E'); // Partículas extra
+      player.mass+=0.25*f.radius*rageMultiplier; player.radius=massToRadius(player.mass); score+=1; food.splice(i,1);
     }
   }
 
-  // comer pellets
+  // comer pellets (com rage mode bonus)
   for(let i=pellets.length-1;i>=0;i--){
     const p=pellets[i];
+    const rageMultiplier = player.rageMode ? 3 : 1; // 3x no rage mode
+    
     if(player.split){
       for(const b of player.splitBalls){
         if(Math.hypot(b.x-p.x,b.y-p.y)<b.radius+p.radius){ 
-          createParticles(p.x, p.y, '#FFD700'); // partículas douradas
-          b.mass+=p.mass*0.8; b.radius=massToRadius(b.mass); score+=1; pellets.splice(i,1); break; 
+          createParticles(p.x, p.y, '#FFD700');
+          if(player.rageMode) createParticles(b.x, b.y, '#FF006E');
+          b.mass+=p.mass*0.8*rageMultiplier; b.radius=massToRadius(b.mass); score+=1; pellets.splice(i,1); break; 
         }
       }
     }else if(Math.hypot(player.x-p.x,player.y-p.y)<player.radius+p.radius){
-      createParticles(p.x, p.y, '#FFD700'); // partículas douradas
-      player.mass+=p.mass*0.8; player.radius=massToRadius(player.mass); score+=1; pellets.splice(i,1);
+      createParticles(p.x, p.y, '#FFD700');
+      if(player.rageMode) createParticles(player.x, player.y, '#FF006E');
+      player.mass+=p.mass*0.8*rageMultiplier; player.radius=massToRadius(player.mass); score+=1; pellets.splice(i,1);
     }
   }
 
-  // inimigos simples + colisões
+  // inimigos simples + colisões (com rage mode bonus)
   for(const e of enemies){
     e.x+=e.vx; e.y+=e.vy;
     if(e.x<e.radius||e.x>WORLD_W-e.radius) e.vx*=-1;
     if(e.y<e.radius||e.y>WORLD_H-e.radius) e.vy*=-1;
     
-    // inimigos comem frutas
     for(let i=food.length-1;i>=0;i--){
       const f=food[i]; if(Math.hypot(e.x-f.x,e.y-f.y)<e.radius+f.radius){ e.mass+=0.2*f.radius; e.radius=massToRadius(e.mass); food.splice(i,1); }
     }
     
-    // inimigos comem pellets
     for(let i=pellets.length-1;i>=0;i--){
       const p=pellets[i]; if(Math.hypot(e.x-p.x,e.y-p.y)<e.radius+p.radius){ e.mass+=p.mass*0.8; e.radius=massToRadius(e.mass); pellets.splice(i,1); }
     }
     
-    // player vs enemy
     const pMass = player.split ? player.splitBalls[0].mass+player.splitBalls[1].mass : player.mass;
     const pX = player.split ? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
     const pY = player.split ? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
     if(Math.hypot(pX-e.x,pY-e.y) < (player.split?Math.max(player.splitBalls[0].radius,player.splitBalls[1].radius):player.radius)+e.radius){
-      if(pMass>e.mass*1.2){ // player come
-        createParticles(e.x, e.y, '#FF4444'); // partículas vermelhas
-        const g=e.mass*0.8; if(player.split){ player.splitBalls[0].mass+=g*0.5; player.splitBalls[1].mass+=g*0.5; player.splitBalls[0].radius=massToRadius(player.splitBalls[0].mass); player.splitBalls[1].radius=massToRadius(player.splitBalls[1].mass);} else { player.mass+=g; player.radius=massToRadius(player.mass); }
-        // respawn inimigo
+      if(pMass>e.mass*1.2){
+        createParticles(e.x, e.y, '#FF4444');
+        const rageMultiplier = player.rageMode ? 2 : 1; // 2x para inimigos no rage mode
+        const g=e.mass*0.8*rageMultiplier; 
+        if(player.split){ 
+          player.splitBalls[0].mass+=g*0.5; player.splitBalls[1].mass+=g*0.5; 
+          player.splitBalls[0].radius=massToRadius(player.splitBalls[0].mass); 
+          player.splitBalls[1].radius=massToRadius(player.splitBalls[1].mass);
+        } else { 
+          player.mass+=g; player.radius=massToRadius(player.mass); 
+        }
+        // Partículas extras no rage mode
+        if(player.rageMode){
+          for(let j=0; j<5; j++){
+            createParticles(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#FF006E');
+          }
+        }
         e.mass=20+Math.random()*50; e.radius=massToRadius(e.mass); e.x=Math.random()*WORLD_W; e.y=Math.random()*WORLD_H;
       }else if(e.mass>pMass*1.1){ endGame(); }
     }
@@ -430,6 +518,16 @@ function update(){
   // HUD
   document.getElementById('score').textContent=score;
   document.getElementById('mass').textContent=Math.floor(player.split? player.splitBalls[0].mass+player.splitBalls[1].mass : player.mass);
+  
+  // Atualizar status do Rage Mode
+  const rageStatusDiv = document.getElementById('rageStatus');
+  if(player.rageMode){
+    const remaining = Math.ceil((player.rageEnd - Date.now()) / 1000);
+    document.getElementById('rageTime').textContent = remaining;
+    rageStatusDiv.style.display = 'block';
+  } else {
+    rageStatusDiv.style.display = 'none';
+  }
 }
 
 function render(){
@@ -447,6 +545,30 @@ function render(){
   // frutas (emoji)
   for(const f of food){ ctx.font='18px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(f.emoji, f.x, f.y); }
 
+  // rage power-ups
+  for(const p of powerUps){
+    const time = Date.now() * 0.005;
+    const pulse = 1 + Math.sin(time + p.pulse) * 0.3; // Pulsação mais intensa
+    const pulseRadius = p.radius * pulse;
+    
+    // Glow effect vermelho
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 15;
+    
+    // Círculo do bônus
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, pulseRadius, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Emoji no centro
+    ctx.shadowBlur = 0;
+    ctx.font = '22px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.emoji, p.x, p.y);
+  }
+
   // pellets ejetados
   for(const p of pellets){ 
     ctx.fillStyle='#FFD700'; 
@@ -459,7 +581,7 @@ function render(){
 
   // partículas
   for(const p of particles){
-    const life = Math.max(0, (p.life - Date.now()) / 800); // garantir que seja positivo
+    const life = Math.max(0, (p.life - Date.now()) / 800);
     if(life > 0){
       ctx.globalAlpha = life;
       ctx.fillStyle = p.color;
@@ -473,41 +595,71 @@ function render(){
   // inimigos
   for(const e of enemies){ ctx.fillStyle=e.color; ctx.beginPath(); ctx.arc(e.x,e.y,e.radius,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,.45)'; ctx.stroke(); }
 
-  // player com pulsação
-  const time = Date.now() * 0.002; // velocidade da pulsação
-  const pulse = 1 + Math.sin(time) * 0.03; // variação de 3%
+  // player com pulsação e rage mode
+  const time = Date.now() * 0.002;
+  let pulse = 1 + Math.sin(time) * 0.03;
+  
+  // Rage mode: pulsação mais intensa e cores diferentes
+  let centerColor = '#66B2FF', midColor = '#4A90E2', borderColor = '#2E5C8A', strokeColor = '#1A4B73';
+  let glowColor = null, glowBlur = 0;
+  
+  if(player.rageMode){
+    pulse = 1 + Math.sin(time * 4) * 0.1; // Pulsação mais rápida e intensa
+    centerColor = '#FF8FA3'; 
+    midColor = '#FF006E'; 
+    borderColor = '#CC0052'; 
+    strokeColor = '#990040';
+    glowColor = '#FF006E'; 
+    glowBlur = 20;
+  }
   
   if(player.split){
     for(const b of player.splitBalls){ 
       const pulseRadius = b.radius * pulse;
-      // Gradiente radial para cada bola
+      
+      // Glow effect para rage mode
+      if(glowColor){
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = glowBlur;
+      }
+      
       const gradient = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, pulseRadius);
-      gradient.addColorStop(0, '#66B2FF'); // centro mais claro
-      gradient.addColorStop(0.7, '#4A90E2'); // meio
-      gradient.addColorStop(1, '#2E5C8A'); // borda mais escura
+      gradient.addColorStop(0, centerColor);
+      gradient.addColorStop(0.7, midColor);
+      gradient.addColorStop(1, borderColor);
       
       ctx.fillStyle = gradient;
       ctx.beginPath(); 
       ctx.arc(b.x,b.y,pulseRadius,0,Math.PI*2); 
       ctx.fill(); 
-      ctx.strokeStyle='#1A4B73'; 
-      ctx.lineWidth = 2;
+      
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = strokeColor; 
+      ctx.lineWidth = player.rageMode ? 3 : 2; // Borda mais grossa no rage
       ctx.stroke(); 
     }
   }else{
     const pulseRadius = player.radius * pulse;
-    // Gradiente radial para player normal
+    
+    // Glow effect para rage mode
+    if(glowColor){
+      ctx.shadowColor = glowColor;
+      ctx.shadowBlur = glowBlur;
+    }
+    
     const gradient = ctx.createRadialGradient(player.x, player.y, 0, player.x, player.y, pulseRadius);
-    gradient.addColorStop(0, '#66B2FF'); // centro mais claro
-    gradient.addColorStop(0.7, '#4A90E2'); // meio
-    gradient.addColorStop(1, '#2E5C8A'); // borda mais escura
+    gradient.addColorStop(0, centerColor);
+    gradient.addColorStop(0.7, midColor);
+    gradient.addColorStop(1, borderColor);
     
     ctx.fillStyle = gradient;
     ctx.beginPath(); 
     ctx.arc(player.x,player.y,pulseRadius,0,Math.PI*2); 
     ctx.fill(); 
-    ctx.strokeStyle='#1A4B73'; 
-    ctx.lineWidth = 2;
+    
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = player.rageMode ? 3 : 2; // Borda mais grossa no rage
     ctx.stroke();
   }
 
@@ -522,21 +674,18 @@ function drawMini(){
   mctx.fillStyle='#071c2d'; mctx.fillRect(0,0,w,h);
   const sx=w/WORLD_W, sy=h/WORLD_H;
 
-  // viewport
   const halfW=(W*0.5)/camera.zoom, halfH=(H*0.5)/camera.zoom;
   mctx.strokeStyle='#ffffffb0'; mctx.lineWidth=1.5;
   mctx.strokeRect((camera.x-halfW)*sx,(camera.y-halfH)*sy,(halfW*2)*sx,(halfH*2)*sy);
 
-  // dots
   function dot(x,y,r,c){ mctx.fillStyle=c; mctx.beginPath(); mctx.arc(x*sx,y*sy,Math.max(2,r*sx*0.35),0,Math.PI*2); mctx.fill(); }
   for(const e of enemies) dot(e.x,e.y,e.radius,'#ff5577');
+  for(const p of powerUps) dot(p.x,p.y,p.radius,'#FF006E'); // Rage power-ups no minimap
   const px = player.split? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
   const py = player.split? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
   const pr = player.split? Math.max(player.splitBalls[0].radius,player.splitBalls[1].radius) : player.radius;
-  dot(px,py,pr,'#00ff99');
+  dot(px,py,pr,player.rageMode ? '#FF006E' : '#00ff99'); // Player muda cor no rage mode
 }
-
-// Inicia parado na tela de start (nada é desenhado do mundo até startGame)
 </script>
 
 </body>
