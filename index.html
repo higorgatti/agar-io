@@ -284,8 +284,8 @@ function createParticles(x, y, color = '#FFD700'){
 function randFruit(){ const e=FRUITS[Math.floor(Math.random()*FRUITS.length)]; return {x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,radius:10,emoji:e}; }
 
 function updateEnemyAI(enemy, now){
-  // Pensar a cada 200ms para economia de performance
-  if(now - enemy.lastThink < 200) return;
+  // Pensar a cada 150ms para ser mais agressivo
+  if(now - enemy.lastThink < 150) return;
   enemy.lastThink = now;
   
   // Calcular posição e massa do player
@@ -294,54 +294,100 @@ function updateEnemyAI(enemy, now){
   const pMass = player.split ? player.splitBalls[0].mass+player.splitBalls[1].mass : player.mass;
   const distToPlayer = Math.hypot(enemy.x - pX, enemy.y - pY);
   
-  // Reduzir medo gradualmente
-  enemy.fearLevel = Math.max(0, enemy.fearLevel - 1);
+  // PREDIÇÃO DE MOVIMENTO - Calcular onde player estará
+  const pVx = player.split ? (player.splitBalls[0].vx + player.splitBalls[1].vx)/2 : (player.vx || 0);
+  const pVy = player.split ? (player.splitBalls[0].vy + player.splitBalls[1].vy)/2 : (player.vy || 0);
   
-  // Decidir comportamento baseado na situação
-  if(distToPlayer < 200){
-    if(player.rageMode){
-      // Muito medo do rage mode
-      enemy.behavior = 'flee';
-      enemy.target = {x: pX, y: pY};
-      enemy.fearLevel = 10;
-    } else if(enemy.mass > pMass * 1.3){
-      // Sou maior, vou perseguir
-      enemy.behavior = 'chase';
-      enemy.target = {x: pX, y: pY};
-    } else if(pMass > enemy.mass * 1.3){
-      // Player é maior, fugir!
-      enemy.behavior = 'flee';
-      enemy.target = {x: pX, y: pY};
-      enemy.fearLevel = 5;
-    } else {
-      // Tamanhos similares, procurar comida
-      enemy.behavior = 'hunt_food';
-    }
-  } else {
-    // Longe do player, procurar comida ou vagar
-    if(Math.random() < 0.3){
-      enemy.behavior = 'hunt_food';
-    } else {
-      enemy.behavior = 'wander';
+  // Tempo de predição baseado na distância e tipo do inimigo
+  let predictionTime = 1.0; // 1 segundo base
+  if(enemy.type === 'hunter') predictionTime = 1.5; // Hunters são mais preditivos
+  if(enemy.type === 'aggressive') predictionTime = 1.2; // Agressivos antecipam bem
+  if(enemy.type === 'cautious') predictionTime = 0.8; // Cautelosos são mais reativos
+  if(enemy.type === 'speedy') predictionTime = 0.7; // Speedys confiam na velocidade
+  
+  // Ajustar predição pela distância (mais longe = mais tempo)
+  const distanceFactor = Math.min(2.0, distToPlayer / 100);
+  predictionTime *= distanceFactor;
+  
+  // Posição predita do player
+  const predictedX = pX + pVx * predictionTime * 60; // 60fps
+  const predictedY = pY + pVy * predictionTime * 60;
+  
+  // Reduzir medo mais devagar (inimigos mais persistentes)
+  enemy.fearLevel = Math.max(0, enemy.fearLevel - 0.5);
+  
+  // PRIORIDADE 1: Encontrar inimigos menores para comer
+  let targetEnemy = null;
+  let closestEnemyDist = Infinity;
+  
+  for(const other of enemies) {
+    if(other === enemy) continue;
+    
+    const dist = Math.hypot(enemy.x - other.x, enemy.y - other.y);
+    if(enemy.mass > other.mass * 1.3 && dist < 250 && dist < closestEnemyDist) {
+      targetEnemy = other;
+      closestEnemyDist = dist;
     }
   }
   
-  // Encontrar comida próxima se estiver procurando
-  if(enemy.behavior === 'hunt_food'){
+  // Se encontrou inimigo menor, perseguir com predição
+  if(targetEnemy) {
+    enemy.behavior = 'hunt_enemy';
+    
+    // Predição para outros inimigos também
+    const targetVx = targetEnemy.vx || 0;
+    const targetVy = targetEnemy.vy || 0;
+    const enemyPredictionTime = 0.8; // Menos tempo para inimigos (são mais erráticos)
+    
+    enemy.target = {
+      x: targetEnemy.x + targetVx * enemyPredictionTime * 60,
+      y: targetEnemy.y + targetVy * enemyPredictionTime * 60
+    };
+    return;
+  }
+  
+  // PRIORIDADE 2: Caçar o player se sou maior (com predição)
+  if(distToPlayer < 300) {
+    if(player.rageMode) {
+      // Fugir do rage mode, predizendo onde player estará
+      enemy.behavior = 'flee';
+      enemy.target = {x: predictedX, y: predictedY};
+      enemy.fearLevel = 5;
+    } else if(enemy.mass > pMass * 1.2) {
+      // Perseguir o player agressivamente com predição
+      enemy.behavior = 'chase';
+      enemy.target = {x: predictedX, y: predictedY};
+    } else if(pMass > enemy.mass * 1.5) {
+      // Fugir apenas se player for MUITO maior
+      enemy.behavior = 'flee';
+      enemy.target = {x: predictedX, y: predictedY};
+      enemy.fearLevel = 3;
+    } else {
+      // Tamanhos similares - competir por comida
+      enemy.behavior = 'hunt_food';
+    }
+  } else {
+    // PRIORIDADE 3: Crescer comendo comida
+    enemy.behavior = 'hunt_food';
+  }
+  
+  // Encontrar comida próxima sempre (crescimento constante)
+  if(enemy.behavior === 'hunt_food') {
     let closestFood = null;
     let closestDist = Infinity;
     
-    for(const f of food){
+    for(const f of food) {
       const dist = Math.hypot(enemy.x - f.x, enemy.y - f.y);
-      if(dist < 150 && dist < closestDist){
+      if(dist < 200 && dist < closestDist) {
         closestFood = f;
         closestDist = dist;
       }
     }
     
-    if(closestFood){
+    if(closestFood) {
       enemy.target = {x: closestFood.x, y: closestFood.y};
     } else {
+      // Se não há comida próxima, vagar procurando
       enemy.behavior = 'wander';
     }
   }
@@ -349,29 +395,40 @@ function updateEnemyAI(enemy, now){
 
 function moveEnemyAI(enemy){
   let targetX = enemy.x, targetY = enemy.y;
-  let speed = enemy.baseSpeed || 0.3; // Usar velocidade base do tipo
+  let speed = enemy.baseSpeed || 0.3;
   
   // Ajustar velocidade baseado no tamanho
   speed = speed * (30 / (enemy.radius + 10));
   
   // Modificadores baseados no tipo
-  if(enemy.type === 'aggressive' && enemy.behavior === 'chase') {
-    speed *= 1.4; // Agressivos são mais rápidos quando perseguindo
+  if(enemy.type === 'aggressive') {
+    speed *= 1.3; // Agressivos sempre mais rápidos
   } else if(enemy.type === 'cautious' && enemy.behavior === 'flee') {
     speed *= 1.6; // Cautelosos fogem mais rápido
   } else if(enemy.type === 'speedy') {
     speed *= 1.8; // Speedys são sempre mais rápidos
   } else if(enemy.type === 'tank') {
-    speed *= 0.6; // Tanks são mais lentos
+    speed *= 0.7; // Tanks são mais lentos
+  } else if(enemy.type === 'hunter') {
+    speed *= 1.2; // Hunters são focados
   }
   
   // Comportamentos
   switch(enemy.behavior){
+    case 'hunt_enemy':
+      // Caçar outros inimigos agressivamente
+      if(enemy.target){
+        targetX = enemy.target.x;
+        targetY = enemy.target.y;
+        speed *= 1.5; // Muito rápido quando caçando outros inimigos
+      }
+      break;
+      
     case 'chase':
       if(enemy.target){
         targetX = enemy.target.x;
         targetY = enemy.target.y;
-        speed *= 1.2; // Mais rápido quando perseguindo
+        speed *= 1.3; // Mais rápido quando perseguindo player
       }
       break;
       
@@ -381,9 +438,9 @@ function moveEnemyAI(enemy){
         const dx = enemy.x - enemy.target.x;
         const dy = enemy.y - enemy.target.y;
         const dist = Math.hypot(dx, dy) || 1;
-        targetX = enemy.x + (dx/dist) * 100;
-        targetY = enemy.y + (dy/dist) * 100;
-        speed *= (1.5 + enemy.fearLevel * 0.1); // Mais rápido quando com medo
+        targetX = enemy.x + (dx/dist) * 120;
+        targetY = enemy.y + (dy/dist) * 120;
+        speed *= (1.4 + enemy.fearLevel * 0.1); // Mais rápido quando com medo
       }
       break;
       
@@ -391,27 +448,27 @@ function moveEnemyAI(enemy){
       if(enemy.target){
         targetX = enemy.target.x;
         targetY = enemy.target.y;
-        speed *= 0.8; // Mais devagar quando procurando comida
+        speed *= 1.0; // Velocidade normal para comida
       }
       break;
       
     case 'wander':
     default:
-      // Movimento aleatório suave
-      targetX = enemy.x + (Math.random() - 0.5) * 50;
-      targetY = enemy.y + (Math.random() - 0.5) * 50;
-      speed *= 0.6;
+      // Movimento de exploração mais ativo
+      targetX = enemy.x + (Math.random() - 0.5) * 80;
+      targetY = enemy.y + (Math.random() - 0.5) * 80;
+      speed *= 0.8;
       break;
   }
   
   // Evitar bordas do mundo
   const margin = enemy.radius + 50;
-  if(enemy.x < margin) targetX = enemy.x + 100;
-  if(enemy.x > WORLD_W - margin) targetX = enemy.x - 100;
-  if(enemy.y < margin) targetY = enemy.y + 100;
-  if(enemy.y > WORLD_H - margin) targetY = enemy.y - 100;
+  if(enemy.x < margin) targetX = enemy.x + 120;
+  if(enemy.x > WORLD_W - margin) targetX = enemy.x - 120;
+  if(enemy.y < margin) targetY = enemy.y + 120;
+  if(enemy.y > WORLD_H - margin) targetY = enemy.y - 120;
   
-  // Aplicar movimento suave
+  // Aplicar movimento mais agressivo
   const dx = targetX - enemy.x;
   const dy = targetY - enemy.y;
   const dist = Math.hypot(dx, dy) || 1;
@@ -419,9 +476,9 @@ function moveEnemyAI(enemy){
   const ax = (dx / dist) * speed;
   const ay = (dy / dist) * speed;
   
-  // Movimento com inércia
-  enemy.vx = enemy.vx * 0.8 + ax * 0.2;
-  enemy.vy = enemy.vy * 0.8 + ay * 0.2;
+  // Movimento com menos inércia (mais responsivo)
+  enemy.vx = enemy.vx * 0.75 + ax * 0.25;
+  enemy.vy = enemy.vy * 0.75 + ay * 0.25;
   
   // Limitar velocidade máxima
   const maxSpeed = speed;
@@ -582,55 +639,54 @@ function renderEnemy(e) {
   const time = Date.now() * 0.003;
   e.animPhase += 0.02;
   
-  // Cor baseada no comportamento
+  // Cor baseada no comportamento - mais agressiva
   let displayColor = e.color;
-  if(e.behavior === 'chase') displayColor = '#FF6B6B';
-  else if(e.behavior === 'flee') displayColor = '#4ECDC4';
-  else if(e.behavior === 'hunt_food') displayColor = '#45B7D1';
-  else if(e.fearLevel > 0) displayColor = '#FFD93D';
+  if(e.behavior === 'hunt_enemy') displayColor = '#FF0000'; // Vermelho intenso quando caçando outros inimigos
+  else if(e.behavior === 'chase') displayColor = '#FF6B6B'; // Vermelho quando perseguindo player
+  else if(e.behavior === 'flee') displayColor = '#4ECDC4'; // Azul quando fugindo
+  else if(e.behavior === 'hunt_food') displayColor = '#45B7D1'; // Azul claro quando procurando comida
+  else if(e.fearLevel > 0) displayColor = '#FFD93D'; // Amarelo quando com medo
   
   // Renderização específica por tipo
   switch(e.type) {
     case 'basic':
-      // Inimigo padrão simples
       ctx.fillStyle = displayColor;
       ctx.beginPath();
       ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,.45)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = e.behavior === 'hunt_enemy' ? '#FF0000' : 'rgba(255,255,255,.45)';
+      ctx.lineWidth = e.behavior === 'hunt_enemy' ? 3 : 1;
       ctx.stroke();
       break;
       
     case 'aggressive':
-      // Inimigo com spikes
+      // Spikes mais intensos quando caçando
       const spikes = 8;
-      const spikeLength = e.radius * 0.3;
+      const spikeLength = e.radius * (e.behavior === 'hunt_enemy' ? 0.4 : 0.3);
       
       ctx.fillStyle = displayColor;
       ctx.beginPath();
       for(let i = 0; i < spikes; i++) {
-        const angle = (i / spikes) * Math.PI * 2 + e.animPhase * 0.5;
+        const angle = (i / spikes) * Math.PI * 2 + e.animPhase * (e.behavior === 'hunt_enemy' ? 1 : 0.5);
         const innerR = e.radius - spikeLength * 0.5;
-        const outerR = e.radius + spikeLength * (0.5 + Math.sin(time * 2 + i) * 0.3);
+        const outerR = e.radius + spikeLength * (0.5 + Math.sin(time * (e.behavior === 'hunt_enemy' ? 4 : 2) + i) * 0.3);
         
         if(i === 0) {
           ctx.moveTo(e.x + Math.cos(angle) * outerR, e.y + Math.sin(angle) * outerR);
         }
         
-        const nextAngle = ((i + 1) / spikes) * Math.PI * 2 + e.animPhase * 0.5;
+        const nextAngle = ((i + 1) / spikes) * Math.PI * 2 + e.animPhase * (e.behavior === 'hunt_enemy' ? 1 : 0.5);
         ctx.lineTo(e.x + Math.cos(angle) * outerR, e.y + Math.sin(angle) * outerR);
         ctx.lineTo(e.x + Math.cos(nextAngle) * innerR, e.y + Math.sin(nextAngle) * innerR);
       }
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = '#FF0000';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = e.behavior === 'hunt_enemy' ? '#CC0000' : '#FF0000';
+      ctx.lineWidth = e.behavior === 'hunt_enemy' ? 3 : 2;
       ctx.stroke();
       break;
       
     case 'cautious':
-      // Inimigo com olhos grandes (cauteloso)
       ctx.fillStyle = displayColor;
       ctx.beginPath();
       ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2);
@@ -639,10 +695,10 @@ function renderEnemy(e) {
       ctx.lineWidth = 1;
       ctx.stroke();
       
-      // Olhos grandes e nervosos
+      // Olhos mais alertas quando caçando
       const eyeSize = e.radius * 0.25;
       const eyeOffset = e.radius * 0.4;
-      const nervousness = Math.sin(time * 8) * 0.1;
+      const nervousness = Math.sin(time * (e.behavior === 'hunt_enemy' ? 12 : 8)) * 0.1;
       
       ctx.fillStyle = 'white';
       ctx.beginPath();
@@ -650,7 +706,7 @@ function renderEnemy(e) {
       ctx.arc(e.x + eyeOffset - nervousness, e.y - eyeOffset, eyeSize, 0, Math.PI*2);
       ctx.fill();
       
-      ctx.fillStyle = 'black';
+      ctx.fillStyle = e.behavior === 'hunt_enemy' ? 'red' : 'black';
       ctx.beginPath();
       ctx.arc(e.x - eyeOffset + nervousness, e.y - eyeOffset, eyeSize*0.6, 0, Math.PI*2);
       ctx.arc(e.x + eyeOffset - nervousness, e.y - eyeOffset, eyeSize*0.6, 0, Math.PI*2);
@@ -658,11 +714,11 @@ function renderEnemy(e) {
       break;
       
     case 'speedy':
-      // Inimigo com rastros de movimento
-      const trailLength = 5;
+      // Rastros mais intensos quando caçando
+      const trailLength = e.behavior === 'hunt_enemy' ? 8 : 5;
       for(let i = 0; i < trailLength; i++) {
         const alpha = 1 - (i / trailLength);
-        const trailRadius = e.radius * (1 - i * 0.1);
+        const trailRadius = e.radius * (1 - i * 0.08);
         const trailX = e.x - (e.vx || 0) * i * 3;
         const trailY = e.y - (e.vy || 0) * i * 3;
         
@@ -674,18 +730,16 @@ function renderEnemy(e) {
       }
       ctx.globalAlpha = 1;
       
-      // Corpo principal menor
       ctx.fillStyle = displayColor;
       ctx.beginPath();
       ctx.arc(e.x, e.y, e.radius * 0.8, 0, Math.PI*2);
       ctx.fill();
-      ctx.strokeStyle = '#FFFF00';
+      ctx.strokeStyle = e.behavior === 'hunt_enemy' ? '#FF0000' : '#FFFF00';
       ctx.lineWidth = 2;
       ctx.stroke();
       break;
       
     case 'tank':
-      // Inimigo grande e robusto
       const segments = 3;
       for(let i = 0; i < segments; i++) {
         const segmentRadius = e.radius * (1 - i * 0.15);
@@ -698,7 +752,7 @@ function renderEnemy(e) {
         ctx.fill();
         
         if(i === 0) {
-          ctx.strokeStyle = 'rgba(100,100,100,0.8)';
+          ctx.strokeStyle = e.behavior === 'hunt_enemy' ? 'rgba(200,0,0,0.8)' : 'rgba(100,100,100,0.8)';
           ctx.lineWidth = 3;
           ctx.stroke();
         }
@@ -707,7 +761,6 @@ function renderEnemy(e) {
       break;
       
     case 'hunter':
-      // Inimigo focado com mira
       ctx.fillStyle = displayColor;
       ctx.beginPath();
       ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2);
@@ -716,11 +769,11 @@ function renderEnemy(e) {
       ctx.lineWidth = 1;
       ctx.stroke();
       
-      // Mira/crosshair quando caçando
-      if(e.behavior === 'chase' || e.behavior === 'hunt_food') {
-        ctx.strokeStyle = '#00FF00';
-        ctx.lineWidth = 2;
-        const crossSize = e.radius * 1.2;
+      // Mira mais intensa quando caçando inimigos
+      if(e.behavior === 'chase' || e.behavior === 'hunt_food' || e.behavior === 'hunt_enemy') {
+        ctx.strokeStyle = e.behavior === 'hunt_enemy' ? '#FF0000' : '#00FF00';
+        ctx.lineWidth = e.behavior === 'hunt_enemy' ? 3 : 2;
+        const crossSize = e.radius * (e.behavior === 'hunt_enemy' ? 1.4 : 1.2);
         
         ctx.beginPath();
         ctx.moveTo(e.x - crossSize, e.y);
@@ -731,13 +784,21 @@ function renderEnemy(e) {
         
         // Círculo da mira
         ctx.beginPath();
-        ctx.arc(e.x, e.y, e.radius * 1.3, 0, Math.PI*2);
+        ctx.arc(e.x, e.y, e.radius * (e.behavior === 'hunt_enemy' ? 1.5 : 1.3), 0, Math.PI*2);
         ctx.stroke();
       }
       break;
   }
   
-  // Indicador visual do medo (tremor) para todos os tipos
+  // Indicador de agressividade quando caçando outros inimigos
+  if(e.behavior === 'hunt_enemy') {
+    ctx.fillStyle = 'rgba(255,0,0,0.2)';
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.radius * 1.3, 0, Math.PI*2);
+    ctx.fill();
+  }
+  
+  // Indicador visual do medo (tremor)
   if(e.fearLevel > 3){
     const shake = (Math.random()-0.5) * e.fearLevel;
     ctx.fillStyle = 'rgba(255,255,0,0.3)';
@@ -861,7 +922,9 @@ function update(){
   }
 
   // inimigos com IA melhorada + colisões (com rage bonus)
-  for(const e of enemies){
+  for(let i = 0; i < enemies.length; i++){
+    const e = enemies[i];
+    
     // IA Inteligente
     updateEnemyAI(e, now);
     moveEnemyAI(e);
@@ -874,51 +937,103 @@ function update(){
     e.x = Math.max(e.radius, Math.min(WORLD_W-e.radius, e.x)); 
     e.y = Math.max(e.radius, Math.min(WORLD_H-e.radius, e.y));
     
-    // Inimigos comem frutas (mas só se não estão fugindo)
-    if(e.behavior !== 'flee'){
-      for(let i=food.length-1;i>=0;i--){
-        const f=food[i]; 
-        if(Math.hypot(e.x-f.x,e.y-f.y)<e.radius+f.radius){ 
-          e.mass+=0.2*f.radius; e.radius=massToRadius(e.mass); food.splice(i,1); 
+    // NOVO: Inimigos comem uns aos outros
+    for(let j = i + 1; j < enemies.length; j++){
+      const other = enemies[j];
+      const dist = Math.hypot(e.x - other.x, e.y - other.y);
+      
+      if(dist < e.radius + other.radius) {
+        if(e.mass > other.mass * 1.15) {
+          // e come other
+          createParticles(other.x, other.y, other.color);
+          e.mass += other.mass * 0.9;
+          e.radius = massToRadius(e.mass);
+          
+          // Respawn o inimigo comido em local seguro
+          other.mass = 15 + Math.random() * 30;
+          other.radius = massToRadius(other.mass);
+          other.x = Math.random() * WORLD_W;
+          other.y = Math.random() * WORLD_H;
+          other.behavior = 'wander';
+          other.target = null;
+          other.fearLevel = 0;
+          
+        } else if(other.mass > e.mass * 1.15) {
+          // other come e
+          createParticles(e.x, e.y, e.color);
+          other.mass += e.mass * 0.9;
+          other.radius = massToRadius(other.mass);
+          
+          // Respawn o inimigo comido em local seguro
+          e.mass = 15 + Math.random() * 30;
+          e.radius = massToRadius(e.mass);
+          e.x = Math.random() * WORLD_W;
+          e.y = Math.random() * WORLD_H;
+          e.behavior = 'wander';
+          e.target = null;
+          e.fearLevel = 0;
         }
       }
     }
     
-    for(let i=pellets.length-1;i>=0;i--){
-      const p=pellets[i]; if(Math.hypot(e.x-p.x,e.y-p.y)<e.radius+p.radius){ e.mass+=p.mass*0.8; e.radius=massToRadius(e.mass); pellets.splice(i,1); }
+    // Inimigos comem frutas sempre (crescimento agressivo)
+    for(let k = food.length-1; k >= 0; k--){
+      const f = food[k]; 
+      if(Math.hypot(e.x-f.x, e.y-f.y) < e.radius+f.radius){ 
+        e.mass += 0.3*f.radius; // Mais ganho para crescer mais rápido
+        e.radius = massToRadius(e.mass); 
+        food.splice(k,1); 
+      }
     }
     
+    // Inimigos comem pellets
+    for(let k = pellets.length-1; k >= 0; k--){
+      const p = pellets[k]; 
+      if(Math.hypot(e.x-p.x, e.y-p.y) < e.radius+p.radius){ 
+        e.mass += p.mass*0.9; 
+        e.radius = massToRadius(e.mass); 
+        pellets.splice(k,1); 
+      }
+    }
+    
+    // Colisão com player
     const pMass = player.split ? player.splitBalls[0].mass+player.splitBalls[1].mass : player.mass;
     const pX = player.split ? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
     const pY = player.split ? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
-    if(Math.hypot(pX-e.x,pY-e.y) < (player.split?Math.max(player.splitBalls[0].radius,player.splitBalls[1].radius):player.radius)+e.radius){
-      if(pMass>e.mass*1.2){
+    
+    if(Math.hypot(pX-e.x, pY-e.y) < (player.split?Math.max(player.splitBalls[0].radius,player.splitBalls[1].radius):player.radius)+e.radius){
+      if(pMass > e.mass*1.15){
         createParticles(e.x, e.y, '#FF4444');
-        const g=e.mass*0.8 * (player.rageMode ? 2 : 1); // 2x no rage mode para inimigos
+        const g = e.mass*0.9 * (player.rageMode ? 2 : 1);
+        
         if(player.split){ 
-          player.splitBalls[0].mass+=g*0.5; player.splitBalls[1].mass+=g*0.5; 
-          player.splitBalls[0].radius=massToRadius(player.splitBalls[0].mass); 
-          player.splitBalls[1].radius=massToRadius(player.splitBalls[1].mass);
+          player.splitBalls[0].mass += g*0.5; 
+          player.splitBalls[1].mass += g*0.5; 
+          player.splitBalls[0].radius = massToRadius(player.splitBalls[0].mass); 
+          player.splitBalls[1].radius = massToRadius(player.splitBalls[1].mass);
         } else { 
-          player.mass+=g; player.radius=massToRadius(player.mass); 
+          player.mass += g; 
+          player.radius = massToRadius(player.mass); 
         }
+        
         if(player.rageMode){
-          // Partículas extra no rage mode
           for(let j=0; j<5; j++){
             createParticles(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#FF006E');
           }
         }
         
-        // Respawn inimigo com nova IA
-        e.mass=20+Math.random()*50; 
-        e.radius=massToRadius(e.mass); 
-        e.x=Math.random()*WORLD_W; 
-        e.y=Math.random()*WORLD_H;
-        e.behavior='wander';
-        e.target=null;
-        e.fearLevel=0;
+        // Respawn inimigo
+        e.mass = 20+Math.random()*40; 
+        e.radius = massToRadius(e.mass); 
+        e.x = Math.random()*WORLD_W; 
+        e.y = Math.random()*WORLD_H;
+        e.behavior = 'wander';
+        e.target = null;
+        e.fearLevel = 0;
         
-      }else if(e.mass>pMass*1.1){ endGame(); }
+      } else if(e.mass > pMass*1.1){ 
+        endGame(); 
+      }
     }
   }
 
