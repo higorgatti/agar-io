@@ -683,7 +683,7 @@ function update(){
     } else {
       if(player.mass > e.mass * 1.15) playerCanEatEnemy = true;
     }
-    if(playerCanEatEnemy){ eatEnemy(i); if(!gameRunning) return; continue; }
+    if(playerCanEatEnemy){ eatEnemy(i); if(!gameRunning) return; }
 
     // 2) Caso contrário, o inimigo tenta comer células individuais do player
     if(player.split){
@@ -701,18 +701,16 @@ function update(){
           }
         }
       }
-      if(consumed){ if(!gameRunning) return; continue; }
+      if(consumed){ if(!gameRunning) return; }
     } else {
       const d=Math.hypot(player.x-e.x,player.y-e.y);
       if(d<player.radius+e.radius){
         if(e.mass > player.mass * 1.10){
           enemyEatsPlayerCell(-1); // sinaliza que é célula única
           if(!gameRunning) return;
-          continue;
         } else if(player.mass > e.mass * 1.15){
           eatEnemy(i);
           if(!gameRunning) return;
-          continue;
         }
       }
     }
