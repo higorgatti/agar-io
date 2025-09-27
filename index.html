@@ -490,7 +490,7 @@ function endGame(){
   overPane.classList.remove('hidden');
 }
 
-function speedFromRadius(r){ return 6/Math.sqrt(r+40); }
+function speedFromRadius(r){ return 12/Math.sqrt(r+30); }
 function getTarget(){ return moveTarget?{x:moveTarget.x,y:moveTarget.y}:{x:mouse.x,y:mouse.y}; }
 
 function movePlayer(){
@@ -498,15 +498,15 @@ function movePlayer(){
   if(player.split && player.splitBalls.length){
     for(const b of player.splitBalls){
       const dx=t.x-b.x, dy=t.y-b.y, d=Math.hypot(dx,dy)||1;
-      const ax=(dx/d)*0.35, ay=(dy/d)*0.35, maxS=speedFromRadius(b.radius);
-      b.vx=(b.vx||0)*0.9+ax; b.vy=(b.vy||0)*0.9+ay;
+      const ax=(dx/d)*0.6, ay=(dy/d)*0.6, maxS=speedFromRadius(b.radius);
+      b.vx=(b.vx||0)*0.85+ax; b.vy=(b.vy||0)*0.85+ay;
       const v=Math.hypot(b.vx,b.vy); if(v>maxS){ b.vx=(b.vx/v)*maxS; b.vy=(b.vy/v)*maxS; }
       b.x+=b.vx; b.y+=b.vy; b.x=Math.max(b.radius,Math.min(WORLD_W-b.radius,b.x)); b.y=Math.max(b.radius,Math.min(WORLD_H-b.radius,b.y));
     }
   }else{
     const dx=t.x-player.x, dy=t.y-player.y, d=Math.hypot(dx,dy)||1;
-    const ax=(dx/d)*0.35, ay=(dy/d)*0.35, maxS=speedFromRadius(player.radius);
-    player.vx=(player.vx||0)*0.9+ax; player.vy=(player.vy||0)*0.9+ay;
+    const ax=(dx/d)*0.6, ay=(dy/d)*0.6, maxS=speedFromRadius(player.radius);
+    player.vx=(player.vx||0)*0.85+ax; player.vy=(player.vy||0)*0.85+ay;
     const v=Math.hypot(player.vx,player.vy); if(v>maxS){ player.vx=(player.vx/v)*maxS; player.vy=(player.vy/v)*maxS; }
     player.x+=player.vx; player.y+=player.vy; player.x=Math.max(player.radius,Math.min(WORLD_W-player.radius,player.x)); player.y=Math.max(player.radius,Math.min(WORLD_H-player.radius,player.y));
   }
