@@ -12,112 +12,110 @@
     #gameCanvas{display:block;width:100%;height:100%;touch-action:none;cursor:none}
     .hidden{display:none!important}
 
-```
 /* HUD - Glassmorphism */
 #ui{
-  position:absolute;left:10px;top:10px;z-index:10;color:#fff;
-  background:rgba(255,255,255,0.1);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,0.2);
-  border-radius:16px;
-  padding:12px 16px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.3);
-  font-weight:600;
-  text-shadow:none;
-}
-
-/* Status do Rage Mode */
-#rageStatus{
-  position:absolute;left:10px;bottom:10px;z-index:10;
-  background:rgba(255,0,110,0.15);
-  backdrop-filter:blur(15px);
-  -webkit-backdrop-filter:blur(15px);
-  border:1px solid rgba(255,0,110,0.4);
-  border-radius:12px;
-  padding:8px 12px;
-  color:#fff;
-  font-size:14px;
-  font-weight:600;
-  box-shadow:0 4px 16px rgba(0,0,0,0.3);
-  display:none;
+position:absolute;left:10px;top:10px;z-index:10;color:#fff;
+background:rgba(255,255,255,0.1);
+backdrop-filter:blur(20px);
+-webkit-backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,0.2);
+border-radius:16px;
+padding:12px 16px;
+box-shadow:0 8px 32px rgba(0,0,0,0.3);
+font-weight:600;
+text-shadow:none;
 }
 
 /* Start - Glassmorphism */
 #start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
 #start .box{
-  width:min(420px,92vw);
-  background:rgba(255,255,255,0.1);
-  backdrop-filter:blur(30px);
-  -webkit-backdrop-filter:blur(30px);
-  border:1px solid rgba(0,255,153,0.3);
-  color:#fff;
-  border-radius:20px;
-  padding:24px;
-  text-align:center;
-  box-shadow:0 16px 40px rgba(0,0,0,0.4);
+width:min(420px,92vw);
+background:rgba(255,255,255,0.1);
+backdrop-filter:blur(30px);
+-webkit-backdrop-filter:blur(30px);
+border:1px solid rgba(0,255,153,0.3);
+color:#fff;
+border-radius:20px;
+padding:24px;
+text-align:center;
+box-shadow:0 16px 40px rgba(0,0,0,0.4);
 }
 #start h1{margin:8px 0 12px 0;text-shadow:0 2px 10px rgba(0,0,0,0.5)}
 #start p{opacity:0.9;margin-bottom:20px}
 #start button{
-  width:100%;padding:16px;border-radius:12px;border:none;
-  background:rgba(0,255,136,0.9);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  font-weight:800;font-size:18px;
-  box-shadow:0 4px 20px rgba(0,255,136,0.3);
-  transition:all 0.3s ease;
-  cursor:pointer;
+width:100%;padding:16px;border-radius:12px;border:none;
+background:rgba(0,255,136,0.9);
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+font-weight:800;font-size:18px;
+box-shadow:0 4px 20px rgba(0,255,136,0.3);
+transition:all 0.3s ease;
+cursor:pointer;
 }
 #start button:hover{
-  background:rgba(0,255,136,1);
-  transform:translateY(-2px);
-  box-shadow:0 6px 25px rgba(0,255,136,0.4);
+background:rgba(0,255,136,1);
+transform:translateY(-2px);
+box-shadow:0 6px 25px rgba(0,255,136,0.4);
 }
 
 /* Game over - Glassmorphism */
 #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
 #over .box{
-  width:min(420px,92vw);
-  background:rgba(255,255,255,0.1);
-  backdrop-filter:blur(30px);
-  -webkit-backdrop-filter:blur(30px);
-  border:1px solid rgba(255,102,102,0.3);
-  color:#fff;
-  border-radius:20px;
-  padding:20px;
-  text-align:center;
-  box-shadow:0 16px 40px rgba(0,0,0,0.4);
+width:min(420px,92vw);
+background:rgba(255,255,255,0.1);
+backdrop-filter:blur(30px);
+-webkit-backdrop-filter:blur(30px);
+border:1px solid rgba(255,102,102,0.3);
+color:#fff;
+border-radius:20px;
+padding:20px;
+text-align:center;
+box-shadow:0 16px 40px rgba(0,0,0,0.4);
 }
 #over h2{text-shadow:0 2px 10px rgba(0,0,0,0.5);margin-bottom:12px}
 #over button{
-  padding:12px 20px;border-radius:12px;border:none;
-  background:rgba(0,255,136,0.9);
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  font-weight:800;
-  box-shadow:0 4px 20px rgba(0,255,136,0.3);
-  transition:all 0.3s ease;
-  cursor:pointer;
+padding:12px 20px;border-radius:12px;border:none;
+background:rgba(0,255,136,0.9);
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+font-weight:800;
+box-shadow:0 4px 20px rgba(0,255,136,0.3);
+transition:all 0.3s ease;
+cursor:pointer;
 }
 #over button:hover{
-  background:rgba(0,255,136,1);
-  transform:translateY(-2px);
+background:rgba(0,255,136,1);
+transform:translateY(-2px);
 }
 
 /* Minimap - Glassmorphism */
 #minimapWrap{
-  position:absolute;right:10px;top:10px;z-index:12;
-  background:rgba(255,255,255,0.1);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-  border:1px solid rgba(0,255,170,0.3);
-  border-radius:16px;
-  padding:8px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+position:absolute;right:10px;top:10px;z-index:12;
+background:rgba(255,255,255,0.1);
+backdrop-filter:blur(20px);
+-webkit-backdrop-filter:blur(20px);
+border:1px solid rgba(0,255,170,0.3);
+border-radius:16px;
+padding:8px;
+box-shadow:0 8px 32px rgba(0,0,0,0.3);
 }
 #minimap{display:block;width:180px;height:130px;border-radius:10px}
-```
+
+/* Status do Rage Mode */
+#rageStatus{
+position:absolute;left:10px;bottom:10px;z-index:10;
+background:rgba(255,0,110,0.2);
+backdrop-filter:blur(15px);
+-webkit-backdrop-filter:blur(15px);
+border:1px solid rgba(255,0,110,0.4);
+border-radius:12px;
+padding:8px 12px;
+color:#fff;
+font-size:14px;
+font-weight:600;
+box-shadow:0 4px 16px rgba(255,0,110,0.3);
+display:none;
+}
 
   </style>
 </head>
@@ -125,13 +123,14 @@
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
     <div id="ui" class="hidden">Pontuação: <b id="score">0</b> • Massa: <b id="mass">10</b></div>
-    <div id="rageStatus">😡 Rage Mode: <span id="rageTime">0</span>s</div>
+    <div id="rageStatus">😡 RAGE MODE (<span id="rageTime">10</span>s)</div>
     <div id="start">
       <div class="box">
         <h1>🦠 Agar Mobile</h1>
         <p>Toque para andar • Duplo-toque/Espaço: dividir • W: ejetar massa</p>
-        <p style="font-size:14px;opacity:0.8;margin-top:10px">🔥 <b>NOVO:</b> Colete bônus 😡 Rage Mode para crescer 3x mais rápido!</p>
-        <p style="font-size:12px;opacity:0.7">Teste rápido: Tecla R = Rage Mode instantâneo</p>
+        <p style="font-size:14px;opacity:0.8">😡 Colete bônus RAGE MODE para crescer 3x mais rápido!</p>
+        <p style="font-size:12px;opacity:0.7">🤖 6 TIPOS DE INIMIGOS: Básico, Agressivo, Cauteloso, Veloz, Tanque, Caçador!</p>
+        <p style="font-size:12px;opacity:0.6">Teste: Tecla R = Rage Mode instantâneo</p>
         <button id="btnStart">COMEÇAR</button>
       </div>
     </div>
@@ -175,6 +174,73 @@ const INITIAL_MASS=12;
 
 function massToRadius(m){ return Math.sqrt(Math.max(0.0001,m))*2+5; }
 
+function spawnEnemy(){
+  const types = ['basic', 'aggressive', 'cautious', 'speedy', 'tank', 'hunter'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  
+  let enemy = {
+    x: Math.random()*WORLD_W,
+    y: Math.random()*WORLD_H,
+    mass: 20+Math.random()*50,
+    radius: 0,
+    vx: 0, vy: 0,
+    behavior: 'wander',
+    target: null,
+    fearLevel: 0,
+    lastThink: 0,
+    type: type,
+    blinkTimer: Math.random() * 1000,
+    animPhase: Math.random() * 6.28
+  };
+  
+  // Configurar atributos baseados no tipo
+  switch(type) {
+    case 'basic':
+      enemy.color = `hsl(${200 + Math.random()*60}, 60%, 50%)`;
+      enemy.baseSpeed = 0.3;
+      enemy.aggressiveness = 0.3;
+      break;
+      
+    case 'aggressive':
+      enemy.color = `hsl(${0 + Math.random()*30}, 70%, 50%)`;
+      enemy.mass = 30 + Math.random()*40; // Maior
+      enemy.baseSpeed = 0.4;
+      enemy.aggressiveness = 0.8;
+      break;
+      
+    case 'cautious':
+      enemy.color = `hsl(${180 + Math.random()*40}, 55%, 60%)`;
+      enemy.mass = 15 + Math.random()*25; // Menor
+      enemy.baseSpeed = 0.25;
+      enemy.aggressiveness = 0.1;
+      break;
+      
+    case 'speedy':
+      enemy.color = `hsl(${60 + Math.random()*40}, 65%, 55%)`;
+      enemy.mass = 10 + Math.random()*20; // Bem pequeno
+      enemy.baseSpeed = 0.6;
+      enemy.aggressiveness = 0.4;
+      break;
+      
+    case 'tank':
+      enemy.color = `hsl(${280 + Math.random()*40}, 50%, 45%)`;
+      enemy.mass = 50 + Math.random()*60; // Bem grande
+      enemy.baseSpeed = 0.15;
+      enemy.aggressiveness = 0.2;
+      break;
+      
+    case 'hunter':
+      enemy.color = `hsl(${120 + Math.random()*40}, 70%, 45%)`;
+      enemy.mass = 25 + Math.random()*35;
+      enemy.baseSpeed = 0.35;
+      enemy.aggressiveness = 0.6;
+      break;
+  }
+  
+  enemy.radius = massToRadius(enemy.mass);
+  enemies.push(enemy);
+}
+
 function reset(){
   player={x:WORLD_W/2,y:WORLD_H/2,mass:INITIAL_MASS,radius:massToRadius(INITIAL_MASS),vx:0,vy:0,split:false,splitBalls:[],
     // Rage Mode
@@ -182,21 +248,22 @@ function reset(){
   };
   enemies=[]; food=[]; powerUps=[]; viruses=[]; pellets=[]; particles=[];
   for(let i=0;i<320;i++){food.push(randFruit());}
-  for(let i=0;i<12;i++){spawnEnemy();}
-  // Adicionar alguns bônus Rage Mode
-  for(let i=0;i<5;i++){spawnRagePowerUp();}
+  // Spawnar inimigos com diferentes tipos
+  for(let i=0;i<25;i++){spawnEnemy();}
+  // Spawnar alguns bônus Rage Mode
+  for(let i=0;i<5;i++){spawnRageBonus();}
   for(let i=0;i<12;i++){viruses.push({x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,radius:18+Math.random()*8,rotation:0,pulse:Math.random()*6.28});}
 }
 
-function spawnRagePowerUp(){
+function spawnRageBonus(){
   powerUps.push({
-    x: Math.random() * WORLD_W,
-    y: Math.random() * WORLD_H,
+    x: Math.random()*WORLD_W,
+    y: Math.random()*WORLD_H,
     radius: 15,
     type: 'rage',
     color: '#FF006E',
     emoji: '😡',
-    pulse: Math.random() * 6.28
+    pulse: Math.random()*6.28
   });
 }
 
@@ -215,7 +282,155 @@ function createParticles(x, y, color = '#FFD700'){
 }
 
 function randFruit(){ const e=FRUITS[Math.floor(Math.random()*FRUITS.length)]; return {x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,radius:10,emoji:e}; }
-function spawnEnemy(){ const m=20+Math.random()*50; enemies.push({x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,mass:m,radius:massToRadius(m),vx:Math.random()-0.5,vy:Math.random()-0.5,color:'hsl('+(Math.random()*60+300)+',70%,55%)'}); }
+
+function updateEnemyAI(enemy, now){
+  // Pensar a cada 200ms para economia de performance
+  if(now - enemy.lastThink < 200) return;
+  enemy.lastThink = now;
+  
+  // Calcular posição e massa do player
+  const pX = player.split ? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
+  const pY = player.split ? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
+  const pMass = player.split ? player.splitBalls[0].mass+player.splitBalls[1].mass : player.mass;
+  const distToPlayer = Math.hypot(enemy.x - pX, enemy.y - pY);
+  
+  // Reduzir medo gradualmente
+  enemy.fearLevel = Math.max(0, enemy.fearLevel - 1);
+  
+  // Decidir comportamento baseado na situação
+  if(distToPlayer < 200){
+    if(player.rageMode){
+      // Muito medo do rage mode
+      enemy.behavior = 'flee';
+      enemy.target = {x: pX, y: pY};
+      enemy.fearLevel = 10;
+    } else if(enemy.mass > pMass * 1.3){
+      // Sou maior, vou perseguir
+      enemy.behavior = 'chase';
+      enemy.target = {x: pX, y: pY};
+    } else if(pMass > enemy.mass * 1.3){
+      // Player é maior, fugir!
+      enemy.behavior = 'flee';
+      enemy.target = {x: pX, y: pY};
+      enemy.fearLevel = 5;
+    } else {
+      // Tamanhos similares, procurar comida
+      enemy.behavior = 'hunt_food';
+    }
+  } else {
+    // Longe do player, procurar comida ou vagar
+    if(Math.random() < 0.3){
+      enemy.behavior = 'hunt_food';
+    } else {
+      enemy.behavior = 'wander';
+    }
+  }
+  
+  // Encontrar comida próxima se estiver procurando
+  if(enemy.behavior === 'hunt_food'){
+    let closestFood = null;
+    let closestDist = Infinity;
+    
+    for(const f of food){
+      const dist = Math.hypot(enemy.x - f.x, enemy.y - f.y);
+      if(dist < 150 && dist < closestDist){
+        closestFood = f;
+        closestDist = dist;
+      }
+    }
+    
+    if(closestFood){
+      enemy.target = {x: closestFood.x, y: closestFood.y};
+    } else {
+      enemy.behavior = 'wander';
+    }
+  }
+}
+
+function moveEnemyAI(enemy){
+  let targetX = enemy.x, targetY = enemy.y;
+  let speed = enemy.baseSpeed || 0.3; // Usar velocidade base do tipo
+  
+  // Ajustar velocidade baseado no tamanho
+  speed = speed * (30 / (enemy.radius + 10));
+  
+  // Modificadores baseados no tipo
+  if(enemy.type === 'aggressive' && enemy.behavior === 'chase') {
+    speed *= 1.4; // Agressivos são mais rápidos quando perseguindo
+  } else if(enemy.type === 'cautious' && enemy.behavior === 'flee') {
+    speed *= 1.6; // Cautelosos fogem mais rápido
+  } else if(enemy.type === 'speedy') {
+    speed *= 1.8; // Speedys são sempre mais rápidos
+  } else if(enemy.type === 'tank') {
+    speed *= 0.6; // Tanks são mais lentos
+  }
+  
+  // Comportamentos
+  switch(enemy.behavior){
+    case 'chase':
+      if(enemy.target){
+        targetX = enemy.target.x;
+        targetY = enemy.target.y;
+        speed *= 1.2; // Mais rápido quando perseguindo
+      }
+      break;
+      
+    case 'flee':
+      if(enemy.target){
+        // Fugir na direção oposta
+        const dx = enemy.x - enemy.target.x;
+        const dy = enemy.y - enemy.target.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        targetX = enemy.x + (dx/dist) * 100;
+        targetY = enemy.y + (dy/dist) * 100;
+        speed *= (1.5 + enemy.fearLevel * 0.1); // Mais rápido quando com medo
+      }
+      break;
+      
+    case 'hunt_food':
+      if(enemy.target){
+        targetX = enemy.target.x;
+        targetY = enemy.target.y;
+        speed *= 0.8; // Mais devagar quando procurando comida
+      }
+      break;
+      
+    case 'wander':
+    default:
+      // Movimento aleatório suave
+      targetX = enemy.x + (Math.random() - 0.5) * 50;
+      targetY = enemy.y + (Math.random() - 0.5) * 50;
+      speed *= 0.6;
+      break;
+  }
+  
+  // Evitar bordas do mundo
+  const margin = enemy.radius + 50;
+  if(enemy.x < margin) targetX = enemy.x + 100;
+  if(enemy.x > WORLD_W - margin) targetX = enemy.x - 100;
+  if(enemy.y < margin) targetY = enemy.y + 100;
+  if(enemy.y > WORLD_H - margin) targetY = enemy.y - 100;
+  
+  // Aplicar movimento suave
+  const dx = targetX - enemy.x;
+  const dy = targetY - enemy.y;
+  const dist = Math.hypot(dx, dy) || 1;
+  
+  const ax = (dx / dist) * speed;
+  const ay = (dy / dist) * speed;
+  
+  // Movimento com inércia
+  enemy.vx = enemy.vx * 0.8 + ax * 0.2;
+  enemy.vy = enemy.vy * 0.8 + ay * 0.2;
+  
+  // Limitar velocidade máxima
+  const maxSpeed = speed;
+  const currentSpeed = Math.hypot(enemy.vx, enemy.vy);
+  if(currentSpeed > maxSpeed){
+    enemy.vx = (enemy.vx / currentSpeed) * maxSpeed;
+    enemy.vy = (enemy.vy / currentSpeed) * maxSpeed;
+  }
+}
 
 // ===== Controles =====
 document.getElementById('btnStart').onclick = startGame;
@@ -245,15 +460,14 @@ document.addEventListener('keydown',(e)=>{
   if(!gameRunning) return;
   if(e.key===' '){ e.preventDefault(); splitPlayer(); }
   if(e.key.toLowerCase()==='w'){ e.preventDefault(); ejectMass(); }
-  // Tecla de teste para Rage Mode
   if(e.key.toLowerCase()==='r'){ 
     e.preventDefault(); 
+    // Ativar Rage Mode para teste
     player.rageMode = true;
-    player.rageEnd = Date.now() + 12000;
-    // Efeito visual
+    player.rageEnd = Date.now() + 10000;
     const px = player.split ? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
     const py = player.split ? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
-    for(let j=0; j<10; j++){
+    for(let i=0; i<8; i++){
       createParticles(px + (Math.random()-0.5)*30, py + (Math.random()-0.5)*30, '#FF006E');
     }
   }
@@ -364,6 +578,175 @@ function maybeMerge(){
   }
 }
 
+function renderEnemy(e) {
+  const time = Date.now() * 0.003;
+  e.animPhase += 0.02;
+  
+  // Cor baseada no comportamento
+  let displayColor = e.color;
+  if(e.behavior === 'chase') displayColor = '#FF6B6B';
+  else if(e.behavior === 'flee') displayColor = '#4ECDC4';
+  else if(e.behavior === 'hunt_food') displayColor = '#45B7D1';
+  else if(e.fearLevel > 0) displayColor = '#FFD93D';
+  
+  // Renderização específica por tipo
+  switch(e.type) {
+    case 'basic':
+      // Inimigo padrão simples
+      ctx.fillStyle = displayColor;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.45)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      break;
+      
+    case 'aggressive':
+      // Inimigo com spikes
+      const spikes = 8;
+      const spikeLength = e.radius * 0.3;
+      
+      ctx.fillStyle = displayColor;
+      ctx.beginPath();
+      for(let i = 0; i < spikes; i++) {
+        const angle = (i / spikes) * Math.PI * 2 + e.animPhase * 0.5;
+        const innerR = e.radius - spikeLength * 0.5;
+        const outerR = e.radius + spikeLength * (0.5 + Math.sin(time * 2 + i) * 0.3);
+        
+        if(i === 0) {
+          ctx.moveTo(e.x + Math.cos(angle) * outerR, e.y + Math.sin(angle) * outerR);
+        }
+        
+        const nextAngle = ((i + 1) / spikes) * Math.PI * 2 + e.animPhase * 0.5;
+        ctx.lineTo(e.x + Math.cos(angle) * outerR, e.y + Math.sin(angle) * outerR);
+        ctx.lineTo(e.x + Math.cos(nextAngle) * innerR, e.y + Math.sin(nextAngle) * innerR);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#FF0000';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      break;
+      
+    case 'cautious':
+      // Inimigo com olhos grandes (cauteloso)
+      ctx.fillStyle = displayColor;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.45)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      
+      // Olhos grandes e nervosos
+      const eyeSize = e.radius * 0.25;
+      const eyeOffset = e.radius * 0.4;
+      const nervousness = Math.sin(time * 8) * 0.1;
+      
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.arc(e.x - eyeOffset + nervousness, e.y - eyeOffset, eyeSize, 0, Math.PI*2);
+      ctx.arc(e.x + eyeOffset - nervousness, e.y - eyeOffset, eyeSize, 0, Math.PI*2);
+      ctx.fill();
+      
+      ctx.fillStyle = 'black';
+      ctx.beginPath();
+      ctx.arc(e.x - eyeOffset + nervousness, e.y - eyeOffset, eyeSize*0.6, 0, Math.PI*2);
+      ctx.arc(e.x + eyeOffset - nervousness, e.y - eyeOffset, eyeSize*0.6, 0, Math.PI*2);
+      ctx.fill();
+      break;
+      
+    case 'speedy':
+      // Inimigo com rastros de movimento
+      const trailLength = 5;
+      for(let i = 0; i < trailLength; i++) {
+        const alpha = 1 - (i / trailLength);
+        const trailRadius = e.radius * (1 - i * 0.1);
+        const trailX = e.x - (e.vx || 0) * i * 3;
+        const trailY = e.y - (e.vy || 0) * i * 3;
+        
+        ctx.globalAlpha = alpha * 0.7;
+        ctx.fillStyle = displayColor;
+        ctx.beginPath();
+        ctx.arc(trailX, trailY, trailRadius, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      
+      // Corpo principal menor
+      ctx.fillStyle = displayColor;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.radius * 0.8, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = '#FFFF00';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      break;
+      
+    case 'tank':
+      // Inimigo grande e robusto
+      const segments = 3;
+      for(let i = 0; i < segments; i++) {
+        const segmentRadius = e.radius * (1 - i * 0.15);
+        const alpha = 1 - i * 0.2;
+        
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = displayColor;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, segmentRadius, 0, Math.PI*2);
+        ctx.fill();
+        
+        if(i === 0) {
+          ctx.strokeStyle = 'rgba(100,100,100,0.8)';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+      break;
+      
+    case 'hunter':
+      // Inimigo focado com mira
+      ctx.fillStyle = displayColor;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.45)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      
+      // Mira/crosshair quando caçando
+      if(e.behavior === 'chase' || e.behavior === 'hunt_food') {
+        ctx.strokeStyle = '#00FF00';
+        ctx.lineWidth = 2;
+        const crossSize = e.radius * 1.2;
+        
+        ctx.beginPath();
+        ctx.moveTo(e.x - crossSize, e.y);
+        ctx.lineTo(e.x + crossSize, e.y);
+        ctx.moveTo(e.x, e.y - crossSize);
+        ctx.lineTo(e.x, e.y + crossSize);
+        ctx.stroke();
+        
+        // Círculo da mira
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.radius * 1.3, 0, Math.PI*2);
+        ctx.stroke();
+      }
+      break;
+  }
+  
+  // Indicador visual do medo (tremor) para todos os tipos
+  if(e.fearLevel > 3){
+    const shake = (Math.random()-0.5) * e.fearLevel;
+    ctx.fillStyle = 'rgba(255,255,0,0.3)';
+    ctx.beginPath();
+    ctx.arc(e.x + shake, e.y + shake, e.radius * 1.1, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
 function loop(){
   if(!gameRunning) return;
   update(); render(); requestAnimationFrame(loop);
@@ -372,18 +755,18 @@ function loop(){
 function update(){
   movePlayer(); maybeMerge();
 
+  // Atualizar Rage Mode
+  const now = Date.now();
+  if(player.rageMode && now > player.rageEnd) {
+    player.rageMode = false;
+  }
+
   // camera
   const cx = player.split? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
   const cy = player.split? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
   const mass = player.split? player.splitBalls[0].mass+player.splitBalls[1].mass : player.mass;
   const targetZoom = Math.max(0.45, Math.min(1.2, 1-(mass-10)/350));
   camera.zoom += (targetZoom-camera.zoom)*0.03; camera.x += (cx-camera.x)*0.08; camera.y += (cy-camera.y)*0.08;
-
-  // Atualizar Rage Mode
-  const now = Date.now();
-  if(player.rageMode && now > player.rageEnd){
-    player.rageMode = false;
-  }
 
   // atualizar partículas
   for(let i=particles.length-1;i>=0;i--){
@@ -412,77 +795,93 @@ function update(){
     }
   }
 
-  // comer bônus rage
+  // comer bônus Rage
   for(let i=powerUps.length-1;i>=0;i--){
-    const p=powerUps[i];
+    const bonus=powerUps[i];
     const pX = player.split ? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
     const pY = player.split ? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
     const pRadius = player.split ? Math.max(player.splitBalls[0].radius,player.splitBalls[1].radius) : player.radius;
     
-    if(Math.hypot(pX-p.x,pY-p.y) < pRadius+p.radius){
-      // Ativar Rage Mode!
+    if(Math.hypot(pX-bonus.x,pY-bonus.y) < pRadius+bonus.radius){
+      // Ativar Rage Mode
       player.rageMode = true;
-      player.rageEnd = now + 12000; // 12 segundos
-      createParticles(p.x, p.y, '#FF006E');
+      player.rageEnd = now + 10000; // 10 segundos
+      createParticles(bonus.x, bonus.y, '#FF006E');
       // Explosão de partículas vermelhas
-      for(let j=0; j<10; j++){
-        createParticles(p.x + (Math.random()-0.5)*30, p.y + (Math.random()-0.5)*30, '#FF006E');
+      for(let j=0; j<8; j++){
+        createParticles(bonus.x + (Math.random()-0.5)*30, bonus.y + (Math.random()-0.5)*30, '#FF006E');
       }
       powerUps.splice(i,1);
       
       // Spawn novo bônus após um tempo
-      setTimeout(()=>spawnRagePowerUp(), 3000 + Math.random()*5000);
+      setTimeout(()=>spawnRageBonus(), 3000 + Math.random()*5000);
     }
   }
 
-  // comer frutas (com rage mode bonus)
+  // comer frutas (com rage bonus)
   for(let i=food.length-1;i>=0;i--){
     const f=food[i];
-    const rageMultiplier = player.rageMode ? 3 : 1; // 3x no rage mode
-    
     if(player.split){
       for(const b of player.splitBalls){
         if(Math.hypot(b.x-f.x,b.y-f.y)<b.radius+f.radius){ 
           createParticles(f.x, f.y, '#00FF88');
-          if(player.rageMode) createParticles(b.x, b.y, '#FF006E'); // Partículas extra
-          b.mass+=0.25*f.radius*rageMultiplier; b.radius=massToRadius(b.mass); score+=1; food.splice(i,1); break; 
+          const gain = 0.25*f.radius * (player.rageMode ? 3 : 1); // 3x no rage mode
+          b.mass+=gain; b.radius=massToRadius(b.mass); score+=1; food.splice(i,1); 
+          if(player.rageMode) createParticles(b.x, b.y, '#FF006E'); // Partículas vermelhas extra
+          break; 
         }
       }
     }else if(Math.hypot(player.x-f.x,player.y-f.y)<player.radius+f.radius){
       createParticles(f.x, f.y, '#00FF88');
-      if(player.rageMode) createParticles(player.x, player.y, '#FF006E'); // Partículas extra
-      player.mass+=0.25*f.radius*rageMultiplier; player.radius=massToRadius(player.mass); score+=1; food.splice(i,1);
+      const gain = 0.25*f.radius * (player.rageMode ? 3 : 1); // 3x no rage mode
+      player.mass+=gain; player.radius=massToRadius(player.mass); score+=1; food.splice(i,1);
+      if(player.rageMode) createParticles(player.x, player.y, '#FF006E'); // Partículas vermelhas extra
     }
   }
 
-  // comer pellets (com rage mode bonus)
+  // comer pellets (com rage bonus)
   for(let i=pellets.length-1;i>=0;i--){
     const p=pellets[i];
-    const rageMultiplier = player.rageMode ? 3 : 1; // 3x no rage mode
-    
     if(player.split){
       for(const b of player.splitBalls){
         if(Math.hypot(b.x-p.x,b.y-p.y)<b.radius+p.radius){ 
           createParticles(p.x, p.y, '#FFD700');
+          const gain = p.mass*0.8 * (player.rageMode ? 3 : 1); // 3x no rage mode
+          b.mass+=gain; b.radius=massToRadius(b.mass); score+=1; pellets.splice(i,1); 
           if(player.rageMode) createParticles(b.x, b.y, '#FF006E');
-          b.mass+=p.mass*0.8*rageMultiplier; b.radius=massToRadius(b.mass); score+=1; pellets.splice(i,1); break; 
+          break; 
         }
       }
     }else if(Math.hypot(player.x-p.x,player.y-p.y)<player.radius+p.radius){
       createParticles(p.x, p.y, '#FFD700');
+      const gain = p.mass*0.8 * (player.rageMode ? 3 : 1); // 3x no rage mode
+      player.mass+=gain; player.radius=massToRadius(player.mass); score+=1; pellets.splice(i,1);
       if(player.rageMode) createParticles(player.x, player.y, '#FF006E');
-      player.mass+=p.mass*0.8*rageMultiplier; player.radius=massToRadius(player.mass); score+=1; pellets.splice(i,1);
     }
   }
 
-  // inimigos simples + colisões (com rage mode bonus)
+  // inimigos com IA melhorada + colisões (com rage bonus)
   for(const e of enemies){
-    e.x+=e.vx; e.y+=e.vy;
-    if(e.x<e.radius||e.x>WORLD_W-e.radius) e.vx*=-1;
-    if(e.y<e.radius||e.y>WORLD_H-e.radius) e.vy*=-1;
+    // IA Inteligente
+    updateEnemyAI(e, now);
+    moveEnemyAI(e);
     
-    for(let i=food.length-1;i>=0;i--){
-      const f=food[i]; if(Math.hypot(e.x-f.x,e.y-f.y)<e.radius+f.radius){ e.mass+=0.2*f.radius; e.radius=massToRadius(e.mass); food.splice(i,1); }
+    // Aplicar movimento
+    e.x += e.vx; 
+    e.y += e.vy;
+    
+    // Manter dentro dos limites (com margem)
+    e.x = Math.max(e.radius, Math.min(WORLD_W-e.radius, e.x)); 
+    e.y = Math.max(e.radius, Math.min(WORLD_H-e.radius, e.y));
+    
+    // Inimigos comem frutas (mas só se não estão fugindo)
+    if(e.behavior !== 'flee'){
+      for(let i=food.length-1;i>=0;i--){
+        const f=food[i]; 
+        if(Math.hypot(e.x-f.x,e.y-f.y)<e.radius+f.radius){ 
+          e.mass+=0.2*f.radius; e.radius=massToRadius(e.mass); food.splice(i,1); 
+        }
+      }
     }
     
     for(let i=pellets.length-1;i>=0;i--){
@@ -495,8 +894,7 @@ function update(){
     if(Math.hypot(pX-e.x,pY-e.y) < (player.split?Math.max(player.splitBalls[0].radius,player.splitBalls[1].radius):player.radius)+e.radius){
       if(pMass>e.mass*1.2){
         createParticles(e.x, e.y, '#FF4444');
-        const rageMultiplier = player.rageMode ? 2 : 1; // 2x para inimigos no rage mode
-        const g=e.mass*0.8*rageMultiplier; 
+        const g=e.mass*0.8 * (player.rageMode ? 2 : 1); // 2x no rage mode para inimigos
         if(player.split){ 
           player.splitBalls[0].mass+=g*0.5; player.splitBalls[1].mass+=g*0.5; 
           player.splitBalls[0].radius=massToRadius(player.splitBalls[0].mass); 
@@ -504,13 +902,22 @@ function update(){
         } else { 
           player.mass+=g; player.radius=massToRadius(player.mass); 
         }
-        // Partículas extras no rage mode
         if(player.rageMode){
+          // Partículas extra no rage mode
           for(let j=0; j<5; j++){
             createParticles(e.x + (Math.random()-0.5)*20, e.y + (Math.random()-0.5)*20, '#FF006E');
           }
         }
-        e.mass=20+Math.random()*50; e.radius=massToRadius(e.mass); e.x=Math.random()*WORLD_W; e.y=Math.random()*WORLD_H;
+        
+        // Respawn inimigo com nova IA
+        e.mass=20+Math.random()*50; 
+        e.radius=massToRadius(e.mass); 
+        e.x=Math.random()*WORLD_W; 
+        e.y=Math.random()*WORLD_H;
+        e.behavior='wander';
+        e.target=null;
+        e.fearLevel=0;
+        
       }else if(e.mass>pMass*1.1){ endGame(); }
     }
   }
@@ -521,8 +928,8 @@ function update(){
   
   // Atualizar status do Rage Mode
   const rageStatusDiv = document.getElementById('rageStatus');
-  if(player.rageMode){
-    const remaining = Math.ceil((player.rageEnd - Date.now()) / 1000);
+  if(player.rageMode && now < player.rageEnd){
+    const remaining = Math.ceil((player.rageEnd - now) / 1000);
     document.getElementById('rageTime').textContent = remaining;
     rageStatusDiv.style.display = 'block';
   } else {
@@ -545,28 +952,28 @@ function render(){
   // frutas (emoji)
   for(const f of food){ ctx.font='18px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(f.emoji, f.x, f.y); }
 
-  // rage power-ups
-  for(const p of powerUps){
+  // bônus Rage Mode
+  for(const bonus of powerUps){
     const time = Date.now() * 0.005;
-    const pulse = 1 + Math.sin(time + p.pulse) * 0.3; // Pulsação mais intensa
-    const pulseRadius = p.radius * pulse;
+    const pulse = 1 + Math.sin(time + bonus.pulse) * 0.2;
+    const pulseRadius = bonus.radius * pulse;
     
     // Glow effect vermelho
-    ctx.shadowColor = p.color;
+    ctx.shadowColor = bonus.color;
     ctx.shadowBlur = 15;
     
     // Círculo do bônus
-    ctx.fillStyle = p.color;
+    ctx.fillStyle = bonus.color;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, pulseRadius, 0, Math.PI*2);
+    ctx.arc(bonus.x, bonus.y, pulseRadius, 0, Math.PI*2);
     ctx.fill();
     
     // Emoji no centro
     ctx.shadowBlur = 0;
-    ctx.font = '22px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, Arial';
+    ctx.font = '20px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(p.emoji, p.x, p.y);
+    ctx.fillText(bonus.emoji, bonus.x, bonus.y);
   }
 
   // pellets ejetados
@@ -592,25 +999,27 @@ function render(){
   }
   ctx.globalAlpha = 1;
 
-  // inimigos
-  for(const e of enemies){ ctx.fillStyle=e.color; ctx.beginPath(); ctx.arc(e.x,e.y,e.radius,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,.45)'; ctx.stroke(); }
+  // inimigos com tipos visuais diferentes
+  for(const e of enemies){ 
+    renderEnemy(e);
+  }
 
   // player com pulsação e rage mode
   const time = Date.now() * 0.002;
   let pulse = 1 + Math.sin(time) * 0.03;
   
-  // Rage mode: pulsação mais intensa e cores diferentes
+  // Rage Mode: pulsação mais intensa
+  if(player.rageMode){
+    pulse = 1 + Math.sin(time * 3) * 0.08; // 3x mais rápido e mais intenso
+  }
+  
+  // Cores baseadas no rage mode
   let centerColor = '#66B2FF', midColor = '#4A90E2', borderColor = '#2E5C8A', strokeColor = '#1A4B73';
   let glowColor = null, glowBlur = 0;
   
   if(player.rageMode){
-    pulse = 1 + Math.sin(time * 4) * 0.1; // Pulsação mais rápida e intensa
-    centerColor = '#FF8FA3'; 
-    midColor = '#FF006E'; 
-    borderColor = '#CC0052'; 
-    strokeColor = '#990040';
-    glowColor = '#FF006E'; 
-    glowBlur = 20;
+    centerColor = '#FF8FA3'; midColor = '#FF006E'; borderColor = '#CC0052'; strokeColor = '#990040';
+    glowColor = '#FF006E'; glowBlur = 20;
   }
   
   if(player.split){
@@ -635,7 +1044,7 @@ function render(){
       
       ctx.shadowBlur = 0;
       ctx.strokeStyle = strokeColor; 
-      ctx.lineWidth = player.rageMode ? 3 : 2; // Borda mais grossa no rage
+      ctx.lineWidth = player.rageMode ? 3 : 2;
       ctx.stroke(); 
     }
   }else{
@@ -659,7 +1068,7 @@ function render(){
     
     ctx.shadowBlur = 0;
     ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = player.rageMode ? 3 : 2; // Borda mais grossa no rage
+    ctx.lineWidth = player.rageMode ? 3 : 2;
     ctx.stroke();
   }
 
@@ -680,11 +1089,11 @@ function drawMini(){
 
   function dot(x,y,r,c){ mctx.fillStyle=c; mctx.beginPath(); mctx.arc(x*sx,y*sy,Math.max(2,r*sx*0.35),0,Math.PI*2); mctx.fill(); }
   for(const e of enemies) dot(e.x,e.y,e.radius,'#ff5577');
-  for(const p of powerUps) dot(p.x,p.y,p.radius,'#FF006E'); // Rage power-ups no minimap
+  for(const bonus of powerUps) dot(bonus.x,bonus.y,bonus.radius,'#FF006E'); // Bônus rage no minimap
   const px = player.split? (player.splitBalls[0].x+player.splitBalls[1].x)/2 : player.x;
   const py = player.split? (player.splitBalls[0].y+player.splitBalls[1].y)/2 : player.y;
   const pr = player.split? Math.max(player.splitBalls[0].radius,player.splitBalls[1].radius) : player.radius;
-  dot(px,py,pr,player.rageMode ? '#FF006E' : '#00ff99'); // Player muda cor no rage mode
+  dot(px,py,pr,'#00ff99');
 }
 </script>
 
