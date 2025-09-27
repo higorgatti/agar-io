@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
@@ -12,309 +11,297 @@
     #gameCanvas{display:block;width:100%;height:100%;touch-action:none}
     .hidden{display:none!important}
 
-```
-/* HUD - Glassmorphism */
-#ui{
-  position:absolute;left:10px;top:10px;z-index:10;color:#fff;
-  background:rgba(255,255,255,0.1);
-  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,0.2);
-  border-radius:16px; padding:12px 16px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.3);
-  font-weight:600; text-shadow:none;
-}
+    /* HUD - Glassmorphism */
+    #ui{
+      position:absolute;left:10px;top:10px;z-index:10;color:#fff;
+      background:rgba(255,255,255,0.1);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,0.2);
+      border-radius:16px; padding:12px 16px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.3);
+      font-weight:600; text-shadow:none;
+    }
 
-/* Start - Interface Simples e Limpa */
-#start{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;
-  background: linear-gradient(135deg, #0c1445 0%, #1a2980 50%, #26467c 100%);
-}
+    /* Start - Interface Simples e Limpa */
+    #start{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;
+      background: linear-gradient(135deg, #0c1445 0%, #1a2980 50%, #26467c 100%);
+    }
 
-#start .container{
-  width:min(400px,90vw); text-align:center; position:relative;
-}
+    #start .container{
+      width:min(400px,90vw); text-align:center; position:relative;
+    }
 
-/* Logo principal */
-#start .logo{
-  font-size:2.8em; font-weight:900; margin-bottom:30px; color:#fff;
-  text-shadow: 0 0 20px rgba(0,255,170,0.6), 0 2px 4px rgba(0,0,0,0.3);
-}
+    /* Logo principal */
+    #start .logo{
+      font-size:2.8em; font-weight:900; margin-bottom:30px; color:#fff;
+      text-shadow: 0 0 20px rgba(0,255,170,0.6), 0 2px 4px rgba(0,0,0,0.3);
+    }
 
-/* Botões superiores */
-#start .topBtns{display:flex;gap:12px;margin-bottom:30px;}
-#start .topBtn{
-  flex:1;padding:14px 12px;border-radius:8px;border:none;font-weight:600;font-size:13px;
-  cursor:pointer;transition:all 0.2s;
-}
-#start .topBtn.free{background:#ffd700;color:#000;}
-#start .topBtn.tournament{background:#4169e1;color:#fff;}
-#start .topBtn.arena{background:#9932cc;color:#fff;}
-#start .topBtn:active{transform:scale(0.95);}
+    /* Botões superiores */
+    #start .topBtns{display:flex;gap:12px;margin-bottom:30px;}
+    #start .topBtn{
+      flex:1;padding:14px 12px;border-radius:8px;border:none;font-weight:600;font-size:13px;
+      cursor:pointer;transition:all 0.2s;
+    }
+    #start .topBtn.free{background:#ffd700;color:#000;}
+    #start .topBtn.tournament{background:#4169e1;color:#fff;}
+    #start .topBtn.arena{background:#9932cc;color:#fff;}
+    #start .topBtn:active{transform:scale(0.95);}
 
-/* Info do servidor */
-#start .serverInfo{
-  background:rgba(255,255,255,0.15);
-  border:2px solid rgba(0,255,170,0.4);border-radius:12px;padding:20px;margin-bottom:25px;
-}
-#start .serverRow{
-  display:flex;justify-content:space-between;margin-bottom:8px;color:#fff;font-size:15px;font-weight:500;
-}
-#start .serverRow:last-child{margin-bottom:0;}
-#start .ping{color:#00ff88;font-weight:700;}
+    /* Info do servidor */
+    #start .serverInfo{
+      background:rgba(255,255,255,0.15);
+      border:2px solid rgba(0,255,170,0.4);border-radius:12px;padding:20px;margin-bottom:25px;
+    }
+    #start .serverRow{
+      display:flex;justify-content:space-between;margin-bottom:8px;color:#fff;font-size:15px;font-weight:500;
+    }
+    #start .serverRow:last-child{margin-bottom:0;}
+    #start .ping{color:#00ff88;font-weight:700;}
 
-/* Seleção de Dificuldade */
-#start .difficultySection{margin-bottom:25px;}
-#start .difficultyTitle{color:#fff;font-weight:600;font-size:16px;margin-bottom:15px;text-align:center;}
-#start .difficultyBtns{display:flex;gap:12px;justify-content:center;}
-#start .diffBtn{
-  width:80px;height:80px;border-radius:50%;border:3px solid;font-weight:600;font-size:11px;
-  cursor:pointer;transition:all 0.3s;background:rgba(255,255,255,0.1);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  position:relative;
-}
-#start .diffBtn:active{transform:scale(0.95);}
+    /* Seleção de Dificuldade */
+    #start .difficultySection{margin-bottom:25px;}
+    #start .difficultyTitle{color:#fff;font-weight:600;font-size:16px;margin-bottom:15px;text-align:center;}
+    #start .difficultyBtns{display:flex;gap:12px;justify-content:center;}
+    #start .diffBtn{
+      width:80px;height:80px;border-radius:50%;border:3px solid;font-weight:600;font-size:11px;
+      cursor:pointer;transition:all 0.3s;background:rgba(255,255,255,0.1);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      position:relative;
+    }
+    #start .diffBtn:active{transform:scale(0.95);}
 
-/* Estados dos botões de dificuldade */
-#start .diffBtn[data-difficulty="easy"]{
-  border-color:#4CAF50;color:#4CAF50;
-}
-#start .diffBtn[data-difficulty="easy"].active{
-  background:#4CAF50;color:#fff;box-shadow:0 0 20px rgba(76,175,80,0.5);
-  transform:scale(1.1);
-}
+    /* Estados dos botões de dificuldade */
+    #start .diffBtn[data-difficulty="easy"]{
+      border-color:#4CAF50;color:#4CAF50;
+    }
+    #start .diffBtn[data-difficulty="easy"].active{
+      background:#4CAF50;color:#fff;box-shadow:0 0 20px rgba(76,175,80,0.5);
+      transform:scale(1.1);
+    }
 
-#start .diffBtn[data-difficulty="normal"]{
-  border-color:#FF9800;color:#FF9800;
-}
-#start .diffBtn[data-difficulty="normal"].active{
-  background:#FF9800;color:#fff;box-shadow:0 0 20px rgba(255,152,0,0.5);
-  transform:scale(1.1);
-}
+    #start .diffBtn[data-difficulty="normal"]{
+      border-color:#FF9800;color:#FF9800;
+    }
+    #start .diffBtn[data-difficulty="normal"].active{
+      background:#FF9800;color:#fff;box-shadow:0 0 20px rgba(255,152,0,0.5);
+      transform:scale(1.1);
+    }
 
-#start .diffBtn[data-difficulty="hard"]{
-  border-color:#F44336;color:#F44336;
-}
-#start .diffBtn[data-difficulty="hard"].active{
-  background:#F44336;color:#fff;box-shadow:0 0 20px rgba(244,67,54,0.5);
-  transform:scale(1.1);
-}
+    #start .diffBtn[data-difficulty="hard"]{
+      border-color:#F44336;color:#F44336;
+    }
+    #start .diffBtn[data-difficulty="hard"].active{
+      background:#F44336;color:#fff;box-shadow:0 0 20px rgba(244,67,54,0.5);
+      transform:scale(1.1);
+    }
 
-/* Indicador de seleção */
-#start .diffBtn::after{
-  content:'';position:absolute;top:-5px;right:-5px;
-  width:20px;height:20px;border-radius:50%;
-  background:#fff;border:2px solid;opacity:0;
-  transition:all 0.3s;font-size:12px;
-}
-#start .diffBtn[data-difficulty="easy"]::after{border-color:#4CAF50;}
-#start .diffBtn[data-difficulty="normal"]::after{border-color:#FF9800;}
-#start .diffBtn[data-difficulty="hard"]::after{border-color:#F44336;}
-#start .diffBtn.active::after{opacity:1;content:'✓';display:flex;align-items:center;justify-content:center;font-weight:bold;}
-#start .diffBtn[data-difficulty="easy"].active::after{color:#4CAF50;}
-#start .diffBtn[data-difficulty="normal"].active::after{color:#FF9800;}
-#start .diffBtn[data-difficulty="hard"].active::after{color:#F44336;}
+    /* Indicador de seleção */
+    #start .diffBtn::after{
+      content:'';position:absolute;top:-5px;right:-5px;
+      width:20px;height:20px;border-radius:50%;
+      background:#fff;border:2px solid;opacity:0;
+      transition:all 0.3s;font-size:12px;
+    }
+    #start .diffBtn[data-difficulty="easy"]::after{border-color:#4CAF50;}
+    #start .diffBtn[data-difficulty="normal"]::after{border-color:#FF9800;}
+    #start .diffBtn[data-difficulty="hard"]::after{border-color:#F44336;}
+    #start .diffBtn.active::after{opacity:1;content:'✓';display:flex;align-items:center;justify-content:center;font-weight:bold;}
+    #start .diffBtn[data-difficulty="easy"].active::after{color:#4CAF50;}
+    #start .diffBtn[data-difficulty="normal"].active::after{color:#FF9800;}
+    #start .diffBtn[data-difficulty="hard"].active::after{color:#F44336;}
 
-/* Toggle Rage Mode */
-#start .toggleSection{margin-bottom:30px;}
-#start .toggle{
-  display:flex;align-items:center;justify-content:center;gap:15px;
-  background:rgba(255,255,255,0.15);
-  border:2px solid rgba(255,50,150,0.5);border-radius:10px;padding:15px;
-}
-#start .toggleSwitch{
-  width:60px;height:30px;border-radius:15px;background:#666;
-  position:relative;cursor:pointer;transition:all 0.3s;
-}
-#start .toggleSwitch.active{background:#ff0080;}
-#start .toggleSwitch::after{
-  content:'';width:26px;height:26px;border-radius:50%;background:#fff;
-  position:absolute;top:2px;left:2px;transition:all 0.3s;
-  box-shadow:0 2px 5px rgba(0,0,0,0.3);
-}
-#start .toggleSwitch.active::after{left:32px;}
-#start .toggleLabel{color:#fff;font-weight:600;font-size:16px;}
+    /* Toggle Rage Mode */
+    #start .toggleSection{margin-bottom:30px;}
+    #start .toggle{
+      display:flex;align-items:center;justify-content:center;gap:15px;
+      background:rgba(255,255,255,0.15);
+      border:2px solid rgba(255,50,150,0.5);border-radius:10px;padding:15px;
+    }
+    #start .toggleSwitch{
+      width:60px;height:30px;border-radius:15px;background:#666;
+      position:relative;cursor:pointer;transition:all 0.3s;
+    }
+    #start .toggleSwitch.active{background:#ff0080;}
+    #start .toggleSwitch::after{
+      content:'';width:26px;height:26px;border-radius:50%;background:#fff;
+      position:absolute;top:2px;left:2px;transition:all 0.3s;
+      box-shadow:0 2px 5px rgba(0,0,0,0.3);
+    }
+    #start .toggleSwitch.active::after{left:32px;}
+    #start .toggleLabel{color:#fff;font-weight:600;font-size:16px;}
 
-/* Botões principais */
-#start .mainBtns{display:flex;justify-content:center;gap:20px;}
-#start .mainBtn{
-  width:100px;height:100px;border-radius:50%;border:3px solid;cursor:pointer;
-  position:relative;transition:all 0.2s;font-weight:600;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-}
-#start .mainBtn:active{transform:scale(0.95);}
-#start .mainBtn .icon{font-size:28px;margin-bottom:5px;}
-#start .mainBtn .text{font-size:12px;line-height:1.1;}
+    /* Botões principais */
+    #start .mainBtns{display:flex;justify-content:center;gap:20px;}
+    #start .mainBtn{
+      width:100px;height:100px;border-radius:50%;border:3px solid;cursor:pointer;
+      position:relative;transition:all 0.2s;font-weight:600;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+    }
+    #start .mainBtn:active{transform:scale(0.95);}
+    #start .mainBtn .icon{font-size:28px;margin-bottom:5px;}
+    #start .mainBtn .text{font-size:12px;line-height:1.1;}
 
-#start .mainBtn.solo{
-  background:#00ff88;border-color:#00cc66;color:#000;
-}
-#start .mainBtn.online{
-  background:#ff6b6b;border-color:#cc5555;color:#fff;
-}
-#start .mainBtn.find{
-  background:#4ecdc4;border-color:#3ca39c;color:#000;
-}
+    #start .mainBtn.solo{background:#00ff88;border-color:#00cc66;color:#000;}
+    #start .mainBtn.online{background:#ff6b6b;border-color:#cc5555;color:#fff;}
+    #start .mainBtn.find{background:#4ecdc4;border-color:#3ca39c;color:#000;}
 
-/* Game over - Glassmorphism */
-#over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
-#over .box{
-  width:min(420px,92vw); background:rgba(255,255,255,0.1);
-  backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
-  border:1px solid rgba(255,102,102,0.3); color:#fff; border-radius:20px;
-  padding:20px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.4);
-}
-#over h2{text-shadow:0 2px 10px rgba(0,0,0,0.5);margin-bottom:12px}
-#over button{
-  padding:12px 20px;border-radius:12px;border:none;
-  background:rgba(0,255,136,0.9);
-  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-  font-weight:800; box-shadow:0 4px 20px rgba(0,255,136,0.3);
-  transition:all 0.2s ease; cursor:pointer;
-}
-#over button:active{transform:scale(0.98)}
+    /* Game over - Glassmorphism */
+    #over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
+    #over .box{
+      width:min(420px,92vw); background:rgba(255,255,255,0.1);
+      backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px);
+      border:1px solid rgba(255,102,102,0.3); color:#fff; border-radius:20px;
+      padding:20px; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,0.4);
+    }
+    #over h2{text-shadow:0 2px 10px rgba(0,0,0,0.5);margin-bottom:12px}
+    #over button{
+      padding:12px 20px;border-radius:12px;border:none;
+      background:rgba(0,255,136,0.9);
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+      font-weight:800; box-shadow:0 4px 20px rgba(0,255,136,0.3);
+      transition:all 0.2s ease; cursor:pointer;
+    }
+    #over button:active{transform:scale(0.98)}
 
-/* Minimap - Glassmorphism */
-#minimapWrap{
-  position:absolute;right:10px;top:10px;z-index:12;
-  background:rgba(255,255,255,0.1);
-  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  border:1px solid rgba(0,255,170,0.3); border-radius:16px; padding:8px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.3);
-}
-#minimap{display:block;width:180px;height:130px;border-radius:10px}
+    /* Minimap - Glassmorphism */
+    #minimapWrap{
+      position:absolute;right:10px;top:10px;z-index:12;
+      background:rgba(255,255,255,0.1);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      border:1px solid rgba(0,255,170,0.3); border-radius:16px; padding:8px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.3);
+    }
+    #minimap{display:block;width:180px;height:130px;border-radius:10px}
 
-/* Status do Rage Mode */
-#rageStatus{
-  position:absolute;left:10px;bottom:10px;z-index:10;
-  background:rgba(255,0,110,0.2);
-  backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
-  border:1px solid rgba(255,0,110,0.4);
-  border-radius:12px; padding:8px 12px; color:#fff;
-  font-size:14px; font-weight:600;
-  box-shadow:0 4px 16px rgba(255,0,110,0.3); display:none;
-}
+    /* Status do Rage Mode */
+    #rageStatus{
+      position:absolute;left:10px;bottom:10px;z-index:10;
+      background:rgba(255,0,110,0.2);
+      backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
+      border:1px solid rgba(255,0,110,0.4);
+      border-radius:12px; padding:8px 12px; color:#fff;
+      font-size:14px; font-weight:600;
+      box-shadow:0 4px 16px rgba(255,0,110,0.3); display:none;
+    }
 
-/* Status do Split Timer */
-#splitStatus{
-  position:absolute;left:10px;bottom:60px;z-index:10;
-  background:rgba(0,150,255,0.2);
-  backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
-  border:1px solid rgba(0,150,255,0.4);
-  border-radius:12px; padding:8px 12px; color:#fff;
-  font-size:14px; font-weight:600;
-  box-shadow:0 4px 16px rgba(0,150,255,0.3); display:none;
-}
+    /* Status do Split Timer */
+    #splitStatus{
+      position:absolute;left:10px;bottom:60px;z-index:10;
+      background:rgba(0,150,255,0.2);
+      backdrop-filter:blur(15px); -webkit-backdrop-filter:blur(15px);
+      border:1px solid rgba(0,150,255,0.4);
+      border-radius:12px; padding:8px 12px; color:#fff;
+      font-size:14px; font-weight:600;
+      box-shadow:0 4px 16px rgba(0,150,255,0.3); display:none;
+    }
 
-/* Botões mobile */
-#mobileBtns{
-  position:absolute;right:10px;bottom:10px;z-index:15;display:flex;gap:8px;
-}
-#mobileBtns button{
-  padding:12px 14px;border-radius:12px;border:none;font-weight:800;
-  background:rgba(255,255,255,0.15); color:#fff;
-  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,0.25);
-  box-shadow:0 4px 16px rgba(0,0,0,0.25);
-}
-#mobileBtns button:active{transform:scale(0.98)}
-```
-
+    /* Botões mobile */
+    #mobileBtns{
+      position:absolute;right:10px;bottom:10px;z-index:15;display:flex;gap:8px;
+    }
+    #mobileBtns button{
+      padding:12px 14px;border-radius:12px;border:none;font-weight:800;
+      background:rgba(255,255,255,0.15); color:#fff;
+      backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+      border:1px solid rgba(255,255,255,0.25);
+      box-shadow:0 4px 16px rgba(0,0,0,0.25);
+    }
+    #mobileBtns button:active{transform:scale(0.98)}
   </style>
 </head>
 <body>
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
-```
-<div id="ui" class="hidden">Pontuação: <b id="score">0</b> • Massa: <b id="mass">10</b></div>
-<div id="rageStatus">😡 RAGE MODE (<span id="rageTime">10</span>s)</div>
-<div id="splitStatus">🔄 RECOMBINAÇÃO EM <span id="splitTime">10</span>s</div>
+    <div id="ui" class="hidden">Pontuação: <b id="score">0</b> • Massa: <b id="mass">10</b></div>
+    <div id="rageStatus">😡 RAGE MODE (<span id="rageTime">10</span>s)</div>
+    <div id="splitStatus">🔄 RECOMBINAÇÃO EM <span id="splitTime">10</span>s</div>
 
-<div id="start">
-  <div class="container">
-    <!-- Botões superiores -->
-    <div class="topBtns">
-      <button class="topBtn free">🎁 Bônus Grátis!</button>
-      <button class="topBtn tournament">🏆 Torneio</button>
-      <button class="topBtn arena">🏛️ Arena</button>
-    </div>
+    <div id="start">
+      <div class="container">
+        <!-- Botões superiores -->
+        <div class="topBtns">
+          <button class="topBtn free">🎁 Bônus Grátis!</button>
+          <button class="topBtn tournament">🏆 Torneio</button>
+          <button class="topBtn arena">🏛️ Arena</button>
+        </div>
 
-    <!-- Logo principal -->
-    <div class="logo">🦠 AGAR MOBILE</div>
+        <!-- Logo principal -->
+        <div class="logo">🦠 AGAR MOBILE</div>
 
-    <!-- Informações do servidor -->
-    <div class="serverInfo">
-      <div class="serverRow">
-        <span>Servidor:</span>
-        <span class="ping">Brasil 25ms</span>
+        <!-- Informações do servidor -->
+        <div class="serverInfo">
+          <div class="serverRow">
+            <span>Servidor:</span>
+            <span class="ping">Brasil 25ms</span>
+          </div>
+          <div class="serverRow">
+            <span>Modo de Jogo:</span>
+            <span>FFA</span>
+          </div>
+        </div>
+
+        <!-- Seleção de Dificuldade -->
+        <div class="difficultySection">
+          <div class="difficultyTitle">DIFICULDADE:</div>
+          <div class="difficultyBtns">
+            <button class="diffBtn active" data-difficulty="easy">
+              <div style="font-size:20px;margin-bottom:4px;">😊</div>
+              <div>FÁCIL</div>
+            </button>
+            <button class="diffBtn" data-difficulty="normal">
+              <div style="font-size:20px;margin-bottom:4px;">😐</div>
+              <div>NORMAL</div>
+            </button>
+            <button class="diffBtn" data-difficulty="hard">
+              <div style="font-size:20px;margin-bottom:4px;">😤</div>
+              <div>DIFÍCIL</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Toggle Rage Mode -->
+        <div class="toggleSection">
+          <div class="toggle">
+            <span class="toggleLabel">😡 MODO RAGE</span>
+            <div class="toggleSwitch" id="rageToggle"></div>
+          </div>
+        </div>
+
+        <!-- Botões principais -->
+        <div class="mainBtns">
+          <button class="mainBtn solo" id="btnStart">
+            <div class="icon">👤</div>
+            <div class="text">JOGAR<br>SOZINHO</div>
+          </button>
+          <button class="mainBtn online" disabled title="Em breve">
+            <div class="icon">👥</div>
+            <div class="text">JOGAR<br>ONLINE</div>
+          </button>
+          <button class="mainBtn find" disabled title="Em breve">
+            <div class="icon">🔍</div>
+            <div class="text">ENCONTRAR<br>JOGOS</div>
+          </button>
+        </div>
       </div>
-      <div class="serverRow">
-        <span>Modo de Jogo:</span>
-        <span>FFA</span>
+    </div>
+
+    <div id="over" class="hidden">
+      <div class="box">
+        <h2>💀 Game Over</h2>
+        <p>Pontuação: <b id="finalScore">0</b> • Massa: <b id="finalMass">0</b></p>
+        <button id="btnRestart">Jogar novamente</button>
       </div>
     </div>
 
-    <!-- Seleção de Dificuldade -->
-    <div class="difficultySection">
-      <div class="difficultyTitle">DIFICULDADE:</div>
-      <div class="difficultyBtns">
-        <button class="diffBtn active" data-difficulty="easy">
-          <div style="font-size:20px;margin-bottom:4px;">😊</div>
-          <div>FÁCIL</div>
-        </button>
-        <button class="diffBtn" data-difficulty="normal">
-          <div style="font-size:20px;margin-bottom:4px;">😐</div>
-          <div>NORMAL</div>
-        </button>
-        <button class="diffBtn" data-difficulty="hard">
-          <div style="font-size:20px;margin-bottom:4px;">😤</div>
-          <div>DIFÍCIL</div>
-        </button>
-      </div>
+    <div id="minimapWrap" class="hidden"><canvas id="minimap" width="180" height="130"></canvas></div>
+
+    <div id="mobileBtns" class="hidden">
+      <button id="btnEject">EJETAR</button>
+      <button id="btnSplit">DIVIDIR</button>
     </div>
-
-    <!-- Toggle Rage Mode -->
-    <div class="toggleSection">
-      <div class="toggle">
-        <span class="toggleLabel">😡 MODO RAGE</span>
-        <div class="toggleSwitch" id="rageToggle"></div>
-      </div>
-    </div>
-
-    <!-- Botões principais -->
-    <div class="mainBtns">
-      <button class="mainBtn solo" id="btnStart">
-        <div class="icon">👤</div>
-        <div class="text">JOGAR<br>SOZINHO</div>
-      </button>
-      <button class="mainBtn online">
-        <div class="icon">👥</div>
-        <div class="text">JOGAR<br>ONLINE</div>
-      </button>
-      <button class="mainBtn find">
-        <div class="icon">🔍</div>
-        <div class="text">ENCONTRAR<br>JOGOS</div>
-      </button>
-    </div>
-  </div>
-</div>
-
-<div id="over" class="hidden">
-  <div class="box">
-    <h2>💀 Game Over</h2>
-    <p>Pontuação: <b id="finalScore">0</b> • Massa: <b id="finalMass">0</b></p>
-    <button id="btnRestart">Jogar novamente</button>
-  </div>
-</div>
-
-<div id="minimapWrap" class="hidden"><canvas id="minimap" width="180" height="130"></canvas></div>
-
-<div id="mobileBtns" class="hidden">
-  <button id="btnEject">EJETAR</button>
-  <button id="btnSplit">DIVIDIR</button>
-</div>
-```
-
   </div>
 
 <script>
@@ -385,13 +372,13 @@ function spawnEnemy(){
   let types;
   switch(currentDifficulty){
     case 'easy':
-      types = ['basic', 'basic', 'cautious', 'cautious', 'basic', 'speedy']; // Mais básicos e cautelosos
+      types = ['basic', 'basic', 'cautious', 'cautious', 'basic', 'speedy'];
       break;
     case 'normal':
-      types = ['basic', 'aggressive', 'cautious', 'speedy', 'tank', 'hunter']; // Balanceado
+      types = ['basic', 'aggressive', 'cautious', 'speedy', 'tank', 'hunter'];
       break;
     case 'hard':
-      types = ['aggressive', 'aggressive', 'hunter', 'hunter', 'tank', 'speedy', 'basic']; // Mais agressivos
+      types = ['aggressive', 'aggressive', 'hunter', 'hunter', 'tank', 'speedy', 'basic'];
       break;
   }
   
@@ -539,10 +526,8 @@ function reset(){
   for(let i=0;i<5;i++){spawnRageBonus();}
   
   // Spawnar itens especiais iniciais
-  console.log("Spawning initial special items...");
   for(let i=0;i<3;i++){
     spawnSpecialItem();
-    console.log(`Special item ${i+1} spawned. Total items: ${specialItems.length}`);
   }
 }
 function randFruit(){ const e=FRUITS[Math.floor(Math.random()*FRUITS.length)]; return {x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,radius:10,emoji:e}; }
@@ -726,8 +711,6 @@ function startGame(){
 function endGame(){
   gameRunning=false; window.__GAME_RUNNING__=false;
   ui.classList.add('hidden'); minimapWrap.classList.add('hidden'); mobileBtns.classList.add('hidden');
-  
-  // Voltar para a tela inicial em vez de mostrar game over
   startPane.classList.remove('hidden');
   overPane.classList.add('hidden');
 }
@@ -820,13 +803,12 @@ function splitPlayer(){
   if(!player.split){
     const a = Math.atan2(t.y-player.y, t.x-player.x), m = player.mass/2;
     const radius = massToRadius(m);
-    const d = radius * 1.5 + 10; // Distância baseada no raio + margem
+    const d = radius * 1.5 + 10;
     player.split = true;
     player.splitBalls = [
       { x: player.x + Math.cos(a)*d, y: player.y + Math.sin(a)*d, mass:m, radius:radius, vx:Math.cos(a)*4, vy:Math.sin(a)*4, splitTime:Date.now() },
       { x: player.x - Math.cos(a)*d, y: player.y - Math.sin(a)*d, mass:m, radius:radius, vx:-Math.cos(a)*4, vy:-Math.sin(a)*4, splitTime:Date.now() }
     ];
-    // Timer fixo de 10 segundos para recombinação
     splitEnd = Date.now() + 10000;
   }else{
     const newBalls=[];
@@ -834,13 +816,12 @@ function splitPlayer(){
       if(ball.mass >= 20){
         const a = Math.atan2(t.y-ball.y, t.x-ball.x), half=ball.mass/2;
         const newRadius = massToRadius(half);
-        const dist = newRadius * 1.5 + 15; // Distância baseada no novo raio + margem
+        const dist = newRadius * 1.5 + 15;
         newBalls.push({ x:ball.x+Math.cos(a)*dist, y:ball.y+Math.sin(a)*dist, mass:half, radius:newRadius, vx:Math.cos(a)*5, vy:Math.sin(a)*5, splitTime:Date.now() });
         newBalls.push({ x:ball.x-Math.cos(a)*dist, y:ball.y-Math.sin(a)*dist, mass:half, radius:newRadius, vx:-Math.cos(a)*5, vy:-Math.sin(a)*5, splitTime:Date.now() });
       } else newBalls.push(ball);
     }
     player.splitBalls = newBalls.slice(0, maxSplits);
-    // Timer fixo de 10 segundos para cada nova divisão
     splitEnd = Date.now() + 10000;
   }
 }
@@ -1050,7 +1031,9 @@ function update(){
       for(let j=0;j<6;j++){ createParticles(item.x+(Math.random()-0.5)*25, item.y+(Math.random()-0.5)*25, item.color); }
       
       specialItems.splice(i,1);
-      safeSpawnSpecialLater();
+      // respawn another of same type immediately
+      const def = { speed:{color:'#00BFFF',emoji:'🚀'}, shield:{color:'#FFD700',emoji:'🛡️'}, magnet:{color:'#8A2BE2',emoji:'🧲'}, splitbomb:{color:'#FFFF00',emoji:'⚡'}, sizeboost:{color:'#32CD32',emoji:'📈'}, invisibility:{color:'#C0C0C0',emoji:'👻'}, freeze:{color:'#87CEEB',emoji:'❄️'} }[item.type];
+      specialItems.push({ x:Math.random()*WORLD_W, y:Math.random()*WORLD_H, radius:12, type:item.type, color:def.color, emoji:def.emoji, pulse:Math.random()*6.28, spawnTime:Date.now() });
     }
   }
 
@@ -1121,18 +1104,13 @@ function update(){
       const o=enemies[j], dist=Math.hypot(e.x-o.x,e.y-o.y);
       if(dist<e.radius+o.radius){
         if(e.mass>o.mass*1.15){
-          // Efeitos visuais de absorção
           createParticles(o.x,o.y,o.color);
           for(let p=0;p<5;p++){ 
             createParticles(o.x+(Math.random()-0.5)*30, o.y+(Math.random()-0.5)*30, e.color); 
           }
-          
-          // Crescimento do inimigo vencedor
           const gainedMass = o.mass * 0.9;
           e.mass += gainedMass;
           e.radius = massToRadius(e.mass);
-          
-          // Respawn do inimigo perdedor com tamanho menor
           o.mass=12+Math.random()*25; 
           o.radius=massToRadius(o.mass); 
           o.x=Math.random()*WORLD_W; 
@@ -1141,18 +1119,13 @@ function update(){
           o.target=null; 
           o.fearLevel=0;
         }else if(o.mass>e.mass*1.15){
-          // Efeitos visuais de absorção
           createParticles(e.x,e.y,e.color);
           for(let p=0;p<5;p++){ 
             createParticles(e.x+(Math.random()-0.5)*30, e.y+(Math.random()-0.5)*30, o.color); 
           }
-          
-          // Crescimento do inimigo vencedor
           const gainedMass = e.mass * 0.9;
           o.mass += gainedMass;
           o.radius = massToRadius(o.mass);
-          
-          // Respawn do inimigo perdedor com tamanho menor
           e.mass=12+Math.random()*25; 
           e.radius=massToRadius(e.mass); 
           e.x=Math.random()*WORLD_W; 
@@ -1168,9 +1141,9 @@ function update(){
     for(let k=food.length-1;k>=0;k--){
       const f=food[k]; 
       if(Math.hypot(e.x-f.x,e.y-f.y)<e.radius+f.radius){ 
-        e.mass+=0.4*f.radius; // Aumentei o ganho de massa das frutas
+        e.mass+=0.4*f.radius;
         e.radius=massToRadius(e.mass); 
-        createParticles(f.x,f.y,'#00FF88'); // Partículas visuais
+        createParticles(f.x,f.y,'#00FF88');
         food.splice(k,1); 
       }
     }
@@ -1178,15 +1151,13 @@ function update(){
       const p=pellets[k]; 
       if(Math.hypot(e.x-p.x,e.y-p.y)<e.radius+p.radius){ 
         e.mass+=p.mass*0.9; 
-        e.radius=massToRadius(e.mass); // Corrigido: era p.mass antes (BUG!)
-        createParticles(p.x,p.y,'#FFD700'); // Partículas visuais
+        e.radius=massToRadius(e.mass);
+        createParticles(p.x,p.y,'#FFD700');
         pellets.splice(k,1); 
       }
     }
 
     // colisão inimigo x player — checar por célula
-    const pMass = totalPlayerMass();
-
     function eatEnemy(idxE){
       const en = enemies[idxE];
       createParticles(en.x,en.y,'#FF4444');
@@ -1211,7 +1182,6 @@ function update(){
     function removeSplitBall(ballIndex) {
       if (player.splitBalls.length > 1) {
         player.splitBalls.splice(ballIndex, 1);
-        // Se sobrou apenas uma bolinha, mesclar de volta
         if (player.splitBalls.length === 1) {
           const b = player.splitBalls[0];
           player.split = false;
@@ -1224,13 +1194,11 @@ function update(){
           player.splitBalls = [];
         }
       } else {
-        // Se era a última bolinha, game over
         endGame();
       }
     }
 
     if(player.split){
-      // Verificar colisões para cada bolinha dividida
       for(let ballIndex = player.splitBalls.length - 1; ballIndex >= 0; ballIndex--){
         const b = player.splitBalls[ballIndex];
         const d=Math.hypot(b.x-e.x,b.y-e.y);
@@ -1240,17 +1208,13 @@ function update(){
             break; 
           }
           else if(e.mass>b.mass*1.1 && activeEffects.shield <= Date.now()){ 
-            // Inimigo come essa bolinha específica (se não tiver escudo)
             createParticles(b.x, b.y, '#FF4444');
             const gainedMass = b.mass * 0.9;
             e.mass += gainedMass;
             e.radius = massToRadius(e.mass);
-            
-            // Criar partículas extra para mostrar que uma bolinha foi comida
             for(let j=0;j<8;j++){ 
               createParticles(b.x+(Math.random()-0.5)*30, b.y+(Math.random()-0.5)*30, '#FF6666'); 
             }
-            
             removeSplitBall(ballIndex);
             break;
           }
@@ -1261,7 +1225,6 @@ function update(){
       if(d<player.radius+e.radius){
         if(player.mass>e.mass*1.15){ eatEnemy(i); }
         else if(e.mass>player.mass*1.1 && activeEffects.shield <= Date.now()){ 
-          // Player morre apenas se não tiver escudo
           endGame(); 
         }
       }
@@ -1332,9 +1295,6 @@ function render(){
     ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(item.emoji, item.x, item.y);
   }
 
-  // Debug: mostrar quantos itens especiais existem
-  ctx.fillStyle='white'; ctx.font='12px Arial'; ctx.fillText(`Items: ${specialItems.length}`, 10, 100);
-
   // pellets
   for(const p of pellets){
     ctx.fillStyle='#FFD700'; ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.fill();
@@ -1367,7 +1327,7 @@ function render(){
       ctx.strokeStyle='#87CEEB';
       ctx.lineWidth=3;
       ctx.stroke();
-      displayColor='#B0E0E6'; // Cor azul claro para inimigo congelado
+      displayColor='#B0E0E6';
     }
 
     switch(e.type){
@@ -1449,7 +1409,6 @@ function render(){
 
   // Efeitos especiais do jogador
   if(activeEffects.invisibility > Date.now()){
-    // Invisibilidade - torna o jogador semi-transparente
     ctx.globalAlpha = 0.3;
   }
 
@@ -1553,8 +1512,6 @@ function drawMini(){
 
 /* ===== Visibilidade (pausa simples) ===== */
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden && gameRunning){ gameRunning=false; } });
-
 </script>
-
 </body>
 </html>
