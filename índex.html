@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Agar Mechanics — Mobile</title>
+  <style>
+    html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:system-ui,Arial,sans-serif}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    #game{position:relative;width:100vw;height:100vh;background:
+      radial-gradient(1000px 600px at 20% 10%,rgba(0,120,160,.18),transparent 60%),
+      linear-gradient(45deg,#00111f 0%,#072637 100%)}
+    #c{display:block;width:100%;height:100%;touch-action:none;cursor:none}
+    .hidden{display:none!important}
+    /* HUD */
+    #hud{position:absolute;left:10px;top:10px;z-index:10;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.8);background:rgba(0,0,0,.35);
+         padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);font-weight:700;backdrop-filter: blur(6px)}
+    /* Start */
+    #start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
+    #start .box{width:min(420px,92vw);background:rgba(0,0,0,.86);border:2px solid #00ff99;color:#fff;border-radius:16px;padding:18px;text-align:center;box-shadow:0 10px 26px rgba(0,0,0,.6)}
+    #start h1{margin:6px 0 10px 0}
+    #start button{width:100%;padding:16px;border-radius:12px;border:none;background:#00ff88;font-weight:900;font-size:18px}
+    /* Game over */
+    #over{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:20}
+    #over .box{width:min(420px,92vw);background:rgba(0,0,0,.9);border:2px solid #ff6666;color:#fff;border-radius:16px;padding:18px;text-align:center}
+    #over button{padding:12px 18px;border-radius:10px;border:none;background:#00ff88;font-weight:800}
+    /* Mobile buttons */
+    #controls{position:absolute;right:10px;bottom:10px;z-index:12;display:flex;gap:8px}
+    #controls button{border:none;border-radius:14px;padding:12px 14px;font-weight:800;background:#00bcd4;color:#00131a}
+    #controls button:nth-child(2){background:#ff8a65;color:#2b0e05}
+    #controls button:nth-child(3){background:#ffd54f;color:#332700}
+    /* Minimap */
+    #miniWrap{position:absolute;right:10px;top:10px;z-index:12;background:rgba(0,0,0,.5);border:1px solid rgba(0,255,170,.6);border-radius:12px;padding:6px 6px 2px 6px;display:none}
+    #mini{display:block;width:190px;height:140px;border-radius:8px}
+    #legend{display:flex;gap:8px;align-items:center;color:#cfe; font-size:12px; padding:4px 2px 6px 2px}
+    .lg{display:flex;align-items:center;gap:4px}
+    .dot{width:10px;height:10px;border-radius:50%}
+    .me{background:#00ff99}.foe{background:#ff5577}.vir{background:#ff3333}
+  </style>
+</head>
+<body>
+  <div id="game">
+    <canvas id="c"></canvas>
+    <div id="hud" class="hidden">Pontuação: <b id="sc">0</b> • Massa: <b id="ms">10</b></div>
+    <div id="start">
+      <div class="box">
+        <h1>🦠 Agar Mechanics</h1>
+        <p>Toque: mover • Duplo-toque / Espaço: dividir • R: reunir • W: ejetar</p>
+        <button id="go">COMEÇAR</button>
+      </div>
+    </div>
+    <div id="over">
+      <div class="box">
+        <h2>💀 Game Over</h2>
+        <p>Pontuação: <b id="fsc">0</b> • Massa: <b id="fms">0</b></p>
+        <button id="again">Jogar novamente</button>
+      </div>
+    </div>
+    <div id="controls" class="hidden">
+      <button id="btnSplit">Dividir</button>
+      <button id="btnMerge">Reunir</button>
+      <button id="btnEject">Ejetar</button>
+    </div>
+    <div id="miniWrap">
+      <canvas id="mini" width="190" height="140"></canvas>
+      <div id="legend">
+        <div class="lg"><span class="dot me"></span>Você</div>
+        <div class="lg"><span class="dot foe"></span>Inimigos</div>
+        <div class="lg"><span class="dot vir"></span>Vírus</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ===== Base =====
+const can = document.getElementById('c'), ctx = can.getContext('2d');
+const mini = document.getElementById('mini'), mctx = mini.getContext('2d');
+const hud = document.getElementById('hud');
+const startPane = document.getElementById('start');
+const overPane = document.getElementById('over');
+const controls = document.getElementById('controls');
+const miniWrap = document.getElementById('miniWrap');
+
+let W = innerWidth, H = innerHeight, DPR = Math.max(1, Math.floor(devicePixelRatio||1));
+function fit(){ W=innerWidth; H=innerHeight; DPR=Math.max(1,Math.floor(devicePixelRatio||1)); can.width=W*DPR; can.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+addEventListener('resize', fit, {passive:true}); fit();
+
+// ===== Mundo =====
+const WORLD_W = 2800, WORLD_H = 2000;
+let running=false, score=0;
+let camera={x:WORLD_W/2,y:WORLD_H/2,zoom:1};
+let mouse={x:WORLD_W/2,y:WORLD_H/2};
+let moveTarget=null;
+
+const MAX_PIECES = 16;
+const INITIAL_MASS = 15;
+const EJECT_MASS = 7;           // massa por pellet ejetado
+const VIRUS_SPLIT_RADIUS = 34;  // se maior que isso e encostar, divide
+const MERGE_DELAY_MS = 14000;   // delay de merge (≈ agar)
+const PELLET_SPEED = 6;
+
+// ===== Estado =====
+let player;
+let enemies=[], food=[], viruses=[], pellets=[];
+
+// ===== Utils =====
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const m2r=(m)=>Math.sqrt(Math.max(0.0001,m))*2+5;
+const nowMs=()=>performance.now();
+
+function playerCenter(){
+  let x=0,y=0,m=0;
+  for(const p of player.pieces){ x+=p.x*p.mass; y+=p.y*p.mass; m+=p.mass; }
+  return {x:x/Math.max(1,m), y:y/Math.max(1,m)};
+}
+function playerMass(){ return player.pieces.reduce((s,p)=>s+p.mass,0); }
+
+// ===== Reset =====
+function reset(){
+  player = { pieces:[{x:WORLD_W/2,y:WORLD_H/2,mass:INITIAL_MASS,radius:m2r(INITIAL_MASS),vx:0,vy:0,mergeAt:0}] };
+  enemies.length=0; food.length=0; viruses.length=0; pellets.length=0; score=0; moveTarget=null;
+  for(let i=0;i<420;i++){ food.push({x:rnd(20,WORLD_W-20),y:rnd(20,WORLD_H-20),r:7+Math.random()*3,kind:(Math.random()*3|0)}); }
+  for(let i=0;i<14;i++){ spawnEnemy(); }
+  for(let i=0;i<18;i++){ viruses.push({x:rnd(60,WORLD_W-60),y:rnd(60,WORLD_H-60),r:rnd(26,32)}); }
+}
+function spawnEnemy(){
+  const m=rnd(24,80);
+  enemies.push({x:rnd(80,WORLD_W-80),y:rnd(80,WORLD_H-80),mass:m,radius:m2r(m),vx:rnd(-1,1),vy:rnd(-1,1),color:`hsl(${Math.floor(rnd(280,340))},70%,55%)`});
+}
+
+// ===== Movimento =====
+function speed(radius){ return 7/Math.sqrt(radius+40); }
+function target(){ return moveTarget?moveTarget:mouse; }
+function movePieces(pieces, dt){
+  const t=target();
+  for(const p of pieces){
+    const dx=t.x-p.x, dy=t.y-p.y, d=Math.hypot(dx,dy)||1;
+    const ax=(dx/d)*0.35, ay=(dy/d)*0.35, maxS=speed(p.radius);
+    p.vx=(p.vx||0)*0.88+ax; p.vy=(p.vy||0)*0.88+ay;
+    const v=Math.hypot(p.vx,p.vy); if(v>maxS){ p.vx=(p.vx/v)*maxS; p.vy=(p.vy/v)*maxS; }
+    p.x+=p.vx*60*dt; p.y+=p.vy*60*dt;
+    p.x=clamp(p.x,p.radius,WORLD_W-p.radius); p.y=clamp(p.y,p.radius,WORLD_H-p.radius);
+  }
+}
+
+// ===== Split / Merge =====
+function splitPlayer(){
+  const pcs = player.pieces;
+  if(pcs.length>=MAX_PIECES) return;
+  // pega maior peça
+  let idx=0; for(let i=1;i<pcs.length;i++) if(pcs[i].mass>pcs[idx].mass) idx=i;
+  const p = pcs[idx]; if(p.mass<20) return;
+  const t=target(); const a=Math.atan2(t.y-p.y,t.x-p.x);
+  const m = p.mass/2;
+  p.mass = m; p.radius=m2r(m);
+  const d = p.radius*1.2;
+  const newPiece = {x:p.x+Math.cos(a)*d,y:p.y+Math.sin(a)*d,mass:m,radius:m2r(m),vx:Math.cos(a)*5,vy:Math.sin(a)*5,mergeAt: nowMs()+MERGE_DELAY_MS};
+  p.mergeAt = nowMs()+MERGE_DELAY_MS;
+  pcs.push(newPiece);
+}
+function forceMerge(){
+  // se o delay já passou e estiverem próximas, junta tudo numa peça
+  const t=nowMs();
+  let cx=0,cy=0,M=0;
+  for(const p of player.pieces){ cx+=p.x*p.mass; cy+=p.y*p.mass; M+=p.mass; }
+  cx/=Math.max(1,M); cy/=Math.max(1,M);
+  // só permite se TODAS já podem juntar
+  if(player.pieces.some(p=>t<p.mergeAt)) return;
+  player.pieces = [{x:cx,y:cy,mass:M,radius:m2r(M),vx:0,vy:0,mergeAt:0}];
+}
+function tryMergeTick(){
+  const t=nowMs();
+  for(let i=0;i<player.pieces.length;i++){
+    for(let j=i+1;j<player.pieces.length;j++){
+      const A=player.pieces[i], B=player.pieces[j];
+      if(t<A.mergeAt || t<B.mergeAt) continue;
+      if(Math.hypot(A.x-B.x,A.y-B.y) < (A.radius+B.radius)*0.75){
+        const total=A.mass+B.mass;
+        const cx=(A.x*A.mass+B.x*B.mass)/total;
+        const cy=(A.y*A.mass+B.y*B.mass)/total;
+        player.pieces.splice(j,1); player.pieces.splice(i,1);
+        player.pieces.push({x:cx,y:cy,mass:total,radius:m2r(total),vx:0,vy:0,mergeAt:0});
+        return;
+      }
+    }
+  }
+}
+function ejectMass(){
+  // ejetar da maior peça
+  let idx=0; for(let i=1;i<player.pieces.length;i++) if(player.pieces[i].mass>player.pieces[idx].mass) idx=i;
+  const p=player.pieces[idx]; if(p.mass<=EJECT_MASS+10) return;
+  const t=target(); const a=Math.atan2(t.y-p.y,t.x-p.x);
+  p.mass-=EJECT_MASS; p.radius=m2r(p.mass);
+  pellets.push({x:p.x+Math.cos(a)*(p.radius+6), y:p.y+Math.sin(a)*(p.radius+6), r:6, vx:Math.cos(a)*PELLET_SPEED, vy:Math.sin(a)*PELLET_SPEED});
+}
+
+// ===== Colisões =====
+function eatFood(pieces){
+  for(let i=food.length-1;i>=0;i--){
+    const f=food[i];
+    for(const p of pieces){
+      if(Math.hypot(p.x-f.x,p.y-f.y) < p.radius+f.r){
+        p.mass+=f.r*0.30; p.radius=m2r(p.mass); score+=1; food.splice(i,1); break;
+      }
+    }
+  }
+}
+function splitByVirus(piece){
+  const available = MAX_PIECES - player.pieces.length;
+  if(available<=0) return;
+  const parts = Math.min(8, available);
+  const newMass = piece.mass/parts;
+  const angle0 = Math.random()*Math.PI*2;
+  const out = [];
+  for(let i=0;i<parts;i++){
+    const a=angle0 + i*(Math.PI*2/parts);
+    out.push({x:piece.x+Math.cos(a)*piece.radius, y:piece.y+Math.sin(a)*piece.radius, mass:newMass, radius:m2r(newMass), vx:Math.cos(a)*6, vy:Math.sin(a)*6, mergeAt: nowMs()+MERGE_DELAY_MS});
+  }
+  const idx = player.pieces.indexOf(piece);
+  player.pieces.splice(idx,1);
+  player.pieces.push(...out);
+}
+function virusTick(){
+  for(const v of viruses){
+    // player vs virus
+    for(const p of player.pieces){
+      if(Math.hypot(p.x-v.x,p.y-v.y) < p.radius+v.r && p.radius>VIRUS_SPLIT_RADIUS){
+        splitByVirus(p);
+      }
+    }
+    // pellets alimentam vírus => cria novo
+    for(let i=pellets.length-1;i>=0;i--){
+      const pl=pellets[i];
+      if(Math.hypot(pl.x-v.x,pl.y-v.y)<v.r+pl.r){
+        pellets.splice(i,1);
+        // cria novo vírus próximo
+        const nx=rnd(-1,1), ny=rnd(-1,1), L=Math.hypot(nx,ny)||1;
+        const x=clamp(v.x+(nx/L)*90, 40, WORLD_W-40);
+        const y=clamp(v.y+(ny/L)*90, 40, WORLD_H-40);
+        viruses.push({x,y,r:rnd(26,32)});
+      }
+    }
+  }
+}
+
+// ===== Bots simples =====
+function updateBots(dt){
+  for(const b of enemies){
+    // perseguir ou fugir do centro do player
+    const c=playerCenter(); const pm=playerMass();
+    const dir = (b.mass>pm*1.2)? 1 : -1; // > player => foge; < player => persegue
+    const dx=c.x-b.x, dy=c.y-b.y, d=Math.hypot(dx,dy)||1;
+    b.vx += (dx/d)*0.08*dir; b.vy += (dy/d)*0.08*dir;
+    const maxS=speed(b.radius)*0.9, v=Math.hypot(b.vx,b.vy);
+    if(v>maxS){ b.vx=(b.vx/v)*maxS; b.vy=(b.vy/v)*maxS; }
+    b.x+=b.vx*60*dt; b.y+=b.vy*60*dt;
+    if(b.x<b.radius||b.x>WORLD_W-b.radius) b.vx*=-1;
+    if(b.y<b.radius||b.y>WORLD_H-b.radius) b.vy*=-1;
+
+    // comem comida
+    for(let i=food.length-1;i>=0;i--){
+      const f=food[i]; if(Math.hypot(b.x-f.x,b.y-f.y)<b.radius+f.r){ b.mass+=0.2*f.r; b.radius=m2r(b.mass); food.splice(i,1); }
+    }
+  }
+  // bots comem bots
+  for(let i=0;i<enemies.length;i++){
+    for(let j=i+1;j<enemies.length;j++){
+      const A=enemies[i], B=enemies[j];
+      const d=Math.hypot(A.x-B.x,A.y-B.y);
+      if(d<A.radius+B.radius){
+        if(A.mass>B.mass*1.2){ A.mass+=B.mass*0.98; A.radius=m2r(A.mass); respawnBot(B); enemies.splice(j,1); j--; }
+        else if(B.mass>A.mass*1.2){ B.mass+=A.mass*0.98; B.radius=m2r(B.mass); respawnBot(A); enemies.splice(i,1); i--; break; }
+        else { // empurrão
+          const nx=(B.x-A.x)/Math.max(1,d), ny=(B.y-A.y)/Math.max(1,d);
+          A.x-=nx*1.0; A.y-=ny*1.0; B.x+=nx*1.0; B.y+=ny*1.0;
+        }
+      }
+    }
+  }
+  // bots vs player peças
+  for(let i=enemies.length-1;i>=0;i--){
+    const b=enemies[i];
+    for(const p of player.pieces){
+      const d=Math.hypot(p.x-b.x,p.y-b.y);
+      if(d<p.radius+b.radius){
+        if(p.mass>b.mass*1.2){ p.mass+=b.mass*0.98; p.radius=m2r(p.mass); respawnBot(b); enemies.splice(i,1); break; }
+        else if(b.mass>p.mass*1.2){ gameOver(); return; }
+        else {
+          const nx=(b.x-p.x)/Math.max(1,d), ny=(b.y-p.y)/Math.max(1,d);
+          p.x -= nx*1.0; p.y -= ny*1.0; b.x += nx*1.0; b.y += ny*1.0;
+        }
+      }
+    }
+  }
+}
+function respawnBot(old){
+  const m=rnd(22,60);
+  enemies.push({x:rnd(80,WORLD_W-80),y:rnd(80,WORLD_H-80),mass:m,radius:m2r(m),vx:rnd(-1,1),vy:rnd(-1,1),color:old.color});
+}
+
+// ===== Pellets =====
+function updatePellets(dt){
+  for(let i=pellets.length-1;i>=0;i--){
+    const p=pellets[i];
+    p.x+=p.vx*60*dt; p.y+=p.vy*60*dt; p.vx*=0.99; p.vy*=0.99;
+    // limite mundo
+    if(p.x<0||p.x>WORLD_W||p.y<0||p.y>WORLD_H){ pellets.splice(i,1); continue; }
+    // colide com bots
+    for(const b of enemies){
+      if(Math.hypot(p.x-b.x,p.y-b.y) < b.radius+p.r){ b.mass+=EJECT_MASS*0.6; b.radius=m2r(b.mass); pellets.splice(i,1); break; }
+    }
+    // colide com player (se não foi do player, mas aqui todos são do player)
+  }
+}
+
+// ===== Loop =====
+let last=0;
+function loop(t){
+  if(!running) return;
+  if(!last) last=t; const dt=Math.min(0.05,(t-last)/1000); last=t;
+
+  // movimento
+  movePieces(player.pieces, dt);
+  updateBots(dt);
+  updatePellets(dt);
+  tryMergeTick();
+  eatFood(player.pieces);
+  virusTick();
+
+  // câmera
+  const c=playerCenter(); const m=playerMass();
+  const targetZoom=Math.max(0.45, Math.min(1.2, 1-(m-10)/380));
+  camera.zoom += (targetZoom-camera.zoom)*0.03; camera.x += (c.x-camera.x)*0.08; camera.y += (c.y-camera.y)*0.08;
+
+  render();
+  requestAnimationFrame(loop);
+}
+
+function render(){
+  ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(W*0.5,H*0.5); ctx.scale(camera.zoom,camera.zoom); ctx.translate(-camera.x,-camera.y);
+
+  // grid
+  ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1;
+  for(let x=0;x<WORLD_W;x+=60){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,WORLD_H); ctx.stroke(); }
+  for(let y=0;y<WORLD_H;y+=60){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(WORLD_W,y); ctx.stroke(); }
+
+  // comida (frutas simples coloridas)
+  for(const f of food){
+    if(f.kind===0){ ctx.fillStyle='#e53935'; ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,Math.PI*2); ctx.fill(); }
+    else if(f.kind===1){ ctx.fillStyle='#ffd54f'; ctx.beginPath(); ctx.ellipse(f.x,f.y,f.r*0.9,f.r*0.6,0,0,Math.PI*2); ctx.fill(); }
+    else { ctx.fillStyle='#8e44ad'; for(let i=0;i<6;i++){ const a=i*Math.PI/3; ctx.beginPath(); ctx.arc(f.x+Math.cos(a)*f.r*0.6,f.y+Math.sin(a)*f.r*0.6,f.r*0.4,0,Math.PI*2); ctx.fill(); } }
+  }
+
+  // pellets ejetados
+  ctx.fillStyle='#ccf';
+  for(const p of pellets){ ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill(); }
+
+  // vírus
+  for(const v of viruses){ ctx.fillStyle='#ff3333'; ctx.beginPath(); ctx.arc(v.x,v.y,v.r,0,Math.PI*2); ctx.fill(); }
+
+  // inimigos
+  for(const b of enemies){ ctx.fillStyle=b.color; ctx.beginPath(); ctx.arc(b.x,b.y,b.radius,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.stroke(); }
+
+  // player (várias peças)
+  ctx.fillStyle='#4A90E2';
+  for(const p of player.pieces){ ctx.beginPath(); ctx.arc(p.x,p.y,p.radius,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='#2E5C8A'; ctx.stroke(); }
+
+  ctx.restore();
+
+  // HUD
+  document.getElementById('sc').textContent = score;
+  document.getElementById('ms').textContent = Math.floor(playerMass());
+
+  drawMini();
+}
+
+function drawMini(){
+  if(miniWrap.style.display==='none') return;
+  const w=mini.width,h=mini.height; mctx.clearRect(0,0,w,h);
+  mctx.fillStyle='#061a28'; mctx.fillRect(0,0,w,h);
+  const sx=w/WORLD_W, sy=h/WORLD_H;
+
+  const halfW=(W*0.5)/camera.zoom, halfH=(H*0.5)/camera.zoom;
+  mctx.strokeStyle='#b6fff0'; mctx.lineWidth=1.5;
+  mctx.strokeRect((camera.x-halfW)*sx,(camera.y-halfH)*sy,(halfW*2)*sx,(halfH*2)*sy);
+
+  // player center
+  const c=playerCenter(); mctx.fillStyle='#00ff99'; mctx.beginPath(); mctx.arc(c.x*sx,c.y*sy,3,0,Math.PI*2); mctx.fill();
+
+  // enemies
+  mctx.fillStyle='#ff5577';
+  for(const b of enemies){ mctx.beginPath(); mctx.arc(b.x*sx,b.y*sy,2.5,0,Math.PI*2); mctx.fill(); }
+
+  // vírus
+  mctx.fillStyle='#ff3333';
+  for(const v of viruses){ mctx.beginPath(); mctx.arc(v.x*sx,v.y*sy,2,0,Math.PI*2); mctx.fill(); }
+}
+
+// ===== Flow =====
+function startGame(){
+  reset(); running=true;
+  startPane.style.display='none'; overPane.style.display='none';
+  hud.classList.remove('hidden'); controls.classList.remove('hidden'); miniWrap.style.display='block';
+  requestAnimationFrame(loop);
+}
+function gameOver(){
+  running=false;
+  document.getElementById('fsc').textContent=score;
+  document.getElementById('fms').textContent=Math.floor(playerMass());
+  overPane.style.display='flex';
+  hud.classList.add('hidden'); controls.classList.add('hidden'); miniWrap.style.display='none';
+}
+
+// ===== Controles =====
+document.getElementById('go').onclick = startGame;
+document.getElementById('again').onclick = startGame;
+document.getElementById('btnSplit').onclick = splitPlayer;
+document.getElementById('btnMerge').onclick = forceMerge;
+document.getElementById('btnEject').onclick = ejectMass;
+
+can.addEventListener('mousemove', (e)=>{
+  if(!running) return;
+  const r=can.getBoundingClientRect(); const x=(e.clientX-r.left)*(W/r.width), y=(e.clientY-r.top)*(H/r.height);
+  const cx=W*0.5, cy=H*0.5;
+  mouse.x = ((x-cx)/camera.zoom)+camera.x; mouse.y = ((y-cy)/camera.zoom)+camera.y; moveTarget=null;
+});
+let lastTap=0;
+can.addEventListener('touchstart', (e)=>{
+  if(!running) return;
+  const now=Date.now(); if(now-lastTap<250){ splitPlayer(); } lastTap=now;
+  const t=e.touches[0]; const r=can.getBoundingClientRect();
+  const x=(t.clientX-r.left)*(W/r.width), y=(t.clientY-r.top)*(H/r.height);
+  const cx=W*0.5, cy=H*0.5;
+  moveTarget={ x: ((x-cx)/camera.zoom)+camera.x, y: ((y-cy)/camera.zoom)+camera.y };
+},{passive:true});
+document.addEventListener('keydown',(e)=>{
+  if(!running) return;
+  const k=e.key.toLowerCase();
+  if(k===' ') { e.preventDefault(); splitPlayer(); }
+  if(k==='r') { e.preventDefault(); forceMerge(); }
+  if(k==='w') { e.preventDefault(); ejectMass(); }
+});
+</script>
+</body>
+</html>
