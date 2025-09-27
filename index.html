@@ -62,6 +62,58 @@
 #start .serverRow:last-child{margin-bottom:0;}
 #start .ping{color:#00ff88;font-weight:700;}
 
+/* Seleção de Dificuldade */
+#start .difficultySection{margin-bottom:25px;}
+#start .difficultyTitle{color:#fff;font-weight:600;font-size:16px;margin-bottom:15px;text-align:center;}
+#start .difficultyBtns{display:flex;gap:12px;justify-content:center;}
+#start .diffBtn{
+  width:80px;height:80px;border-radius:50%;border:3px solid;font-weight:600;font-size:11px;
+  cursor:pointer;transition:all 0.3s;background:rgba(255,255,255,0.1);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;
+}
+#start .diffBtn:active{transform:scale(0.95);}
+
+/* Estados dos botões de dificuldade */
+#start .diffBtn[data-difficulty="easy"]{
+  border-color:#4CAF50;color:#4CAF50;
+}
+#start .diffBtn[data-difficulty="easy"].active{
+  background:#4CAF50;color:#fff;box-shadow:0 0 20px rgba(76,175,80,0.5);
+  transform:scale(1.1);
+}
+
+#start .diffBtn[data-difficulty="normal"]{
+  border-color:#FF9800;color:#FF9800;
+}
+#start .diffBtn[data-difficulty="normal"].active{
+  background:#FF9800;color:#fff;box-shadow:0 0 20px rgba(255,152,0,0.5);
+  transform:scale(1.1);
+}
+
+#start .diffBtn[data-difficulty="hard"]{
+  border-color:#F44336;color:#F44336;
+}
+#start .diffBtn[data-difficulty="hard"].active{
+  background:#F44336;color:#fff;box-shadow:0 0 20px rgba(244,67,54,0.5);
+  transform:scale(1.1);
+}
+
+/* Indicador de seleção */
+#start .diffBtn::after{
+  content:'';position:absolute;top:-5px;right:-5px;
+  width:20px;height:20px;border-radius:50%;
+  background:#fff;border:2px solid;opacity:0;
+  transition:all 0.3s;font-size:12px;
+}
+#start .diffBtn[data-difficulty="easy"]::after{border-color:#4CAF50;}
+#start .diffBtn[data-difficulty="normal"]::after{border-color:#FF9800;}
+#start .diffBtn[data-difficulty="hard"]::after{border-color:#F44336;}
+#start .diffBtn.active::after{opacity:1;content:'✓';display:flex;align-items:center;justify-content:center;font-weight:bold;}
+#start .diffBtn[data-difficulty="easy"].active::after{color:#4CAF50;}
+#start .diffBtn[data-difficulty="normal"].active::after{color:#FF9800;}
+#start .diffBtn[data-difficulty="hard"].active::after{color:#F44336;}
+
 /* Toggle Rage Mode */
 #start .toggleSection{margin-bottom:30px;}
 #start .toggle{
@@ -179,27 +231,16 @@
 <div id="splitStatus">🔄 RECOMBINAÇÃO EM <span id="splitTime">10</span>s</div>
 
 <div id="start">
-  <!-- Partículas de fundo -->
-  <div class="particle" style="left:10%;animation-delay:0s;"></div>
-  <div class="particle" style="left:20%;animation-delay:2s;"></div>
-  <div class="particle" style="left:30%;animation-delay:4s;"></div>
-  <div class="particle" style="left:40%;animation-delay:1s;"></div>
-  <div class="particle" style="left:50%;animation-delay:3s;"></div>
-  <div class="particle" style="left:60%;animation-delay:5s;"></div>
-  <div class="particle" style="left:70%;animation-delay:2.5s;"></div>
-  <div class="particle" style="left:80%;animation-delay:4.5s;"></div>
-  <div class="particle" style="left:90%;animation-delay:1.5s;"></div>
-  
   <div class="container">
     <!-- Botões superiores -->
     <div class="topBtns">
-      <button class="topBtn">🎁 Bônus Grátis!</button>
+      <button class="topBtn free">🎁 Bônus Grátis!</button>
       <button class="topBtn tournament">🏆 Torneio</button>
       <button class="topBtn arena">🏛️ Arena</button>
     </div>
 
     <!-- Logo principal -->
-    <div class="logo">AGAR MOBILE</div>
+    <div class="logo">🦠 AGAR MOBILE</div>
 
     <!-- Informações do servidor -->
     <div class="serverInfo">
@@ -213,10 +254,29 @@
       </div>
     </div>
 
+    <!-- Seleção de Dificuldade -->
+    <div class="difficultySection">
+      <div class="difficultyTitle">DIFICULDADE:</div>
+      <div class="difficultyBtns">
+        <button class="diffBtn active" data-difficulty="easy">
+          <div style="font-size:20px;margin-bottom:4px;">😊</div>
+          <div>FÁCIL</div>
+        </button>
+        <button class="diffBtn" data-difficulty="normal">
+          <div style="font-size:20px;margin-bottom:4px;">😐</div>
+          <div>NORMAL</div>
+        </button>
+        <button class="diffBtn" data-difficulty="hard">
+          <div style="font-size:20px;margin-bottom:4px;">😤</div>
+          <div>DIFÍCIL</div>
+        </button>
+      </div>
+    </div>
+
     <!-- Toggle Rage Mode -->
     <div class="toggleSection">
       <div class="toggle">
-        <span class="toggleLabel">MODO RAGE</span>
+        <span class="toggleLabel">😡 MODO RAGE</span>
         <div class="toggleSwitch" id="rageToggle"></div>
       </div>
     </div>
@@ -312,7 +372,20 @@ function playerAvgVelocity(){
 
 /* ===== Inimigos ===== */
 function spawnEnemy(){
-  const types = ['basic', 'aggressive', 'cautious', 'speedy', 'tank', 'hunter'];
+  // Tipos de inimigos baseados na dificuldade
+  let types;
+  switch(currentDifficulty){
+    case 'easy':
+      types = ['basic', 'basic', 'cautious', 'cautious', 'basic', 'speedy']; // Mais básicos e cautelosos
+      break;
+    case 'normal':
+      types = ['basic', 'aggressive', 'cautious', 'speedy', 'tank', 'hunter']; // Balanceado
+      break;
+    case 'hard':
+      types = ['aggressive', 'aggressive', 'hunter', 'hunter', 'tank', 'speedy', 'basic']; // Mais agressivos
+      break;
+  }
+  
   const type = types[Math.floor(Math.random() * types.length)];
   let enemy = {
     x: Math.random()*WORLD_W, y: Math.random()*WORLD_H,
@@ -320,13 +393,51 @@ function spawnEnemy(){
     behavior:'wander', target:null, fearLevel:0, lastThink:0,
     type, blinkTimer: Math.random()*1000, animPhase: Math.random()*6.28
   };
+  
+  // Ajustes de velocidade baseados na dificuldade
+  let speedMultiplier = 1;
+  switch(currentDifficulty){
+    case 'easy': speedMultiplier = 0.7; break;
+    case 'normal': speedMultiplier = 1; break;
+    case 'hard': speedMultiplier = 1.2; break;
+  }
+  
   switch(type){
-    case 'basic': enemy.color=`hsl(${200+Math.random()*60},60%,50%)`; enemy.baseSpeed=0.3; enemy.aggressiveness=0.3; break;
-    case 'aggressive': enemy.color=`hsl(${0+Math.random()*30},70%,50%)`; enemy.mass=30+Math.random()*40; enemy.baseSpeed=0.4; enemy.aggressiveness=0.8; break;
-    case 'cautious': enemy.color=`hsl(${180+Math.random()*40},55%,60%)`; enemy.mass=15+Math.random()*25; enemy.baseSpeed=0.25; enemy.aggressiveness=0.1; break;
-    case 'speedy': enemy.color=`hsl(${60+Math.random()*40},65%,55%)`; enemy.mass=10+Math.random()*20; enemy.baseSpeed=0.6; enemy.aggressiveness=0.4; break;
-    case 'tank': enemy.color=`hsl(${280+Math.random()*40},50%,45%)`; enemy.mass=50+Math.random()*60; enemy.baseSpeed=0.15; enemy.aggressiveness=0.2; break;
-    case 'hunter': enemy.color=`hsl(${120+Math.random()*40},70%,45%)`; enemy.mass=25+Math.random()*35; enemy.baseSpeed=0.35; enemy.aggressiveness=0.6; break;
+    case 'basic': 
+      enemy.color=`hsl(${200+Math.random()*60},60%,50%)`; 
+      enemy.baseSpeed=0.3*speedMultiplier; 
+      enemy.aggressiveness=0.3; 
+      break;
+    case 'aggressive': 
+      enemy.color=`hsl(${0+Math.random()*30},70%,50%)`; 
+      enemy.mass=30+Math.random()*40; 
+      enemy.baseSpeed=0.4*speedMultiplier; 
+      enemy.aggressiveness=(currentDifficulty==='hard'?0.9:0.8); 
+      break;
+    case 'cautious': 
+      enemy.color=`hsl(${180+Math.random()*40},55%,60%)`; 
+      enemy.mass=15+Math.random()*25; 
+      enemy.baseSpeed=0.25*speedMultiplier; 
+      enemy.aggressiveness=0.1; 
+      break;
+    case 'speedy': 
+      enemy.color=`hsl(${60+Math.random()*40},65%,55%)`; 
+      enemy.mass=10+Math.random()*20; 
+      enemy.baseSpeed=0.6*speedMultiplier; 
+      enemy.aggressiveness=0.4; 
+      break;
+    case 'tank': 
+      enemy.color=`hsl(${280+Math.random()*40},50%,45%)`; 
+      enemy.mass=50+Math.random()*60; 
+      enemy.baseSpeed=0.15*speedMultiplier; 
+      enemy.aggressiveness=(currentDifficulty==='hard'?0.4:0.2); 
+      break;
+    case 'hunter': 
+      enemy.color=`hsl(${120+Math.random()*40},70%,45%)`; 
+      enemy.mass=25+Math.random()*35; 
+      enemy.baseSpeed=0.35*speedMultiplier; 
+      enemy.aggressiveness=(currentDifficulty==='hard'?0.8:0.6); 
+      break;
   }
   enemy.radius = massToRadius(enemy.mass);
   enemies.push(enemy);
@@ -342,12 +453,41 @@ function safeSpawnRageLater(){
 
 /* ===== Reset ===== */
 function reset(){
-  player={x:WORLD_W/2,y:WORLD_H/2,mass:INITIAL_MASS,radius:massToRadius(INITIAL_MASS),vx:0,vy:0,split:false,splitBalls:[],
-    rageMode:false, rageEnd:0
+  // Configurações baseadas na dificuldade
+  let enemyCount, foodCount, playerStartMass;
+  
+  switch(currentDifficulty){
+    case 'easy':
+      enemyCount = 15;
+      foodCount = 400;
+      playerStartMass = 18;
+      break;
+    case 'normal':
+      enemyCount = 25;
+      foodCount = 320;
+      playerStartMass = INITIAL_MASS; // 12
+      break;
+    case 'hard':
+      enemyCount = 35;
+      foodCount = 250;
+      playerStartMass = 10;
+      break;
+  }
+
+  player={
+    x:WORLD_W/2, y:WORLD_H/2, mass:playerStartMass, radius:massToRadius(playerStartMass),
+    vx:0, vy:0, split:false, splitBalls:[], rageMode:false, rageEnd:0
   };
+  
   enemies=[]; food=[]; powerUps=[]; pellets=[]; particles=[];
-  for(let i=0;i<320;i++){food.push(randFruit());}
-  for(let i=0;i<25;i++){spawnEnemy();}
+  
+  // Spawnar comida baseada na dificuldade
+  for(let i=0;i<foodCount;i++){food.push(randFruit());}
+  
+  // Spawnar inimigos baseados na dificuldade
+  for(let i=0;i<enemyCount;i++){spawnEnemy();}
+  
+  // Spawnar power-ups
   for(let i=0;i<5;i++){spawnRageBonus();}
 }
 function randFruit(){ const e=FRUITS[Math.floor(Math.random()*FRUITS.length)]; return {x:Math.random()*WORLD_W,y:Math.random()*WORLD_H,radius:10,emoji:e}; }
@@ -488,6 +628,17 @@ document.getElementById('rageToggle').onclick = function(){
   rageStartMode = !rageStartMode;
   this.classList.toggle('active', rageStartMode);
 };
+
+// Sistema de Dificuldade
+let currentDifficulty = 'easy';
+const difficultyBtns = document.querySelectorAll('.diffBtn');
+difficultyBtns.forEach(btn => {
+  btn.onclick = function(){
+    difficultyBtns.forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentDifficulty = this.dataset.difficulty;
+  };
+});
 
 /* ===== Jogo ===== */
 function startGame(){
@@ -762,21 +913,67 @@ function update(){
       const o=enemies[j], dist=Math.hypot(e.x-o.x,e.y-o.y);
       if(dist<e.radius+o.radius){
         if(e.mass>o.mass*1.15){
-          createParticles(o.x,o.y,o.color); e.mass+=o.mass*0.9; e.radius=massToRadius(e.mass);
-          o.mass=15+Math.random()*30; o.radius=massToRadius(o.mass); o.x=Math.random()*WORLD_W; o.y=Math.random()*WORLD_H; o.behavior='wander'; o.target=null; o.fearLevel=0;
+          // Efeitos visuais de absorção
+          createParticles(o.x,o.y,o.color);
+          for(let p=0;p<5;p++){ 
+            createParticles(o.x+(Math.random()-0.5)*30, o.y+(Math.random()-0.5)*30, e.color); 
+          }
+          
+          // Crescimento do inimigo vencedor
+          const gainedMass = o.mass * 0.9;
+          e.mass += gainedMass;
+          e.radius = massToRadius(e.mass);
+          
+          // Respawn do inimigo perdedor com tamanho menor
+          o.mass=12+Math.random()*25; 
+          o.radius=massToRadius(o.mass); 
+          o.x=Math.random()*WORLD_W; 
+          o.y=Math.random()*WORLD_H; 
+          o.behavior='wander'; 
+          o.target=null; 
+          o.fearLevel=0;
         }else if(o.mass>e.mass*1.15){
-          createParticles(e.x,e.y,e.color); o.mass+=e.mass*0.9; o.radius=massToRadius(o.mass);
-          e.mass=15+Math.random()*30; e.radius=massToRadius(e.mass); e.x=Math.random()*WORLD_W; e.y=Math.random()*WORLD_H; e.behavior='wander'; e.target=null; e.fearLevel=0;
+          // Efeitos visuais de absorção
+          createParticles(e.x,e.y,e.color);
+          for(let p=0;p<5;p++){ 
+            createParticles(e.x+(Math.random()-0.5)*30, e.y+(Math.random()-0.5)*30, o.color); 
+          }
+          
+          // Crescimento do inimigo vencedor
+          const gainedMass = e.mass * 0.9;
+          o.mass += gainedMass;
+          o.radius = massToRadius(o.mass);
+          
+          // Respawn do inimigo perdedor com tamanho menor
+          e.mass=12+Math.random()*25; 
+          e.radius=massToRadius(e.mass); 
+          e.x=Math.random()*WORLD_W; 
+          e.y=Math.random()*WORLD_H; 
+          e.behavior='wander'; 
+          e.target=null; 
+          e.fearLevel=0;
         }
       }
     }
 
     // inimigos comem frutas/pellets
     for(let k=food.length-1;k>=0;k--){
-      const f=food[k]; if(Math.hypot(e.x-f.x,e.y-f.y)<e.radius+f.radius){ e.mass+=0.3*f.radius; e.radius=massToRadius(e.mass); food.splice(k,1); }
+      const f=food[k]; 
+      if(Math.hypot(e.x-f.x,e.y-f.y)<e.radius+f.radius){ 
+        e.mass+=0.4*f.radius; // Aumentei o ganho de massa das frutas
+        e.radius=massToRadius(e.mass); 
+        createParticles(f.x,f.y,'#00FF88'); // Partículas visuais
+        food.splice(k,1); 
+      }
     }
     for(let k=pellets.length-1;k>=0;k--){
-      const p=pellets[k]; if(Math.hypot(e.x-p.x,e.y-p.y)<e.radius+p.radius){ e.mass+=p.mass*0.9; e.radius=massToRadius(p.mass); pellets.splice(k,1); }
+      const p=pellets[k]; 
+      if(Math.hypot(e.x-p.x,e.y-p.y)<e.radius+p.radius){ 
+        e.mass+=p.mass*0.9; 
+        e.radius=massToRadius(e.mass); // Corrigido: era p.mass antes (BUG!)
+        createParticles(p.x,p.y,'#FFD700'); // Partículas visuais
+        pellets.splice(k,1); 
+      }
     }
 
     // colisão inimigo x player — checar por célula
