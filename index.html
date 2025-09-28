@@ -6,8 +6,11 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Agar Mobile</title>
 
-  <!-- Estilos -->
+  <!-- CSS do jogo (HUD, minimapa, etc.) -->
   <link rel="stylesheet" href="src/css/style.css" />
+  <!-- CSS do seu menu/landing animado -->
+  <link rel="stylesheet" href="src/css/menu.css" />
+
   <meta name="theme-color" content="#001122" />
 </head>
 <body>
@@ -23,28 +26,117 @@
     <!-- Status do Rage -->
     <div id="rageStatus">😡 RAGE MODE (<span id="rageTime">10</span>s)</div>
 
-    <!-- Tela inicial -->
+    <!-- TELA INICIAL (seu menu entra aqui dentro) -->
     <div id="start">
-      <div class="box">
-        <h1>🦠 Agar Mobile</h1>
+      <div class="box" style="background:transparent;border:none;padding:0;box-shadow:none">
+        <!-- Fundo animado -->
+        <div class="game-background" id="gameBackground"></div>
 
-        <p>Toque e arraste para mover • Toque duplo: dividir até 8x</p>
-        <p>Botões: <b>Dividir</b> e <b>Ejetar</b> no canto inferior direito</p>
-        <p style="font-size:14px;opacity:.85">⚡ Divisão estilo Nebulos.io (recombinação inteligente)</p>
-        <p style="font-size:12px;opacity:.75">🤖 Inimigos: Básico, Agressivo, Cauteloso, Veloz, Tanque, Caçador</p>
+        <!-- Conteúdo do seu menu -->
+        <div class="container">
+          <!-- Header -->
+          <div class="header">
+            <div class="player-info">
+              <div class="avatar">🎮</div>
+              <div class="player-stats">
+                <div class="player-name">Jogador</div>
+                <div class="player-level">Nível 15</div>
+              </div>
+            </div>
+            <div class="coins">💰 2,450</div>
+          </div>
 
-        <!-- Seletor de dificuldade (opcional, mas já integrado no main.js) -->
-        <label style="display:block;margin:10px 0;color:#fff;">
-          Dificuldade:
-          <select id="difficulty" style="margin-left:8px;">
-            <option value="easy">Fácil</option>
-            <option value="normal" selected>Normal</option>
-            <option value="hard">Difícil</option>
-            <option value="insane">Insano</option>
-          </select>
-        </label>
+          <!-- XP Progress -->
+          <div class="xp-section">
+            <div class="xp-info">
+              <span>XP: 3,250 / 5,000</span>
+              <span>Próximo Nível: 16</span>
+            </div>
+            <div class="xp-bar">
+              <div class="xp-progress"></div>
+            </div>
+          </div>
 
-        <button id="btnStart">COMEÇAR</button>
+          <!-- Logo -->
+          <div class="logo">
+            <h1>
+              <div class="virus-icon"></div>
+              AGAR MOBILE
+            </h1>
+          </div>
+
+          <!-- Server Info -->
+          <div class="server-info">
+            <div class="server-row">
+              <span>Servidor:</span>
+              <span class="server-status">Brasil 25ms</span>
+            </div>
+            <div class="server-row">
+              <span>Modo de Jogo:</span>
+              <span>FFA</span>
+            </div>
+            <div class="server-row">
+              <span>Players Online:</span>
+              <span class="online-count">1,247</span>
+            </div>
+          </div>
+
+          <!-- Missão diária -->
+          <div class="daily-mission">
+            <div class="mission-title">🎯 Missão Diária</div>
+            <div class="mission-desc">Colete 500 células pequenas</div>
+            <div class="mission-progress">
+              <div class="progress-bar"><div class="progress-fill"></div></div>
+              <div class="mission-reward">+200 💰</div>
+            </div>
+          </div>
+
+          <!-- Dificuldade (visual) -->
+          <div class="difficulty-section">
+            <div class="difficulty-title">DIFICULDADE</div>
+            <div class="difficulty-options">
+              <button class="difficulty-btn difficulty-easy selected" data-diff="easy">
+                😊<br>FÁCIL
+              </button>
+              <button class="difficulty-btn difficulty-normal" data-diff="normal">
+                😐<br>NORMAL
+              </button>
+              <button class="difficulty-btn difficulty-hard" data-diff="hard">
+                😤<br>DIFÍCIL
+              </button>
+            </div>
+          </div>
+
+          <!-- Modos -->
+          <div class="game-modes">
+            <!-- ESTE botão inicia o jogo -->
+            <button id="btnStart" class="mode-btn mode-solo">
+              👤<br>JOGAR<br>SOZINHO
+            </button>
+
+            <!-- Demais ainda “decorativos” por enquanto -->
+            <button class="mode-btn mode-online">
+              👥<br>JOGAR<br>ONLINE
+            </button>
+            <button class="mode-btn mode-tournament">
+              🏆<br>TORNEIO<br>SEMANAL
+            </button>
+            <button class="mode-btn mode-arena">
+              🏛️<br>ARENA<br>RANQUEADA
+            </button>
+          </div>
+
+          <!-- Specials -->
+          <div class="special-section">
+            <button class="special-btn bonus-btn">🎁 BÔNUS<br>DIÁRIO</button>
+            <button class="special-btn shop-btn">🛒 LOJA<br>DE SKINS</button>
+          </div>
+
+          <!-- Online Info -->
+          <div class="online-info">
+            <span class="online-count">1,247</span> jogadores online agora
+          </div>
+        </div>
       </div>
     </div>
 
@@ -69,7 +161,83 @@
     </div>
   </div>
 
-  <!-- Entrada do app (módulos ES) -->
+  <!-- Entrada do app (ES Modules) -->
   <script type="module" src="src/js/main.js"></script>
+  <!-- JS leve do menu (só FX visuais – opcional) -->
+  <script>
+    // plano de fundo animado
+    class GameBackground {
+      constructor() {
+        this.container = document.getElementById('gameBackground');
+        this.cells = [];
+        this.cellTypes = [
+          { size: 'small',  weight: 60, minSize: 6,  maxSize: 12 },
+          { size: 'medium', weight: 25, minSize: 20, maxSize: 35 },
+          { size: 'large',  weight: 10, minSize: 40, maxSize: 60 },
+          { size: 'huge',   weight: 4,  minSize: 65, maxSize: 85 },
+          { size: 'virus',  weight: 1,  minSize: 35, maxSize: 35 }
+        ];
+        this.colors = ['cell-color-1','cell-color-2','cell-color-3','cell-color-4','cell-color-5','cell-color-6','cell-color-7','cell-color-8'];
+        this.init();
+      }
+      init(){ this.createInitialCells(); this.startCellGeneration(); this.startConsumptionSimulation(); }
+      createInitialCells(){ for (let i=0;i<25;i++) this.createCell(Math.random()*innerWidth); }
+      getCellType(){ const r=Math.random()*100; let acc=0; for(const t of this.cellTypes){ acc+=t.weight; if(r<=acc)return t; } return this.cellTypes[0]; }
+      createCell(startX=-100){
+        const t=this.getCellType();
+        const cell=document.createElement('div');
+        const size=Math.random()*(t.maxSize-t.minSize)+t.minSize;
+        const y=Math.random()*(innerHeight-size);
+        const speed=Math.random()*10+5;
+        cell.className=`game-cell ${t.size}-cell`;
+        if(t.size==='virus'){ cell.classList.add('virus-cell'); }
+        else{
+          const color=this.colors[Math.floor(Math.random()*this.colors.length)];
+          cell.classList.add(color);
+          if(t.size==='large'||t.size==='huge'){
+            const names=['Player','Bot','AI','Pro','Noob','King','Queen','Master'];
+            cell.textContent=names[Math.floor(Math.random()*names.length)];
+          }
+        }
+        Object.assign(cell.style,{
+          width:`${size}px`, height:`${size}px`, left:`${startX}px`, top:`${y}px`,
+          animationDuration:`${speed}s`, animationDelay:`${Math.random()*2}s`
+        });
+        this.container.appendChild(cell);
+        this.cells.push({element:cell,size,type:t.size,x:startX,y});
+        setTimeout(()=>{ if(cell.parentNode){ this.container.removeChild(cell); this.cells=this.cells.filter(c=>c.element!==cell);} }, (speed+2)*1000);
+      }
+      startCellGeneration(){ setInterval(()=>{ if(this.cells.length<30) this.createCell(); }, Math.random()*2000+1000); }
+      startConsumptionSimulation(){
+        setInterval(()=>{
+          const small=this.cells.filter(c=>c.type==='small');
+          if(small.length>0 && Math.random()<0.3){
+            const s=small[Math.floor(Math.random()*small.length)];
+            s.element.classList.add('consuming');
+            setTimeout(()=>{ if(s.element.parentNode){ this.container.removeChild(s.element); this.cells=this.cells.filter(c=>c.element!==s.element);} }, 500);
+          }
+        }, 3000);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', ()=>{ new GameBackground(); });
+
+    // efeitos visuais dos botões (apenas UI)
+    document.addEventListener('click', (e)=>{
+      const b = e.target.closest('.difficulty-btn');
+      if(b){
+        document.querySelectorAll('.difficulty-btn').forEach(x=>x.classList.remove('selected'));
+        b.classList.add('selected');
+        // Se quiser ligar à lógica real de dificuldade:
+        // import('./src/js/difficulty.js').then(({setDifficultyByName}) => setDifficultyByName(b.dataset.diff));
+      }
+    });
+    // contador online fake
+    function updateOnlineCount(){
+      const els=document.querySelectorAll('.online-count');
+      const val=Math.floor(Math.random()*300)+1000;
+      els.forEach(el=>el.textContent=val.toLocaleString());
+    }
+    setInterval(updateOnlineCount, 30000);
+  </script>
 </body>
 </html>
