@@ -22,7 +22,37 @@ const INITIAL_MASS = 12;
 const RAGE_MS = 10000;
 const ENEMY_EAT = 1.15;   // fator p/ comer
 const PLAYER_DIE = 1.10;  // fator p/ morrer para inimigo
+// tempo mínimo travado dividido (10s)
+const SPLIT_LOCK_MS = 10000;
+function splitPlayer(){
+  const cells = playerCells();
+  if(player.split && cells.length >= MAX_SPLITS) return;
+  if(!player.split && player.mass < 20) return;
 
+  const t = getTarget();
+  if(!player.split){
+    const a = Math.atan2(t.y-player.y, t.x-player.x), d = 30, m = player.mass/2;
+    player.split = true;
+    player.splitBalls = [
+      { x: player.x + Math.cos(a)*d, y: player.y + Math.sin(a)*d, mass:m, radius:massToRadius(m), vx:Math.cos(a)*4, vy:Math.sin(a)*4, splitTime:now() },
+      { x: player.x - Math.cos(a)*d, y: player.y - Math.sin(a)*d, mass:m, radius:massToRadius(m), vx:-Math.cos(a)*4, vy:-Math.sin(a)*4, splitTime:now() }
+    ];
+    // trava a recombinação por 10s
+    splitEnd = now() + SPLIT_LOCK_MS;
+  } else {
+    const newBalls=[];
+    for(const ball of player.splitBalls){
+      if(ball.mass >= 20){
+        const a = Math.atan2(t.y-ball.y, t.x-ball.x), d=ball.radius+15, half=ball.mass/2;
+        newBalls.push({ x:ball.x+Math.cos(a)*d, y:ball.y+Math.sin(a)*d, mass:half, radius:massToRadius(half), vx:Math.cos(a)*5, vy:Math.sin(a)*5, splitTime:now() });
+        newBalls.push({ x:ball.x-Math.cos(a)*d, y:ball.y-Math.sin(a)*d, mass:half, radius:massToRadius(half), vx:-Math.cos(a)*5, vy:-Math.sin(a)*5, splitTime:now() });
+      } else newBalls.push(ball);
+    }
+    player.splitBalls = newBalls.slice(0, MAX_SPLITS);
+    // toda nova divisão renova o travamento de 10s
+    splitEnd = now() + SPLIT_LOCK_MS;
+  }
+}
 /* ===== Utils ===== */
 const now = () => Date.now();
 const dist = (x1,y1,x2,y2) => Math.hypot(x1-x2, y1-y2);
