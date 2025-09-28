@@ -223,3 +223,18 @@ document.addEventListener('click', (e) => {
   const val = b.dataset.diff; // 'easy' | 'normal' | 'hard'
   if (val) setDifficultyByName(val);
 });
+import { setDifficultyByName } from './difficulty.js';
+
+// clicar nos botões redondos do menu troca a dificuldade real do jogo
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.difficulty-btn');
+  if (!btn) return;
+
+  // visual
+  document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  // lógica do jogo
+  const diff = btn.dataset.diff; // 'easy' | 'normal' | 'hard'
+  if (diff) setDifficultyByName(diff);
+});
