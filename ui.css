@@ -1,7 +1,0 @@
-.difficultySection{position:absolute;left:0;right:0;top:30vh;margin:auto;max-width:560px;color:#fff;padding:0 16px}
-.difficultyTitle{opacity:.9;margin-bottom:10px}
-.difficultyBtns{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;justify-items:center}
-.diffBtn{width:110px;height:110px;border-radius:999px;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-weight:900;display:flex;align-items:center;justify-content:center;text-align:center;flex-direction:column;gap:6px;position:relative;cursor:pointer}
-.diffBtn.active,.diffBtn:hover{outline:3px solid #00ff88}
-.hackersBadge{position:absolute;bottom:6px;right:6px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#00ff88;color:#000;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;border:2px solid #0c0}
-.controlsRow{position:absolute;left:0;right:0;bottom:14vh;margin:auto;display:flex;justify-content:center;gap:12px}
