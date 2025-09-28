@@ -2,7 +2,7 @@
 // Agar Mobile - systems.js
 // Rage, itens, pellets, partículas, câmera e interações
 // ==============================
-
+import { getDifficulty } from './difficulty.js';
 import {
   WORLD,
   RAGE_MS,
@@ -64,10 +64,16 @@ export function updatePelletPhysics(){
 /* ======================
    Rage mode
    ====================== */
+// ===== Rage mode =====
 function safeSpawnRageLater(){
-  const delay = 3000 + Math.random()*5000;
-  setTimeout(()=>{ if (state.gameRunning) spawnRageBonus(); }, delay);
+  // usa a dificuldade atual para calcular o intervalo do próximo spawn
+  const diff = getDifficulty();
+  const delay = diff.rageDelayMin + Math.random() * (diff.rageDelayMax - diff.rageDelayMin);
+  setTimeout(() => {
+    if (state.gameRunning) spawnRageBonus();
+  }, delay);
 }
+
 function spawnRageBonus(){
   state.powerUps.push({
     x: Math.random()*WORLD.w,
@@ -78,6 +84,30 @@ function spawnRageBonus(){
     emoji: '😡',
     pulse: Math.random()*6.28
   });
+}
+
+export function updateRage(){
+  // player coleta bônus rage
+  for (let i = state.powerUps.length - 1; i >= 0; i--){
+    const b = state.powerUps[i];
+    let hit = false;
+    for (const c of playerCells()){
+      if (dist(c.x,c.y,b.x,b.y) < c.radius + b.radius){ hit = true; break; }
+    }
+    if (!hit) continue;
+
+    state.player.rageMode = true;
+    state.player.rageEnd  = now() + RAGE_MS;
+    createParticles(b.x, b.y, '#FF006E');
+    for (let j=0;j<8;j++) createParticles(b.x + (Math.random()-0.5)*30, b.y + (Math.random()-0.5)*30, '#FF006E');
+
+    state.powerUps.splice(i,1);
+    safeSpawnRageLater(); // agenda próximo de acordo com a dificuldade
+  }
+
+  if (state.player.rageMode && now() > state.player.rageEnd){
+    state.player.rageMode = false;
+  }
 }
 
 export function updateRage(){
