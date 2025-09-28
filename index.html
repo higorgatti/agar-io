@@ -2,13 +2,17 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Agar Mobile</title>
-  <!-- CSS principal -->
-  <link rel="stylesheet" href="src/css/style.css">
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="src/css/style.css" />
+  <meta name="theme-color" content="#001122" />
 </head>
 <body>
   <div id="gameContainer">
+    <!-- Canvas principal -->
     <canvas id="gameCanvas"></canvas>
 
     <!-- HUD -->
@@ -16,22 +20,35 @@
       Pontuação: <b id="score">0</b> • Massa: <b id="mass">10</b>
     </div>
 
-    <!-- Rage Status -->
+    <!-- Status do Rage -->
     <div id="rageStatus">😡 RAGE MODE (<span id="rageTime">10</span>s)</div>
 
     <!-- Tela inicial -->
     <div id="start">
       <div class="box">
         <h1>🦠 Agar Mobile</h1>
+
         <p>Toque e arraste para mover • Toque duplo: dividir até 8x</p>
         <p>Botões: <b>Dividir</b> e <b>Ejetar</b> no canto inferior direito</p>
-        <p style="font-size:14px;opacity:0.85">⚡ DIVISÃO tipo Nebulos.io (recombinação inteligente)</p>
-        <p style="font-size:12px;opacity:0.75">🤖 Inimigos: Básico, Agressivo, Cauteloso, Veloz, Tanque, Caçador</p>
+        <p style="font-size:14px;opacity:.85">⚡ Divisão estilo Nebulos.io (recombinação inteligente)</p>
+        <p style="font-size:12px;opacity:.75">🤖 Inimigos: Básico, Agressivo, Cauteloso, Veloz, Tanque, Caçador</p>
+
+        <!-- Seletor de dificuldade (opcional, mas já integrado no main.js) -->
+        <label style="display:block;margin:10px 0;color:#fff;">
+          Dificuldade:
+          <select id="difficulty" style="margin-left:8px;">
+            <option value="easy">Fácil</option>
+            <option value="normal" selected>Normal</option>
+            <option value="hard">Difícil</option>
+            <option value="insane">Insano</option>
+          </select>
+        </label>
+
         <button id="btnStart">COMEÇAR</button>
       </div>
     </div>
 
-    <!-- Tela de Game Over -->
+    <!-- Game Over -->
     <div id="over" class="hidden">
       <div class="box">
         <h2>💀 Game Over</h2>
@@ -40,19 +57,19 @@
       </div>
     </div>
 
-    <!-- Mini mapa -->
+    <!-- Minimap -->
     <div id="minimapWrap" class="hidden">
       <canvas id="minimap" width="180" height="130"></canvas>
     </div>
 
-    <!-- Botões Mobile -->
+    <!-- Botões mobile -->
     <div id="mobileBtns" class="hidden">
       <button id="btnEject">EJETAR</button>
       <button id="btnSplit">DIVIDIR</button>
     </div>
   </div>
 
-  <!-- JS principal como módulo -->
+  <!-- Entrada do app (módulos ES) -->
   <script type="module" src="src/js/main.js"></script>
 </body>
 </html>
