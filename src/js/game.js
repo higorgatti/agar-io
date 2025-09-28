@@ -98,7 +98,6 @@ function updateEnemyAI(enemy, now){
   enemy.lastThink = now;
 
   const {x:pX, y:pY} = playerCentroid();
-  const pMass = totalPlayerMass();
   const {vx:pVx, vy:pVy} = playerAvgVelocity();
   const distToPlayer = Math.hypot(enemy.x - pX, enemy.y - pY);
 
@@ -114,7 +113,7 @@ function updateEnemyAI(enemy, now){
 
   enemy.fearLevel = Math.max(0, enemy.fearLevel - 0.5);
 
-  // Caçar inimigos menores próximos
+  // caçar inimigos menores próximos
   let targetEnemy=null, closestEnemyDist=Infinity;
   for(const other of enemies){
     if(other===enemy) continue;
@@ -131,6 +130,7 @@ function updateEnemyAI(enemy, now){
   }
 
   if(distToPlayer < 300){
+    const pMass = totalPlayerMass();
     if(player.rageMode){
       enemy.behavior='flee'; enemy.target={x:predictedX, y:predictedY}; enemy.fearLevel=5;
     } else if(enemy.mass > pMass*1.2){
@@ -341,7 +341,7 @@ function maybeMerge(){
       player.split=false; player.x=b.x; player.y=b.y; player.mass=b.mass; player.radius=b.radius; player.vx=b.vx; player.vy=b.vy; player.splitBalls=[];
     }
   }
-  // Recombinação rápida para muito pequenas
+  // recombinação rápida para muito pequenas
   for(let i=0;i<player.splitBalls.length;i++){
     const ball=player.splitBalls[i];
     if(ball.mass<15){
@@ -399,16 +399,31 @@ function update(){
     if(Date.now()>p.life || p.x<0||p.x>WORLD_W||p.y<0||p.y>WORLD_H) pellets.splice(i,1);
   }
 
-  // bônus Rage
-  for(let i=powerUps.length-1;i>=0;i--){
-    const b=powerUps[i];
-    const {x:px,y:py} = playerCentroid();
-    const pr = player.split ? Math.max(...player.splitBalls.map(b=>b.radius)) : player.radius;
-    if(Math.hypot(px-b.x,py-b.y) < pr + b.radius){
-      player.rageMode=true; player.rageEnd=now+10000;
-      createParticles(b.x,b.y,'#FF006E');
-      for(let j=0;j<8;j++){ createParticles(b.x+(Math.random()-0.5)*30, b.y+(Math.random()-0.5)*30, '#FF006E'); }
-      powerUps.splice(i,1);
+  /* ===== BÔNUS RAGE — qualquer fragmento coleta ===== */
+  for (let i = powerUps.length - 1; i >= 0; i--) {
+    const b = powerUps[i];
+    let collected = false;
+
+    if (player.split) {
+      for (const cell of player.splitBalls) {
+        if (Math.hypot(cell.x - b.x, cell.y - b.y) < cell.radius + b.radius) {
+          collected = true; break;
+        }
+      }
+    } else {
+      if (Math.hypot(player.x - b.x, player.y - b.y) < player.radius + b.radius) {
+        collected = true;
+      }
+    }
+
+    if (collected) {
+      player.rageMode = true;
+      player.rageEnd = Date.now() + 10000;
+      createParticles(b.x, b.y, '#FF006E');
+      for (let j = 0; j < 8; j++) {
+        createParticles(b.x + (Math.random() - 0.5) * 30, b.y + (Math.random() - 0.5) * 30, '#FF006E');
+      }
+      powerUps.splice(i, 1);
       safeSpawnRageLater();
     }
   }
@@ -455,7 +470,7 @@ function update(){
     }
   }
 
-  // inimigos
+  // inimigos (AI, comer itens, etc)
   for(let i=0;i<enemies.length;i++){
     const e=enemies[i];
     updateEnemyAI(e, now); moveEnemyAI(e);
@@ -485,9 +500,42 @@ function update(){
       const p=pellets[k]; if(Math.hypot(e.x-p.x,e.y-p.y)<e.radius+p.radius){ e.mass+=p.mass*0.9; e.radius=massToRadius(e.mass); pellets.splice(k,1); }
     }
 
-    // colisão inimigo x player — checar por célula
-    const pMass = totalPlayerMass();
+    /* ===== COLISÃO INIMIGO x PLAYER — por fragmento ===== */
+    if(player.split){
+      for (let bi = 0; bi < player.splitBalls.length; bi++) {
+        const b = player.splitBalls[bi];
+        const d = Math.hypot(b.x - e.x, b.y - e.y);
+        if (d < b.radius + e.radius) {
+          if (b.mass > e.mass * 1.15) {
+            // ESTE fragmento come o inimigo
+            eatEnemy(i);
+            break;
+          } else if (e.mass > b.mass * 1.10) {
+            // Inimigo come ESTE fragmento (não o jogador inteiro)
+            createParticles(b.x, b.y, '#FF4444');
+            e.mass += b.mass * 0.8;
+            e.radius = massToRadius(e.mass);
+            player.splitBalls.splice(bi, 1);
+            bi--;
 
+            if (player.splitBalls.length === 0) {
+              endGame();
+              return;
+            }
+          }
+          break;
+        }
+      }
+    } else {
+      const d=Math.hypot(player.x-e.x,player.y-e.y);
+      if(d<player.radius+e.radius){
+        if(player.mass>e.mass*1.15){ eatEnemy(i); }
+        else if(e.mass>player.mass*1.10){ endGame(); return; }
+      }
+    }
+    if(!gameRunning) return;
+
+    // helper para comer inimigo e dar massa ao player
     function eatEnemy(idxE){
       const en = enemies[idxE];
       createParticles(en.x,en.y,'#FF4444');
@@ -504,28 +552,10 @@ function update(){
       }
       if(player.rageMode){ for(let j=0;j<5;j++){ createParticles(en.x+(Math.random()-0.5)*20, en.y+(Math.random()-0.5)*20, '#FF006E'); } }
 
-      // respawn
+      // respawn do inimigo
       en.mass=20+Math.random()*40; en.radius=massToRadius(en.mass);
       en.x=Math.random()*WORLD_W; en.y=Math.random()*WORLD_H; en.behavior='wander'; en.target=null; en.fearLevel=0;
     }
-
-    if(player.split){
-      for(const b of player.splitBalls){
-        const d=Math.hypot(b.x-e.x,b.y-e.y);
-        if(d<b.radius+e.radius){
-          if(b.mass>e.mass*1.15 || pMass>e.mass*1.15){ eatEnemy(i); }
-          else if(e.mass>pMass*1.1){ endGame(); }
-          break;
-        }
-      }
-    } else {
-      const d=Math.hypot(player.x-e.x,player.y-e.y);
-      if(d<player.radius+e.radius){
-        if(player.mass>e.mass*1.15){ eatEnemy(i); }
-        else if(e.mass>player.mass*1.1){ endGame(); }
-      }
-    }
-    if(!gameRunning) return;
   }
 
   // HUD
