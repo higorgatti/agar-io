@@ -215,3 +215,11 @@ function update() {
 
 // expõe se algum módulo precisar
 export { startGame, endGame, loop, update };
+import { setDifficultyByName } from './difficulty.js';
+
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.difficulty-btn');
+  if (!b) return;
+  const val = b.dataset.diff; // 'easy' | 'normal' | 'hard'
+  if (val) setDifficultyByName(val);
+});
