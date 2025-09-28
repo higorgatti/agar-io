@@ -1,5 +1,126 @@
-/* ====== MENU / LANDING ====== */
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Arial,sans-serif;background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%);min-height:100vh;overflow-x:hidden;position:relative}
+/* ===== MENU / LANDING (estilo do mock) ===== */
 
-/* ... todo o restante do seu CSS do menu ... */
+:root{
+  --glass-bg: rgba(255,255,255,0.12);
+  --glass-brd: rgba(255,255,255,0.22);
+  --glass-blur: 18px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: radial-gradient(1200px 800px at 15% 20%, #153861 0%, #0d2b4b 40%, #082138 70%, #071b2e 100%);
+  color:#fff;
+}
+
+/* fundo animado leve */
+.game-background{
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(600px 300px at 20% 30%, rgba(76,175,80,.12) 0%, transparent 70%),
+    radial-gradient(500px 260px at 80% 70%, rgba(33,150,243,.12) 0%, transparent 70%),
+    radial-gradient(420px 240px at 50% 50%, rgba(255,87,34,.10) 0%, transparent 70%);
+}
+
+/* container central do menu (fica dentro do #start) */
+.container{
+  position:relative; z-index:1;
+  width:min(720px, 92vw);
+  margin: 14px auto 24px;
+}
+
+/* cabeçalho “AGAR MOBILE” + cartão de servidor */
+.logo h1{
+  font-size:40px; letter-spacing:.5px; margin:4px 0 10px;
+  text-shadow:0 3px 10px rgba(0,0,0,.35);
+  display:flex; align-items:center; gap:10px; justify-content:flex-start;
+}
+.virus-icon{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle,#4CAF50,#388E3C)}
+
+/* cartões glass */
+.header,
+.server-info,
+.xp-section,
+.daily-mission{
+  background: var(--glass-bg);
+  border:1px solid var(--glass-brd);
+  border-radius:20px;
+  padding:14px 16px;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 0 12px 40px rgba(0,0,0,.25);
+  margin-bottom:14px;
+}
+
+/* header */
+.header{display:flex; align-items:center; justify-content:space-between}
+.player-info{display:flex; gap:10px; align-items:center}
+.avatar{
+  width:44px;height:44px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(45deg,#4CAF50,#2196F3); font-size:20px
+}
+.player-name{font-weight:700}
+.player-level{opacity:.8; font-size:12px}
+.coins{background:rgba(255,193,7,.15); border:2px solid #FFC107; color:#FFC107;
+  padding:8px 12px; border-radius:999px; font-weight:800}
+
+/* informações do servidor */
+.server-info .server-row{display:flex; justify-content:space-between; margin:6px 0}
+.server-status{color:#49d36a; font-weight:800}
+
+/* XP */
+.xp-info{display:flex; justify-content:space-between; margin-bottom:8px}
+.xp-bar{height:8px; background:rgba(255,255,255,.18); border-radius:6px; overflow:hidden}
+.xp-progress{height:100%; width:65%; background:linear-gradient(90deg,#4CAF50,#8BC34A);
+  animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 6px rgba(76,175,80,.5)}50%{box-shadow:0 0 18px rgba(76,175,80,.9)}100%{box-shadow:0 0 6px rgba(76,175,80,.5)}}
+
+/* missão diária */
+.mission-title{font-weight:800; margin-bottom:4px}
+.mission-desc{opacity:.9; margin-bottom:8px}
+.mission-progress{display:flex; gap:10px; align-items:center}
+.progress-bar{flex:1; height:6px; background:rgba(255,255,255,.18); border-radius:4px; overflow:hidden}
+.progress-fill{height:100%; width:40%; background:linear-gradient(90deg,#4CAF50,#8BC34A)}
+.mission-reward{background:#FFC107; color:#2b2b2b; font-weight:800; padding:4px 8px; border-radius:10px}
+
+/* dificuldade */
+.difficulty-title{text-align:center; font-weight:900; letter-spacing:.8px; margin:20px 0 12px}
+.difficulty-options{display:flex; gap:14px; justify-content:center}
+.difficulty-btn{
+  width:110px; height:110px; border-radius:999px; border:none; cursor:pointer;
+  font-weight:900; letter-spacing:.4px; color:#fff;
+  box-shadow:0 12px 30px rgba(0,0,0,.25); transition:transform .2s, box-shadow .2s;
+}
+.difficulty-btn.selected{transform:scale(1.08); box-shadow:0 0 28px rgba(255,255,255,.40)}
+.difficulty-easy{background:linear-gradient(45deg,#4CAF50,#8BC34A)}
+.difficulty-normal{background:linear-gradient(45deg,#FF9800,#FFC107)}
+.difficulty-hard{background:linear-gradient(45deg,#F44336,#E91E63)}
+
+/* modos (grid 2x2) */
+.game-modes{
+  display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0 18px
+}
+.mode-btn{
+  border:none; border-radius:18px; padding:20px; color:#fff; font-weight:900;
+  box-shadow:0 14px 32px rgba(0,0,0,.28); transition:transform .15s, box-shadow .15s;
+}
+.mode-btn:hover{transform:translateY(-3px); box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.mode-solo{background:linear-gradient(45deg,#4CAF50,#8BC34A)}
+.mode-online{background:linear-gradient(45deg,#F44336,#FF5722)}
+.mode-tournament{background:linear-gradient(45deg,#FF9800,#FFC107)}
+.mode-arena{background:linear-gradient(45deg,#9C27B0,#E91E63)}
+
+/* especiais */
+.special-section{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+.special-btn{
+  border:none; border-radius:16px; padding:16px; font-weight:900; color:#fff;
+  box-shadow:0 12px 32px rgba(0,0,0,.25)
+}
+.bonus-btn{background:linear-gradient(45deg,#FFC107,#FF8F00)}
+.shop-btn{background:linear-gradient(45deg,#2196F3,#03A9F4)}
+
+/* contagem online */
+.online-info{text-align:center; opacity:.9; margin-top:12px}
+.online-count{color:#49d36a; font-weight:900}
