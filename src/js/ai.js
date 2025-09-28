@@ -94,13 +94,17 @@ export function updateEnemyAI(e) {
 export function moveEnemyAI(e) {
   let targetX = e.x, targetY = e.y;
 
-  // velocidade-base por tipo + escala por tamanho
-  let speed = (e.baseSpeed || 0.3) * (30 / (e.radius + 10));
-  if (e.type === 'aggressive')       speed *= 1.3;
-  else if (e.type === 'cautious' && e.behavior === 'flee') speed *= 1.6;
-  else if (e.type === 'speedy')      speed *= 1.8;
-  else if (e.type === 'tank')        speed *= 0.7;
-  else if (e.type === 'hunter')      speed *= 1.2;
+// velocidade-base por tipo + escala por tamanho
+let speed = (e.baseSpeed || 0.3) * (30 / (e.radius + 10));
+
+// multiplicador global por dificuldade
+speed *= getDifficulty().enemySpeedMul;
+
+if (e.type === 'aggressive') speed *= 1.3;
+else if (e.type === 'cautious' && e.behavior === 'flee') speed *= 1.8;
+else if (e.type === 'speedy') speed *= 1.8;
+else if (e.type === 'tank') speed *= 0.7;
+else if (e.type === 'hunter') speed *= 1.2;
 
   switch (e.behavior) {
     case 'hunt_enemy':
