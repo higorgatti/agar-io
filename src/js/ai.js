@@ -2,7 +2,7 @@
 // Agar Mobile - ai.js
 // IA dos inimigos: decidir comportamento e mover
 // ==============================
-
+import { getDifficulty } from './difficulty.js';
 import { WORLD } from './constants.js';
 import { now, dist, clamp } from './utils.js';
 import { state } from './state.js';
