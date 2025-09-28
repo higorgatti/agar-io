@@ -13,25 +13,25 @@
     <canvas id="gameCanvas"></canvas>
 
     <!-- Tela inicial -->
-    <section id="start" class="screen active">
-      <h1 class="logo">Agar Mobile</h1>
-      <div class="difficultySection">
-        <div class="difficultyTitle">NÍVEL DE DIFICULDADE:</div>
-        <div class="difficultyBtns">
-          <button class="diffBtn" data-diff="easy">FÁCIL</button>
-          <button class="diffBtn" data-diff="normal">NORMAL</button>
-          <button class="diffBtn" data-diff="hard">DIFÍCIL</button>
-          <button class="diffBtn" id="btnHackers" data-role="hackers">
-            <div style="font-size:20px;margin-bottom:4px;">🛠️</div>
-            <div>HACKERS</div>
-            <span id="hackersBadge" class="hackersBadge">0</span>
-          </button>
-        </div>
-      </div>
-      <div class="controlsRow">
-        <button id="btnStart" class="btn primary">COMEÇAR</button>
-      </div>
-    </section>
+  <section id="start" class="screen active start-classic">
+  <div class="startPanel">
+    <h1 class="logo">Agar Mobile</h1>
+
+    <div class="diffRow">
+      <button class="diffBtn pill" data-diff="easy">FÁCIL</button>
+      <button class="diffBtn pill" data-diff="normal">NORMAL</button>
+      <button class="diffBtn pill" data-diff="hard">DIFÍCIL</button>
+
+      <!-- HACKERS como círculo pequeno ao lado -->
+      <button class="diffBtn chipCircle" id="btnHackers" title="Itens especiais">
+        <span class="chipIcon">🛠️</span>
+        <span id="hackersBadge" class="hackersBadge">0</span>
+      </button>
+    </div>
+
+    <button id="btnStart" class="btnPlay">COMEÇAR</button>
+  </div>
+</section>
 
     <!-- HUD -->
     <section id="hud" class="screen">
