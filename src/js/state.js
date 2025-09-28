@@ -3,14 +3,20 @@
 // Mantém o estado global + canvas + reset/spawns
 // ==============================
 
-import { MAX_DPR, WORLD, INITIAL_MASS, FRUITS } from './constants.js';
+import {
+  MAX_DPR,
+  WORLD,
+  INITIAL_MASS,
+  FRUITS
+} from './constants.js';
+
 import { massToRadius } from './utils.js';
 
 // ---------- Canvas & UI ----------
 const canvas = document.getElementById('gameCanvas');
-const ctx    = canvas.getContext('2d');
-const mini   = document.getElementById('minimap');
-const mctx   = mini.getContext('2d');
+const ctx     = canvas.getContext('2d');
+const mini    = document.getElementById('minimap');
+const mctx    = mini.getContext('2d');
 
 export const ui          = document.getElementById('ui');
 export const startPane   = document.getElementById('start');
@@ -18,12 +24,12 @@ export const overPane    = document.getElementById('over');
 export const minimapWrap = document.getElementById('minimapWrap');
 export const mobileBtns  = document.getElementById('mobileBtns');
 
-// ---------- View (medidas e DPR) ----------
+// Medidas da viewport e DPR
 export const view = {
   canvas, ctx, mini, mctx,
   W: innerWidth,
   H: innerHeight,
-  DPR: Math.min(MAX_DPR, (window.devicePixelRatio || 1)),
+  DPR: Math.min(MAX_DPR, (window.devicePixelRatio || 1))
 };
 
 // ---------- Estado de jogo ----------
@@ -31,7 +37,7 @@ export const state = {
   gameRunning: false,
   score: 0,
 
-  player: null, // definido em reset()
+  player: null,          // definido em reset()
   enemies: [],
   food: [],
   powerUps: [],
@@ -40,7 +46,7 @@ export const state = {
 
   camera: { x: WORLD.w / 2, y: WORLD.h / 2, zoom: 1 },
   moveTarget: null,
-  splitEnd: 0,
+  splitEnd: 0
 };
 
 // ---------- Ajuste de canvas ----------
@@ -52,13 +58,13 @@ export function fit() {
   canvas.width  = view.W * view.DPR;
   canvas.height = view.H * view.DPR;
 
-  // importante: desenhar sempre em “tamanho CSS”
+  // importante: desenhar sempre em "tamanho CSS"
   view.ctx.setTransform(view.DPR, 0, 0, view.DPR, 0, 0);
 }
 addEventListener('resize', fit, { passive: true });
 fit();
 
-// ---------- Helpers internos de spawn ----------
+// ---------- Helpers de spawn (internos deste módulo) ----------
 function randFruit() {
   const emoji = FRUITS[Math.floor(Math.random() * FRUITS.length)];
   return { x: Math.random() * WORLD.w, y: Math.random() * WORLD.h, radius: 10, emoji };
@@ -72,7 +78,7 @@ function spawnRageBonus() {
     type: 'rage',
     color: '#FF006E',
     emoji: '😡',
-    pulse: Math.random() * 6.28,
+    pulse: Math.random() * 6.28
   });
 }
 
@@ -80,7 +86,7 @@ function spawnEnemy() {
   const types = ['basic', 'aggressive', 'cautious', 'speedy', 'tank', 'hunter'];
   const type  = types[Math.floor(Math.random() * types.length)];
 
-  const e = {
+  let e = {
     x: Math.random() * WORLD.w,
     y: Math.random() * WORLD.h,
     mass: 20 + Math.random() * 50,
@@ -92,10 +98,7 @@ function spawnEnemy() {
     lastThink: 0,
     type,
     blinkTimer: Math.random() * 1000,
-    animPhase: Math.random() * 6.28,
-    color: '#6aa0ff',
-    baseSpeed: 0.3,
-    aggressiveness: 0.3,
+    animPhase: Math.random() * 6.28
   };
 
   switch (type) {
@@ -126,9 +129,9 @@ function spawnEnemy() {
 // ---------- Reset geral ----------
 export function reset(opts = {}) {
   const {
-    foodCount   = 320,
-    enemyCount  = 25,
-    initialRage = 5,
+    foodCount = 320,
+    enemyCount = 25,
+    initialRage = 5
   } = opts;
 
   // Player
@@ -141,7 +144,7 @@ export function reset(opts = {}) {
     split: false,
     splitBalls: [],
     rageMode: false,
-    rageEnd: 0,
+    rageEnd: 0
   };
 
   // Coleções
@@ -156,7 +159,7 @@ export function reset(opts = {}) {
   state.splitEnd   = 0;
   state.moveTarget = null;
 
-  // Spawns iniciais conforme dificuldade
+  // Spawns iniciais (usando a dificuldade)
   for (let i = 0; i < foodCount;  i++) state.food.push(randFruit());
   for (let i = 0; i < enemyCount; i++) spawnEnemy();
   for (let i = 0; i < initialRage; i++) spawnRageBonus();
@@ -165,5 +168,5 @@ export function reset(opts = {}) {
   state.camera = { x: WORLD.w / 2, y: WORLD.h / 2, zoom: 1 };
 }
 
-// re-export útil
+// export prático do WORLD (se outro módulo precisar)
 export { WORLD };
