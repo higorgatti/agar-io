@@ -1,13 +1,61 @@
-Pontuação: 0 • Massa: 10
-😡 RAGE MODE (10s)
-🦠 Agar Mobile
-Toque e arraste para mover • Toque duplo: dividir até 8x
-Botões: Dividir e Ejetar no canto inferior direito
-⚡ DIVISÃO tipo Nebulos.io (recombinação inteligente)
-🤖 Inimigos: Básico, Agressivo, Cauteloso, Veloz, Tanque, Caçador
-COMEÇAR
-💀 Game Over
-Pontuação: 0 • Massa: 0
-Jogar novamente
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Agar Mobile</title>
 
-EJETAR DIVIDIR
+  <!-- Fallback: evita o “texto solto” caso o CSS externo demore -->
+  <style>.hidden{display:none!important}</style>
+
+  <link rel="stylesheet" href="src/css/style.css">
+</head>
+<body>
+  <div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD -->
+    <div id="ui" class="hidden">
+      Pontuação: <b id="score">0</b> • Massa: <b id="mass">10</b>
+    </div>
+
+    <!-- Rage -->
+    <div id="rageStatus">😡 RAGE MODE (<span id="rageTime">10</span>s)</div>
+
+    <!-- Start -->
+    <div id="start">
+      <div class="box">
+        <h1>🦠 Agar Mobile</h1>
+        <p>Toque e arraste para mover • Toque duplo: dividir até 8x</p>
+        <p>Botões: <b>Dividir</b> e <b>Ejetar</b> no canto inferior direito</p>
+        <p style="font-size:14px;opacity:0.85">⚡ DIVISÃO tipo Nebulos.io (recombinação inteligente)</p>
+        <p style="font-size:12px;opacity:0.75">🤖 Inimigos: Básico, Agressivo, Cauteloso, Veloz, Tanque, Caçador</p>
+        <button id="btnStart">COMEÇAR</button>
+      </div>
+    </div>
+
+    <!-- Game Over -->
+    <div id="over" class="hidden">
+      <div class="box">
+        <h2>💀 Game Over</h2>
+        <p>Pontuação: <b id="finalScore">0</b> • Massa: <b id="finalMass">0</b></p>
+        <button id="btnRestart">Jogar novamente</button>
+      </div>
+    </div>
+
+    <!-- Minimap -->
+    <div id="minimapWrap" class="hidden">
+      <canvas id="minimap" width="180" height="130"></canvas>
+    </div>
+
+    <!-- Botões mobile -->
+    <div id="mobileBtns" class="hidden">
+      <button id="btnEject">EJETAR</button>
+      <button id="btnSplit">DIVIDIR</button>
+    </div>
+  </div>
+
+  <script src="src/js/game.js"></script>
+</body>
+</html>
