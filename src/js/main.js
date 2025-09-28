@@ -2,14 +2,14 @@
 // Agar Mobile - main.js (Entry)
 // ==============================
 
-// Constantes (se precisar em main)
-import { /* WORLD, */ } from './constants.js';
+// Dificuldade
+import { setDifficultyByName, getDifficulty } from './difficulty.js';
 
 // Estado, canvas e elementos de UI
 import {
-  view,       // { canvas, ctx, mini, mctx, W, H, DPR }
-  state,      // { gameRunning, score, player, enemies, food, powerUps, pellets, particles, camera, moveTarget, splitEnd }
-  fit, reset, // ajuste de canvas e reset do estado
+  view,                 // { canvas, ctx, mini, mctx, W, H, DPR }
+  state,                // { gameRunning, score, player, enemies, food, powerUps, pellets, particles, camera, moveTarget, splitEnd }
+  fit, reset,           // ajuste de canvas e reset do estado
   ui, startPane, overPane, minimapWrap, mobileBtns
 } from './state.js';
 
@@ -25,60 +25,68 @@ import {
   separatePlayerCells
 } from './player.js';
 
-// IA de inimigos
+// IA dos inimigos
 import { updateEnemyAI, moveEnemyAI } from './ai.js';
 
-// Sistemas gerais (rage/itens/partículas/câmera)
+// Sistemas (rage/itens/partículas/câmera/interações)
 import {
   updateRage,
   eatItems,
   updateParticles,
   updatePelletPhysics,
-  updateCamera
+  updateCamera,
+  runEnemyInteractions
 } from './systems.js';
 
 // Renderização
 import { render } from './render.js';
 
 //
-// ---------- DOM refs auxiliares ----------
+// ---------- configurações iniciais ----------
+setDifficultyByName('normal');            // defina 'easy' | 'normal' | 'hard' | 'insane'
+fit();                                    // dimensiona o canvas ao carregar
+addEventListener('resize', fit, { passive: true });
+
+// (se houver <select id="difficulty"> no index.html, isto habilita a troca pela UI)
+const diffSelect = document.getElementById('difficulty');
+if (diffSelect) {
+  diffSelect.addEventListener('change', (e) => {
+    setDifficultyByName(e.target.value);
+  });
+}
+
+//
+// ---------- helpers ----------
 const $ = (sel) => document.querySelector(sel);
 const elScore = $('#score');
 const elMass = $('#mass');
 const elRageStatus = $('#rageStatus');
 const elRageTime = $('#rageTime');
 
-const btnStart = $('#btnStart');
+const btnStart   = $('#btnStart');
 const btnRestart = $('#btnRestart');
-const btnSplit = $('#btnSplit');
-const btnEject = $('#btnEject');
+const btnSplit   = $('#btnSplit');
+const btnEject   = $('#btnEject');
 
-//
-// ---------- Helpers ----------
 function screenToWorld(clientX, clientY) {
   const rect = view.canvas.getBoundingClientRect();
-  // normaliza para o tamanho CSS (não o pixel ratio)
   const x = (clientX - rect.left) * (view.W / rect.width);
-  const y = (clientY - rect.top) * (view.H / rect.height);
-  // converte para o mundo (câmera/zoom)
-  const cx = view.W * 0.5;
-  const cy = view.H * 0.5;
-  const wx = ((x - cx) / state.camera.zoom) + state.camera.x;
-  const wy = ((y - cy) / state.camera.zoom) + state.camera.y;
-  return { x: wx, y: wy };
+  const y = (clientY - rect.top)  * (view.H / rect.height);
+  const cx = view.W * 0.5, cy = view.H * 0.5;
+  return {
+    x: ((x - cx) / state.camera.zoom) + state.camera.x,
+    y: ((y - cy) / state.camera.zoom) + state.camera.y
+  };
 }
 
 //
-// ---------- Entrada (toque) ----------
+// ---------- toque (mobile) ----------
 let lastTap = 0;
 
 function onTouchStart(e) {
   if (!state.gameRunning) return;
   const t = Date.now();
-  if (t - lastTap < 250) {
-    // toque duplo => dividir
-    splitPlayer();
-  }
+  if (t - lastTap < 250) splitPlayer(); // toque duplo => divide
   lastTap = t;
 
   const touch = e.touches[0];
@@ -100,25 +108,41 @@ document.addEventListener('touchmove', (e) => {
 
 // registra eventos no canvas
 view.canvas.addEventListener('touchstart', onTouchStart, { passive: false });
-view.canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+view.canvas.addEventListener('touchmove',  onTouchMove,  { passive: false });
 
 //
-// ---------- Botões UI ----------
+// ---------- botões ----------
 btnStart.addEventListener('click', startGame);
 btnRestart.addEventListener('click', startGame);
 btnSplit.addEventListener('click', () => { if (state.gameRunning) splitPlayer(); });
 btnEject.addEventListener('click', () => { if (state.gameRunning) ejectMass(); });
 
 //
-// ---------- Fluxo do jogo ----------
-function startGame() {
-  reset();
+// ---------- fluxo do jogo ----------
+function startGame(){
+  // aplica a dificuldade atual
+  const diff = getDifficulty();
+  reset({
+    foodCount:   diff.foodCount,
+    enemyCount:  diff.enemyCount,
+    initialRage: diff.initialRage
+  });
+
+  // liga o jogo e prepara UI
   state.gameRunning = true;
+  window.__GAME_RUNNING__ = true;
+
   startPane.classList.add('hidden');
   overPane.classList.add('hidden');
   ui.classList.remove('hidden');
   minimapWrap.classList.remove('hidden');
   mobileBtns.classList.remove('hidden');
+
+  // HUD inicial
+  elScore.textContent = 0;
+  elMass.textContent  = Math.floor(totalPlayerMass());
+  if (elRageStatus) elRageStatus.style.display = 'none';
+
   requestAnimationFrame(loop);
 }
 
@@ -128,49 +152,50 @@ function endGame() {
   minimapWrap.classList.add('hidden');
   mobileBtns.classList.add('hidden');
 
-  // atualiza UI de fim de jogo
   $('#finalScore').textContent = state.score;
-  $('#finalMass').textContent = Math.floor(totalPlayerMass());
+  $('#finalMass').textContent  = Math.floor(totalPlayerMass());
 
   overPane.classList.remove('hidden');
 }
 
-// pausa ao mudar de aba
+// pausa ao trocar de aba
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && state.gameRunning) state.gameRunning = false;
 });
 
 //
-// ---------- Loop ----------
+// ---------- loop ----------
 function loop() {
   if (!state.gameRunning) return;
   update();
-  render(); // usa o estado atual pra desenhar
+  render();
   requestAnimationFrame(loop);
 }
 
 function update() {
-  // Movimento e lógica do player
+  // Player
   movePlayer();
-  separatePlayerCells(); // evita sobreposição das células divididas
+  separatePlayerCells();       // evita sobrepor células divididas
   maybeMerge();
 
-  // Sistemas gerais
+  // Sistemas
   updateRage();
   updateParticles();
   updatePelletPhysics();
 
-  // Coleta de itens do jogador (aproveita helper genérico)
+  // Coleta do player
   eatItems(state.food,    (f) => f.radius, (f) => 0.25 * f.radius, '#00FF88');
   eatItems(state.pellets, (p) => p.radius, (p) => p.mass * 0.8,    '#FFD700');
 
-  // IA + interações de inimigos
-  const N = state.enemies.length;
-  for (let i = 0; i < N; i++) {
+  // IA + movimento
+  for (let i = 0; i < state.enemies.length; i++) {
     const e = state.enemies[i];
     updateEnemyAI(e);
     moveEnemyAI(e);
   }
+
+  // Interações (inimigos comem/morrem, player morre, etc.)
+  runEnemyInteractions();
 
   // Câmera
   updateCamera();
@@ -179,7 +204,6 @@ function update() {
   elScore.textContent = state.score;
   elMass.textContent  = Math.floor(totalPlayerMass());
 
-  // Rage status
   if (state.player.rageMode) {
     const remain = Math.max(0, Math.ceil((state.player.rageEnd - Date.now()) / 1000));
     elRageTime.textContent = remain;
@@ -189,8 +213,5 @@ function update() {
   }
 }
 
-// ajuste de canvas no resize
-addEventListener('resize', fit, { passive: true });
-
-// Exponha endGame se algum módulo precisar encerrar o jogo
+// expõe se algum módulo precisar
 export { startGame, endGame, loop, update };
