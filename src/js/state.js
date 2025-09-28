@@ -132,7 +132,13 @@ function spawnEnemy() {
 }
 
 // ---------- Reset geral ----------
-export function reset() {
+export function reset(opts = {}) {
+  const {
+    foodCount = 320,
+    enemyCount = 25,
+    initialRage = 5
+  } = opts;
+
   // Player
   state.player = {
     x: WORLD.w / 2,
@@ -146,6 +152,26 @@ export function reset() {
     rageEnd: 0
   };
 
+  // Coleções
+  state.enemies   = [];
+  state.food      = [];
+  state.powerUps  = [];
+  state.pellets   = [];
+  state.particles = [];
+
+  // Score/fluxo
+  state.score      = 0;
+  state.splitEnd   = 0;
+  state.moveTarget = null;
+
+  // Spawns iniciais (usando a dificuldade)
+  for (let i = 0; i < foodCount;  i++) state.food.push(randFruit());
+  for (let i = 0; i < enemyCount; i++) spawnEnemy();
+  for (let i = 0; i < initialRage; i++) spawnRageBonus();
+
+  // Câmera centralizada
+  state.camera = { x: WORLD.w / 2, y: WORLD.h / 2, zoom: 1 };
+}
   // Coleções
   state.enemies  = [];
   state.food     = [];
