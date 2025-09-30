@@ -1,519 +1,183 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
-}
-
-/* Fundo do jogo animado */
-.game-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
-    overflow: hidden;
-    background: 
-        radial-gradient(circle at 20% 30%, rgba(76, 175, 80, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(33, 150, 243, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(255, 87, 34, 0.1) 0%, transparent 50%);
-}
-
-.game-cell {
-    position: absolute;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 10px;
-    text-shadow: 0 0 5px rgba(0,0,0,0.5);
-}
-
-/* Células pequenas (comida) */
-.small-cell {
-    width: 8px;
-    height: 8px;
-    opacity: 0.6;
-    animation: drift 15s infinite linear;
-}
-
-/* Células médias */
-.medium-cell {
-    width: 25px;
-    height: 25px;
-    opacity: 0.4;
-    animation: drift 20s infinite linear;
-}
-
-/* Células grandes */
-.large-cell {
-    width: 45px;
-    height: 45px;
-    opacity: 0.3;
-    animation: drift 25s infinite linear;
-}
-
-/* Células gigantes */
-.huge-cell {
-    width: 70px;
-    height: 70px;
-    opacity: 0.2;
-    animation: drift 30s infinite linear;
-}
-
-/* Vírus */
-.virus-cell {
-    width: 35px;
-    height: 35px;
-    background: radial-gradient(circle, #4CAF50, #388E3C) !important;
-    opacity: 0.3;
-    animation: drift 22s infinite linear, pulse-virus 3s infinite ease-in-out;
-    position: relative;
-}
-
-.virus-cell::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 25px;
-    height: 25px;
-    background: radial-gradient(circle, #81C784, #4CAF50);
-    border-radius: 50%;
-}
-
-.virus-cell::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 15px;
-    height: 15px;
-    background: radial-gradient(circle, #A5D6A7, #81C784);
-    border-radius: 50%;
-}
-
-/* Animações */
-@keyframes drift {
-    from {
-        transform: translateX(-100px) translateY(0px) rotate(0deg);
+// Sistema de fundo do jogo
+class GameBackground {
+    constructor() {
+        this.container = document.getElementById('gameBackground');
+        this.cells = [];
+        this.cellTypes = [
+            { size: 'small', weight: 60, minSize: 6, maxSize: 12 },
+            { size: 'medium', weight: 25, minSize: 20, maxSize: 35 },
+            { size: 'large', weight: 10, minSize: 40, maxSize: 60 },
+            { size: 'huge', weight: 4, minSize: 65, maxSize: 85 },
+            { size: 'virus', weight: 1, minSize: 35, maxSize: 35 }
+        ];
+        this.colors = ['cell-color-1', 'cell-color-2', 'cell-color-3', 'cell-color-4', 
+                      'cell-color-5', 'cell-color-6', 'cell-color-7', 'cell-color-8'];
+        this.init();
     }
-    to {
-        transform: translateX(calc(100vw + 100px)) translateY(0px) rotate(360deg);
-    }
-}
 
-@keyframes pulse-virus {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
-
-/* Cores das células */
-.cell-color-1 { background: radial-gradient(circle, #FF5722, #D84315); }
-.cell-color-2 { background: radial-gradient(circle, #2196F3, #1565C0); }
-.cell-color-3 { background: radial-gradient(circle, #4CAF50, #2E7D32); }
-.cell-color-4 { background: radial-gradient(circle, #FF9800, #F57C00); }
-.cell-color-5 { background: radial-gradient(circle, #9C27B0, #6A1B9A); }
-.cell-color-6 { background: radial-gradient(circle, #FFC107, #F9A825); }
-.cell-color-7 { background: radial-gradient(circle, #607D8B, #455A64); }
-.cell-color-8 { background: radial-gradient(circle, #E91E63, #C2185B); }
-
-/* Efeito de consumo */
-@keyframes consume {
-    0% { 
-        transform: scale(1);
-        opacity: 0.5;
+    init() {
+        this.createInitialCells();
+        this.startCellGeneration();
+        this.startConsumptionSimulation();
     }
-    50% { 
-        transform: scale(1.2);
-        opacity: 0.8;
+
+    createInitialCells() {
+        // Criar células iniciais espalhadas pela tela
+        for (let i = 0; i < 25; i++) {
+            this.createCell(Math.random() * window.innerWidth);
+        }
     }
-    100% { 
-        transform: scale(0);
-        opacity: 0;
+
+    getCellType() {
+        const random = Math.random() * 100;
+        let accumulated = 0;
+        
+        for (let type of this.cellTypes) {
+            accumulated += type.weight;
+            if (random <= accumulated) {
+                return type;
+            }
+        }
+        return this.cellTypes[0];
+    }
+
+    createCell(startX = -100) {
+        const cellType = this.getCellType();
+        const cell = document.createElement('div');
+        
+        const size = Math.random() * (cellType.maxSize - cellType.minSize) + cellType.minSize;
+        const yPosition = Math.random() * (window.innerHeight - size);
+        const speed = Math.random() * 10 + 5; // velocidade entre 5 e 15 segundos
+        
+        cell.className = `game-cell ${cellType.size}-cell`;
+        
+        if (cellType.size === 'virus') {
+            cell.classList.add('virus-cell');
+        } else {
+            const colorClass = this.colors[Math.floor(Math.random() * this.colors.length)];
+            cell.classList.add(colorClass);
+            
+            // Adicionar nome para células maiores
+            if (cellType.size === 'large' || cellType.size === 'huge') {
+                const names = ['Player', 'Bot', 'AI', 'Pro', 'Noob', 'King', 'Queen', 'Master'];
+                cell.textContent = names[Math.floor(Math.random() * names.length)];
+            }
+        }
+        
+        cell.style.width = `${size}px`;
+        cell.style.height = `${size}px`;
+        cell.style.left = `${startX}px`;
+        cell.style.top = `${yPosition}px`;
+        cell.style.animationDuration = `${speed}s`;
+        cell.style.animationDelay = `${Math.random() * 2}s`;
+        
+        this.container.appendChild(cell);
+        this.cells.push({
+            element: cell,
+            size: size,
+            type: cellType.size,
+            x: startX,
+            y: yPosition
+        });
+
+        // Remover célula quando sair da tela
+        setTimeout(() => {
+            if (cell.parentNode) {
+                this.container.removeChild(cell);
+                this.cells = this.cells.filter(c => c.element !== cell);
+            }
+        }, (speed + 2) * 1000);
+    }
+
+    startCellGeneration() {
+        setInterval(() => {
+            if (this.cells.length < 30) {
+                this.createCell();
+            }
+        }, Math.random() * 2000 + 1000); // Entre 1-3 segundos
+    }
+
+    startConsumptionSimulation() {
+        setInterval(() => {
+            // Simular consumo de células pequenas
+            const smallCells = this.cells.filter(c => c.type === 'small');
+            if (smallCells.length > 0 && Math.random() < 0.3) {
+                const randomCell = smallCells[Math.floor(Math.random() * smallCells.length)];
+                randomCell.element.classList.add('consuming');
+                
+                setTimeout(() => {
+                    if (randomCell.element.parentNode) {
+                        this.container.removeChild(randomCell.element);
+                        this.cells = this.cells.filter(c => c.element !== randomCell.element);
+                    }
+                }, 500);
+            }
+        }, 3000);
     }
 }
 
-.consuming {
-    animation: consume 0.5s ease-out forwards;
+// Variável global para dificuldade selecionada
+let selectedDifficulty = 'easy';
+
+// Inicializar o fundo do jogo
+let gameBackground;
+document.addEventListener('DOMContentLoaded', function() {
+    gameBackground = new GameBackground();
+    setupDifficultyButtons();
+    setupModeButtons();
+});
+
+// Configurar botões de dificuldade
+function setupDifficultyButtons() {
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedDifficulty = this.dataset.diff;
+            console.log('Dificuldade selecionada:', selectedDifficulty);
+        });
+    });
 }
 
-.container {
-    position: relative;
-    z-index: 1;
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 20px;
-    min-height: 100vh;
+// Configurar botões de modo
+function setupModeButtons() {
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px) scale(1.05)';
+        });
+        
+        btn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
 }
 
-/* Header */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 15px;
-    border-radius: 15px;
-    backdrop-filter: blur(10px);
+// Função global para iniciar o jogo (conecta com main.js)
+function startGame() {
+    console.log('Iniciando jogo na dificuldade:', selectedDifficulty);
+    
+    // Esta função será interceptada pelo main.js quando carregado
+    if (window.gameMain && window.gameMain.startGame) {
+        window.gameMain.startGame(selectedDifficulty);
+    } else {
+        // Fallback caso main.js não esteja carregado
+        alert(`Iniciando jogo na dificuldade: ${selectedDifficulty.toUpperCase()}`);
+    }
 }
 
-.player-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+// Simulação de atualização de players online
+function updateOnlineCount() {
+    const countElements = document.querySelectorAll('.online-count');
+    const newCount = Math.floor(Math.random() * 300) + 1000;
+    countElements.forEach(el => el.textContent = newCount.toLocaleString());
 }
 
-.avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(45deg, #4CAF50, #2196F3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-}
+// Atualiza a cada 30 segundos
+setInterval(updateOnlineCount, 30000);
 
-.player-stats {
-    color: white;
-}
-
-.player-name {
-    font-size: 14px;
-    font-weight: bold;
-}
-
-.player-level {
-    font-size: 12px;
-    opacity: 0.8;
-}
-
-.coins {
-    background: rgba(255, 193, 7, 0.2);
-    padding: 8px 12px;
-    border-radius: 20px;
-    color: #FFC107;
-    font-weight: bold;
-    border: 2px solid #FFC107;
-}
-
-/* Logo */
-.logo {
-    text-align: center;
-    margin: 20px 0;
-}
-
-.logo h1 {
-    color: white;
-    font-size: 36px;
-    font-weight: bold;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.virus-icon {
-    width: 40px;
-    height: 40px;
-    background: radial-gradient(circle, #4CAF50, #388E3C);
-    border-radius: 50%;
-    position: relative;
-}
-
-.virus-icon::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 30px;
-    height: 30px;
-    background: radial-gradient(circle, #81C784, #4CAF50);
-    border-radius: 50%;
-}
-
-/* Server Info */
-.server-info {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 15px;
-    border-radius: 15px;
-    margin-bottom: 20px;
-    backdrop-filter: blur(10px);
-}
-
-.server-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: white;
-    margin-bottom: 8px;
-}
-
-.server-row:last-child {
-    margin-bottom: 0;
-}
-
-.server-status {
-    color: #4CAF50;
-    font-weight: bold;
-}
-
-/* XP Bar */
-.xp-section {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 15px;
-    border-radius: 15px;
-    margin-bottom: 20px;
-    backdrop-filter: blur(10px);
-}
-
-.xp-info {
-    display: flex;
-    justify-content: space-between;
-    color: white;
-    margin-bottom: 10px;
-}
-
-.xp-bar {
-    width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.xp-progress {
-    width: 65%;
-    height: 100%;
-    background: linear-gradient(90deg, #4CAF50, #8BC34A);
-    border-radius: 4px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
-    50% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.8); }
-    100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
-}
-
-/* Difficulty */
-.difficulty-section {
-    margin-bottom: 25px;
-}
-
-.difficulty-title {
-    color: white;
-    text-align: center;
-    margin-bottom: 15px;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.difficulty-options {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-.difficulty-btn {
-    flex: 1;
-    padding: 15px;
-    border: none;
-    border-radius: 50%;
-    width: 80px;
-    height: 80px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 12px;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.difficulty-easy {
-    background: linear-gradient(45deg, #4CAF50, #8BC34A);
-    color: white;
-}
-
-.difficulty-normal {
-    background: linear-gradient(45deg, #FF9800, #FFC107);
-    color: white;
-}
-
-.difficulty-hard {
-    background: linear-gradient(45deg, #F44336, #E91E63);
-    color: white;
-}
-
-.difficulty-btn.selected {
-    transform: scale(1.1);
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-}
-
-/* Game Mode Buttons */
-.game-modes {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 25px;
-}
-
-.mode-btn {
-    padding: 20px;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: bold;
-    color: white;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.mode-solo {
-    background: linear-gradient(45deg, #4CAF50, #8BC34A);
-}
-
-.mode-online {
-    background: linear-gradient(45deg, #F44336, #FF5722);
-}
-
-.mode-tournament {
-    background: linear-gradient(45deg, #FF9800, #FFC107);
-}
-
-.mode-arena {
-    background: linear-gradient(45deg, #9C27B0, #E91E63);
-}
-
-.mode-btn:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-}
-
-.mode-btn::before {
-    content: '';
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 20px;
-    height: 20px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Special Buttons */
-.special-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.special-btn {
-    padding: 15px;
-    border: none;
-    border-radius: 15px;
-    cursor: pointer;
-    font-weight: bold;
-    color: white;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.bonus-btn {
-    background: linear-gradient(45deg, #FFC107, #FF8F00);
-}
-
-.shop-btn {
-    background: linear-gradient(45deg, #2196F3, #03A9F4);
-}
-
-/* Daily Mission */
-.daily-mission {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 15px;
-    border-radius: 15px;
-    backdrop-filter: blur(10px);
-    margin-bottom: 20px;
-}
-
-.mission-title {
-    color: white;
-    font-size: 14px;
-    font-weight: bold;
-    margin-bottom: 8px;
-}
-
-.mission-desc {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 12px;
-    margin-bottom: 10px;
-}
-
-.mission-progress {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.progress-bar {
-    flex: 1;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
-    margin-right: 10px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    width: 40%;
-    height: 100%;
-    background: linear-gradient(90deg, #4CAF50, #8BC34A);
-    border-radius: 3px;
-}
-
-.mission-reward {
-    background: #FFC107;
-    color: #333;
-    padding: 4px 8px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-/* Online Players */
-.online-info {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 12px;
-    margin-top: 15px;
-}
-
-.online-count {
-    color: #4CAF50;
-    font-weight: bold;
-}
+// Exportar para uso do main.js
+window.menuSystem = {
+    getSelectedDifficulty: () => selectedDifficulty,
+    hideMenu: () => document.querySelector('.container').style.display = 'none',
+    showMenu: () => document.querySelector('.container').style.display = 'block'
+};
