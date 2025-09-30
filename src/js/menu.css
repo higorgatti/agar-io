@@ -172,4 +172,126 @@ function startGame() {
 function gameOver() {
     state.gameRunning = false;
     
-    // Mo
+    // Mostrar tela de game over
+    overPane.style.display = 'flex';
+    
+    // Atualizar score final
+    const finalScoreEl = overPane.querySelector('#finalScore');
+    if (finalScoreEl) {
+        finalScoreEl.textContent = Math.floor(state.score);
+    }
+}
+
+function restartGame() {
+    overPane.style.display = 'none';
+    
+    // Voltar para o menu
+    if (window.menuSystem) {
+        window.menuSystem.showMenu();
+    }
+    
+    startPane.style.display = 'flex';
+    ui.style.display = 'none';
+    minimapWrap.style.display = 'none';
+    mobileBtns.container.style.display = 'none';
+}
+
+// Conectar botões de UI
+const startBtn = document.querySelector('.mode-solo');
+if (startBtn) {
+    startBtn.addEventListener('click', startGame);
+}
+
+const restartBtn = overPane.querySelector('#restartBtn, .restart-btn');
+if (restartBtn) {
+    restartBtn.addEventListener('click', restartGame);
+}
+
+// ========================================
+// GAME LOOP
+// ========================================
+
+function update() {
+    if (!state.gameRunning) return;
+    
+    const dt = 16; // ~60fps
+    
+    // 1. Player
+    movePlayer();
+    separatePlayerCells();
+    maybeMerge();
+    
+    // 2. Sistemas
+    updateRage();
+    updateParticles();
+    updatePelletPhysics();
+    
+    // 3. IA
+    state.enemies.forEach(e => {
+        updateEnemyAI(e);
+        moveEnemyAI(e);
+    });
+    
+    // 4. Interações
+    runEnemyInteractions();
+    
+    // 5. Câmera
+    updateCamera();
+    
+    // 6. HUD
+    updateHUD();
+}
+
+function updateHUD() {
+    // Score
+    const scoreEl = ui.querySelector('#score, .score-value');
+    if (scoreEl) {
+        scoreEl.textContent = Math.floor(state.score);
+    }
+    
+    // Massa total
+    const massEl = ui.querySelector('#mass, .mass-value');
+    if (massEl) {
+        const totalMass = state.player.mass + 
+            state.player.splitBalls.reduce((sum, b) => sum + b.mass, 0);
+        massEl.textContent = Math.floor(totalMass);
+    }
+    
+    // Rage mode
+    const rageEl = ui.querySelector('#rage, .rage-indicator');
+    if (rageEl) {
+        if (state.player.rageMode && state.player.rageEnd > now()) {
+            const timeLeft = Math.ceil((state.player.rageEnd - now()) / 1000);
+            rageEl.textContent = `RAGE: ${timeLeft}s`;
+            rageEl.style.display = 'block';
+        } else {
+            rageEl.style.display = 'none';
+        }
+    }
+}
+
+function loop() {
+    if (!state.gameRunning) return;
+    
+    update();
+    render();
+    drawMini();
+    
+    requestAnimationFrame(loop);
+}
+
+// ========================================
+// EXPORTAR PARA MENU
+// ========================================
+
+// Disponibilizar função para o menu.js
+window.gameMain = {
+    startGame: startGame
+};
+
+// ========================================
+// INICIALIZAÇÃO FINAL
+// ========================================
+
+console.log('Agar Mobile carregado!');
+console.log('Pressione JOGAR SOZINHO para começar');
