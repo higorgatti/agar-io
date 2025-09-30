@@ -1,183 +1,175 @@
-// Sistema de fundo do jogo
-class GameBackground {
-    constructor() {
-        this.container = document.getElementById('gameBackground');
-        this.cells = [];
-        this.cellTypes = [
-            { size: 'small', weight: 60, minSize: 6, maxSize: 12 },
-            { size: 'medium', weight: 25, minSize: 20, maxSize: 35 },
-            { size: 'large', weight: 10, minSize: 40, maxSize: 60 },
-            { size: 'huge', weight: 4, minSize: 65, maxSize: 85 },
-            { size: 'virus', weight: 1, minSize: 35, maxSize: 35 }
-        ];
-        this.colors = ['cell-color-1', 'cell-color-2', 'cell-color-3', 'cell-color-4', 
-                      'cell-color-5', 'cell-color-6', 'cell-color-7', 'cell-color-8'];
-        this.init();
-    }
+// ========================================
+// AGAR MOBILE - MAIN.JS
+// Entry point e orquestração do jogo
+// ========================================
 
-    init() {
-        this.createInitialCells();
-        this.startCellGeneration();
-        this.startConsumptionSimulation();
-    }
+import { setDifficultyByName, getDifficulty } from './difficulty.js';
+import { view, state, fit, reset, ui, startPane, overPane, minimapWrap, mobileBtns } from './state.js';
+import { now } from './utils.js';
+import { movePlayer, splitPlayer, ejectMass, maybeMerge, separatePlayerCells } from './player.js';
+import { updateEnemyAI, moveEnemyAI } from './ai.js';
+import { 
+    createParticles, 
+    updateParticles, 
+    updatePelletPhysics, 
+    updateRage, 
+    runEnemyInteractions, 
+    updateCamera 
+} from './systems.js';
+import { render, drawMini } from './render.js';
 
-    createInitialCells() {
-        // Criar células iniciais espalhadas pela tela
-        for (let i = 0; i < 25; i++) {
-            this.createCell(Math.random() * window.innerWidth);
-        }
-    }
+// ========================================
+// INICIALIZAÇÃO
+// ========================================
 
-    getCellType() {
-        const random = Math.random() * 100;
-        let accumulated = 0;
-        
-        for (let type of this.cellTypes) {
-            accumulated += type.weight;
-            if (random <= accumulated) {
-                return type;
-            }
-        }
-        return this.cellTypes[0];
-    }
+// Configurar dificuldade padrão
+setDifficultyByName('normal');
 
-    createCell(startX = -100) {
-        const cellType = this.getCellType();
-        const cell = document.createElement('div');
-        
-        const size = Math.random() * (cellType.maxSize - cellType.minSize) + cellType.minSize;
-        const yPosition = Math.random() * (window.innerHeight - size);
-        const speed = Math.random() * 10 + 5; // velocidade entre 5 e 15 segundos
-        
-        cell.className = `game-cell ${cellType.size}-cell`;
-        
-        if (cellType.size === 'virus') {
-            cell.classList.add('virus-cell');
-        } else {
-            const colorClass = this.colors[Math.floor(Math.random() * this.colors.length)];
-            cell.classList.add(colorClass);
-            
-            // Adicionar nome para células maiores
-            if (cellType.size === 'large' || cellType.size === 'huge') {
-                const names = ['Player', 'Bot', 'AI', 'Pro', 'Noob', 'King', 'Queen', 'Master'];
-                cell.textContent = names[Math.floor(Math.random() * names.length)];
-            }
-        }
-        
-        cell.style.width = `${size}px`;
-        cell.style.height = `${size}px`;
-        cell.style.left = `${startX}px`;
-        cell.style.top = `${yPosition}px`;
-        cell.style.animationDuration = `${speed}s`;
-        cell.style.animationDelay = `${Math.random() * 2}s`;
-        
-        this.container.appendChild(cell);
-        this.cells.push({
-            element: cell,
-            size: size,
-            type: cellType.size,
-            x: startX,
-            y: yPosition
-        });
+// Ajustar canvas ao tamanho da janela
+fit();
+window.addEventListener('resize', fit);
 
-        // Remover célula quando sair da tela
-        setTimeout(() => {
-            if (cell.parentNode) {
-                this.container.removeChild(cell);
-                this.cells = this.cells.filter(c => c.element !== cell);
-            }
-        }, (speed + 2) * 1000);
-    }
+// ========================================
+// CONTROLES E INPUT
+// ========================================
 
-    startCellGeneration() {
-        setInterval(() => {
-            if (this.cells.length < 30) {
-                this.createCell();
-            }
-        }, Math.random() * 2000 + 1000); // Entre 1-3 segundos
-    }
+let lastTap = 0;
+let moveTarget = null;
 
-    startConsumptionSimulation() {
-        setInterval(() => {
-            // Simular consumo de células pequenas
-            const smallCells = this.cells.filter(c => c.type === 'small');
-            if (smallCells.length > 0 && Math.random() < 0.3) {
-                const randomCell = smallCells[Math.floor(Math.random() * smallCells.length)];
-                randomCell.element.classList.add('consuming');
-                
-                setTimeout(() => {
-                    if (randomCell.element.parentNode) {
-                        this.container.removeChild(randomCell.element);
-                        this.cells = this.cells.filter(c => c.element !== randomCell.element);
-                    }
-                }, 500);
-            }
-        }, 3000);
-    }
+// Converter coordenadas de tela para mundo
+function screenToWorld(screenX, screenY) {
+    const cam = state.camera;
+    const worldX = (screenX - view.W / 2) / cam.zoom + cam.x;
+    const worldY = (screenY - view.H / 2) / cam.zoom + cam.y;
+    return { x: worldX, y: worldY };
 }
 
-// Variável global para dificuldade selecionada
-let selectedDifficulty = 'easy';
+// Touch controls
+view.canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const now = Date.now();
+    const touch = e.touches[0];
+    const rect = view.canvas.getBoundingClientRect();
+    const screenX = touch.clientX - rect.left;
+    const screenY = touch.clientY - rect.top;
+    
+    state.moveTarget = screenToWorld(screenX, screenY);
+    
+    // Duplo toque = split
+    if (now - lastTap < 300) {
+        splitPlayer();
+    }
+    lastTap = now;
+}, { passive: false });
 
-// Inicializar o fundo do jogo
-let gameBackground;
-document.addEventListener('DOMContentLoaded', function() {
-    gameBackground = new GameBackground();
-    setupDifficultyButtons();
-    setupModeButtons();
+view.canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = view.canvas.getBoundingClientRect();
+    const screenX = touch.clientX - rect.left;
+    const screenY = touch.clientY - rect.top;
+    state.moveTarget = screenToWorld(screenX, screenY);
+}, { passive: false });
+
+// Mouse controls (para desktop)
+let mouseDown = false;
+
+view.canvas.addEventListener('mousedown', e => {
+    mouseDown = true;
+    const rect = view.canvas.getBoundingClientRect();
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+    state.moveTarget = screenToWorld(screenX, screenY);
 });
 
-// Configurar botões de dificuldade
-function setupDifficultyButtons() {
-    document.querySelectorAll('.difficulty-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
-            this.classList.add('selected');
-            selectedDifficulty = this.dataset.diff;
-            console.log('Dificuldade selecionada:', selectedDifficulty);
-        });
-    });
-}
-
-// Configurar botões de modo
-function setupModeButtons() {
-    document.querySelectorAll('.mode-btn').forEach(btn => {
-        btn.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-5px) scale(1.05)';
-        });
-        
-        btn.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0) scale(1)';
-        });
-    });
-}
-
-// Função global para iniciar o jogo (conecta com main.js)
-function startGame() {
-    console.log('Iniciando jogo na dificuldade:', selectedDifficulty);
-    
-    // Esta função será interceptada pelo main.js quando carregado
-    if (window.gameMain && window.gameMain.startGame) {
-        window.gameMain.startGame(selectedDifficulty);
-    } else {
-        // Fallback caso main.js não esteja carregado
-        alert(`Iniciando jogo na dificuldade: ${selectedDifficulty.toUpperCase()}`);
+view.canvas.addEventListener('mousemove', e => {
+    if (mouseDown) {
+        const rect = view.canvas.getBoundingClientRect();
+        const screenX = e.clientX - rect.left;
+        const screenY = e.clientY - rect.top;
+        state.moveTarget = screenToWorld(screenX, screenY);
     }
+});
+
+view.canvas.addEventListener('mouseup', () => {
+    mouseDown = false;
+});
+
+// Duplo clique = split
+view.canvas.addEventListener('dblclick', () => {
+    splitPlayer();
+});
+
+// Botões mobile
+if (mobileBtns.split) {
+    mobileBtns.split.addEventListener('click', () => {
+        splitPlayer();
+    });
 }
 
-// Simulação de atualização de players online
-function updateOnlineCount() {
-    const countElements = document.querySelectorAll('.online-count');
-    const newCount = Math.floor(Math.random() * 300) + 1000;
-    countElements.forEach(el => el.textContent = newCount.toLocaleString());
+if (mobileBtns.eject) {
+    mobileBtns.eject.addEventListener('click', () => {
+        ejectMass();
+    });
 }
 
-// Atualiza a cada 30 segundos
-setInterval(updateOnlineCount, 30000);
+// Prevenir scroll durante o jogo
+document.body.addEventListener('touchmove', e => {
+    if (state.gameRunning) {
+        e.preventDefault();
+    }
+}, { passive: false });
 
-// Exportar para uso do main.js
-window.menuSystem = {
-    getSelectedDifficulty: () => selectedDifficulty,
-    hideMenu: () => document.querySelector('.container').style.display = 'none',
-    showMenu: () => document.querySelector('.container').style.display = 'block'
-};
+// ========================================
+// CONTROLES DE DIFICULDADE
+// ========================================
+
+// Conectar botões de dificuldade do menu com o sistema
+document.querySelectorAll('.difficulty-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const difficulty = btn.dataset.diff;
+        if (difficulty) {
+            setDifficultyByName(difficulty);
+            console.log('Dificuldade alterada para:', difficulty);
+        }
+    });
+});
+
+// ========================================
+// FLUXO DO JOGO
+// ========================================
+
+function startGame() {
+    console.log('Iniciando jogo...');
+    
+    // Obter dificuldade selecionada
+    const difficulty = getDifficulty();
+    console.log('Dificuldade atual:', difficulty);
+    
+    // Esconder menu e mostrar UI do jogo
+    if (window.menuSystem) {
+        window.menuSystem.hideMenu();
+    }
+    
+    startPane.style.display = 'none';
+    ui.style.display = 'block';
+    minimapWrap.style.display = 'block';
+    mobileBtns.container.style.display = 'flex';
+    
+    // Reset do jogo com configurações da dificuldade
+    reset({
+        enemyCount: difficulty.enemyCount,
+        foodCount: difficulty.foodCount,
+        initialRage: difficulty.initialRage
+    });
+    
+    state.gameRunning = true;
+    
+    // Iniciar loop
+    loop();
+}
+
+function gameOver() {
+    state.gameRunning = false;
+    
+    // Mo
