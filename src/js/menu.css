@@ -1,126 +1,519 @@
-/* ===== MENU / LANDING (estilo do mock) ===== */
-
-:root{
-  --glass-bg: rgba(255,255,255,0.12);
-  --glass-brd: rgba(255,255,255,0.22);
-  --glass-blur: 18px;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: radial-gradient(1200px 800px at 15% 20%, #153861 0%, #0d2b4b 40%, #082138 70%, #071b2e 100%);
-  color:#fff;
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
 }
 
-/* fundo animado leve */
-.game-background{
-  position:fixed; inset:0; pointer-events:none; z-index:0;
-  background:
-    radial-gradient(600px 300px at 20% 30%, rgba(76,175,80,.12) 0%, transparent 70%),
-    radial-gradient(500px 260px at 80% 70%, rgba(33,150,243,.12) 0%, transparent 70%),
-    radial-gradient(420px 240px at 50% 50%, rgba(255,87,34,.10) 0%, transparent 70%);
+/* Fundo do jogo animado */
+.game-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(76, 175, 80, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(33, 150, 243, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255, 87, 34, 0.1) 0%, transparent 50%);
 }
 
-/* container central do menu (fica dentro do #start) */
-.container{
-  position:relative; z-index:1;
-  width:min(720px, 92vw);
-  margin: 14px auto 24px;
+.game-cell {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 10px;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
 
-/* cabeçalho “AGAR MOBILE” + cartão de servidor */
-.logo h1{
-  font-size:40px; letter-spacing:.5px; margin:4px 0 10px;
-  text-shadow:0 3px 10px rgba(0,0,0,.35);
-  display:flex; align-items:center; gap:10px; justify-content:flex-start;
-}
-.virus-icon{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle,#4CAF50,#388E3C)}
-
-/* cartões glass */
-.header,
-.server-info,
-.xp-section,
-.daily-mission{
-  background: var(--glass-bg);
-  border:1px solid var(--glass-brd);
-  border-radius:20px;
-  padding:14px 16px;
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  box-shadow: 0 12px 40px rgba(0,0,0,.25);
-  margin-bottom:14px;
+/* Células pequenas (comida) */
+.small-cell {
+    width: 8px;
+    height: 8px;
+    opacity: 0.6;
+    animation: drift 15s infinite linear;
 }
 
-/* header */
-.header{display:flex; align-items:center; justify-content:space-between}
-.player-info{display:flex; gap:10px; align-items:center}
-.avatar{
-  width:44px;height:44px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(45deg,#4CAF50,#2196F3); font-size:20px
+/* Células médias */
+.medium-cell {
+    width: 25px;
+    height: 25px;
+    opacity: 0.4;
+    animation: drift 20s infinite linear;
 }
-.player-name{font-weight:700}
-.player-level{opacity:.8; font-size:12px}
-.coins{background:rgba(255,193,7,.15); border:2px solid #FFC107; color:#FFC107;
-  padding:8px 12px; border-radius:999px; font-weight:800}
 
-/* informações do servidor */
-.server-info .server-row{display:flex; justify-content:space-between; margin:6px 0}
-.server-status{color:#49d36a; font-weight:800}
-
-/* XP */
-.xp-info{display:flex; justify-content:space-between; margin-bottom:8px}
-.xp-bar{height:8px; background:rgba(255,255,255,.18); border-radius:6px; overflow:hidden}
-.xp-progress{height:100%; width:65%; background:linear-gradient(90deg,#4CAF50,#8BC34A);
-  animation:pulse 2s infinite}
-@keyframes pulse{0%{box-shadow:0 0 6px rgba(76,175,80,.5)}50%{box-shadow:0 0 18px rgba(76,175,80,.9)}100%{box-shadow:0 0 6px rgba(76,175,80,.5)}}
-
-/* missão diária */
-.mission-title{font-weight:800; margin-bottom:4px}
-.mission-desc{opacity:.9; margin-bottom:8px}
-.mission-progress{display:flex; gap:10px; align-items:center}
-.progress-bar{flex:1; height:6px; background:rgba(255,255,255,.18); border-radius:4px; overflow:hidden}
-.progress-fill{height:100%; width:40%; background:linear-gradient(90deg,#4CAF50,#8BC34A)}
-.mission-reward{background:#FFC107; color:#2b2b2b; font-weight:800; padding:4px 8px; border-radius:10px}
-
-/* dificuldade */
-.difficulty-title{text-align:center; font-weight:900; letter-spacing:.8px; margin:20px 0 12px}
-.difficulty-options{display:flex; gap:14px; justify-content:center}
-.difficulty-btn{
-  width:110px; height:110px; border-radius:999px; border:none; cursor:pointer;
-  font-weight:900; letter-spacing:.4px; color:#fff;
-  box-shadow:0 12px 30px rgba(0,0,0,.25); transition:transform .2s, box-shadow .2s;
+/* Células grandes */
+.large-cell {
+    width: 45px;
+    height: 45px;
+    opacity: 0.3;
+    animation: drift 25s infinite linear;
 }
-.difficulty-btn.selected{transform:scale(1.08); box-shadow:0 0 28px rgba(255,255,255,.40)}
-.difficulty-easy{background:linear-gradient(45deg,#4CAF50,#8BC34A)}
-.difficulty-normal{background:linear-gradient(45deg,#FF9800,#FFC107)}
-.difficulty-hard{background:linear-gradient(45deg,#F44336,#E91E63)}
 
-/* modos (grid 2x2) */
-.game-modes{
-  display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0 18px
+/* Células gigantes */
+.huge-cell {
+    width: 70px;
+    height: 70px;
+    opacity: 0.2;
+    animation: drift 30s infinite linear;
 }
-.mode-btn{
-  border:none; border-radius:18px; padding:20px; color:#fff; font-weight:900;
-  box-shadow:0 14px 32px rgba(0,0,0,.28); transition:transform .15s, box-shadow .15s;
-}
-.mode-btn:hover{transform:translateY(-3px); box-shadow:0 18px 40px rgba(0,0,0,.35)}
-.mode-solo{background:linear-gradient(45deg,#4CAF50,#8BC34A)}
-.mode-online{background:linear-gradient(45deg,#F44336,#FF5722)}
-.mode-tournament{background:linear-gradient(45deg,#FF9800,#FFC107)}
-.mode-arena{background:linear-gradient(45deg,#9C27B0,#E91E63)}
 
-/* especiais */
-.special-section{display:grid; grid-template-columns:1fr 1fr; gap:14px}
-.special-btn{
-  border:none; border-radius:16px; padding:16px; font-weight:900; color:#fff;
-  box-shadow:0 12px 32px rgba(0,0,0,.25)
+/* Vírus */
+.virus-cell {
+    width: 35px;
+    height: 35px;
+    background: radial-gradient(circle, #4CAF50, #388E3C) !important;
+    opacity: 0.3;
+    animation: drift 22s infinite linear, pulse-virus 3s infinite ease-in-out;
+    position: relative;
 }
-.bonus-btn{background:linear-gradient(45deg,#FFC107,#FF8F00)}
-.shop-btn{background:linear-gradient(45deg,#2196F3,#03A9F4)}
 
-/* contagem online */
-.online-info{text-align:center; opacity:.9; margin-top:12px}
-.online-count{color:#49d36a; font-weight:900}
+.virus-cell::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 25px;
+    height: 25px;
+    background: radial-gradient(circle, #81C784, #4CAF50);
+    border-radius: 50%;
+}
+
+.virus-cell::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 15px;
+    height: 15px;
+    background: radial-gradient(circle, #A5D6A7, #81C784);
+    border-radius: 50%;
+}
+
+/* Animações */
+@keyframes drift {
+    from {
+        transform: translateX(-100px) translateY(0px) rotate(0deg);
+    }
+    to {
+        transform: translateX(calc(100vw + 100px)) translateY(0px) rotate(360deg);
+    }
+}
+
+@keyframes pulse-virus {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Cores das células */
+.cell-color-1 { background: radial-gradient(circle, #FF5722, #D84315); }
+.cell-color-2 { background: radial-gradient(circle, #2196F3, #1565C0); }
+.cell-color-3 { background: radial-gradient(circle, #4CAF50, #2E7D32); }
+.cell-color-4 { background: radial-gradient(circle, #FF9800, #F57C00); }
+.cell-color-5 { background: radial-gradient(circle, #9C27B0, #6A1B9A); }
+.cell-color-6 { background: radial-gradient(circle, #FFC107, #F9A825); }
+.cell-color-7 { background: radial-gradient(circle, #607D8B, #455A64); }
+.cell-color-8 { background: radial-gradient(circle, #E91E63, #C2185B); }
+
+/* Efeito de consumo */
+@keyframes consume {
+    0% { 
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    50% { 
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+    100% { 
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+.consuming {
+    animation: consume 0.5s ease-out forwards;
+}
+
+.container {
+    position: relative;
+    z-index: 1;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #4CAF50, #2196F3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.player-stats {
+    color: white;
+}
+
+.player-name {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.player-level {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.coins {
+    background: rgba(255, 193, 7, 0.2);
+    padding: 8px 12px;
+    border-radius: 20px;
+    color: #FFC107;
+    font-weight: bold;
+    border: 2px solid #FFC107;
+}
+
+/* Logo */
+.logo {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.logo h1 {
+    color: white;
+    font-size: 36px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.virus-icon {
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle, #4CAF50, #388E3C);
+    border-radius: 50%;
+    position: relative;
+}
+
+.virus-icon::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle, #81C784, #4CAF50);
+    border-radius: 50%;
+}
+
+/* Server Info */
+.server-info {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.server-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.server-row:last-child {
+    margin-bottom: 0;
+}
+
+.server-status {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+/* XP Bar */
+.xp-section {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.xp-info {
+    display: flex;
+    justify-content: space-between;
+    color: white;
+    margin-bottom: 10px;
+}
+
+.xp-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.xp-progress {
+    width: 65%;
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    border-radius: 4px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.8); }
+    100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
+}
+
+/* Difficulty */
+.difficulty-section {
+    margin-bottom: 25px;
+}
+
+.difficulty-title {
+    color: white;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.difficulty-options {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.difficulty-btn {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.difficulty-easy {
+    background: linear-gradient(45deg, #4CAF50, #8BC34A);
+    color: white;
+}
+
+.difficulty-normal {
+    background: linear-gradient(45deg, #FF9800, #FFC107);
+    color: white;
+}
+
+.difficulty-hard {
+    background: linear-gradient(45deg, #F44336, #E91E63);
+    color: white;
+}
+
+.difficulty-btn.selected {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+/* Game Mode Buttons */
+.game-modes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.mode-btn {
+    padding: 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.mode-solo {
+    background: linear-gradient(45deg, #4CAF50, #8BC34A);
+}
+
+.mode-online {
+    background: linear-gradient(45deg, #F44336, #FF5722);
+}
+
+.mode-tournament {
+    background: linear-gradient(45deg, #FF9800, #FFC107);
+}
+
+.mode-arena {
+    background: linear-gradient(45deg, #9C27B0, #E91E63);
+}
+
+.mode-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+.mode-btn::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Special Buttons */
+.special-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.special-btn {
+    padding: 15px;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    color: white;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.bonus-btn {
+    background: linear-gradient(45deg, #FFC107, #FF8F00);
+}
+
+.shop-btn {
+    background: linear-gradient(45deg, #2196F3, #03A9F4);
+}
+
+/* Daily Mission */
+.daily-mission {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+}
+
+.mission-title {
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.mission-desc {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+
+.mission-progress {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    margin-right: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    border-radius: 3px;
+}
+
+.mission-reward {
+    background: #FFC107;
+    color: #333;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Online Players */
+.online-info {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    margin-top: 15px;
+}
+
+.online-count {
+    color: #4CAF50;
+    font-weight: bold;
+}
